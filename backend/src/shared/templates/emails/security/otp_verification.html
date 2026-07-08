@@ -1,0 +1,12 @@
+{% extends "layouts/base_" ~ theme ~ ".html" %}
+{% block header_title %}Verify your email{% endblock %}
+{% block content %}
+<p style="font-size: 16px; line-height: 1.5; color: #374151;">Hello,</p>
+<p style="font-size: 16px; line-height: 1.5; color: #374151;">Thank you for registering with <strong>{{ proj_name }}</strong>. To complete your sign-up process, please use the verification code below:</p>
+
+<div style="background-color: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; text-align: center; margin: 32px 0;">
+    <h2 style="font-family: monospace; font-size: 32px; letter-spacing: 8px; color: #111827; margin: 0; padding-left: 8px;">{{ otp }}</h2>
+</div>
+
+<p style="font-size: 14px; color: #6b7280; text-align: center;">This code will expire in 15 minutes. Please do not share it with anyone.</p>
+{% endblock %}

@@ -1,0 +1,130 @@
+"""
+Exposes HTTP endpoints for managing user profiles.
+Handles fetching, updating, and completely deleting a user's account.
+During deletion, it ensures the current session is securely terminated by blacklisting the active JWT.
+"""
+from datetime import datetime, timezone
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Request, Response
+
+from src.authentication.api.dependencies import (
+    get_current_user,
+    get_jwt_payload,
+    verify_csrf,
+)
+from src.authentication.container import get_container
+from src.authentication.core.domain import UserIdentity
+from src.shared.api.dependencies import limiter
+from src.shared.api.utils import delete_refresh_token_cookie
+from src.shared.config import rate_limit_settings, token_settings
+from src.shared.infrastructure.sql.uow import SQLAlchemyUnitOfWork, get_uow
+from src.users.api.schemas import ProfileUpdate
+from src.users.container import user_profile_repository
+from src.users.core.domain.exceptions import UserNotFoundException
+from src.users.core.domain.profile import UserProfile
+
+router = APIRouter()
+
+
+
+@router.get("/me", response_model=UserProfile)
+@limiter.limit(rate_limit_settings.DEFAULT_RATE_LIMIT)
+async def get_profile(
+    request: Request,
+    current_user: Annotated[UserIdentity, Depends(get_current_user)],
+    uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)]
+):
+    """
+    Fetch the current user's profile information.
+    
+    Requires a valid JWT Access Token. Returns basic profile details like the user's ID, email, display name, and profile picture URL.
+    
+    **Returns:**
+    The user's profile object.
+    """
+    cache_key = f"user_profile:{current_user.id}"
+    cache = get_container().cache_adapter
+    cached_data = await cache.get_dict(cache_key)
+    if cached_data:
+        return UserProfile(**cached_data)
+
+    async with uow:
+        profile = await user_profile_repository.get_profile(uow.session, current_user.id)
+    if not profile:
+        raise UserNotFoundException()
+        
+    await cache.set_dict(cache_key, profile.model_dump(mode="json"), ttl=900)
+    return profile
+
+
+@router.patch("/me", dependencies=[Depends(verify_csrf)], response_model=UserProfile)
+@limiter.limit(rate_limit_settings.DEFAULT_RATE_LIMIT)
+async def update_profile(
+    request: Request,
+    body: ProfileUpdate,
+    current_user: Annotated[UserIdentity, Depends(get_current_user)],
+    uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)]
+):
+    """
+    Update the current user's profile information.
+    
+    Allows the user to modify their display name or profile picture URL. Fields omitted from the payload will remain unchanged.
+    
+    **Returns:**
+    The updated user profile object.
+    """
+    async with uow:
+        updated = await user_profile_repository.update_profile(uow.session,
+            current_user.id,
+            name=body.name,
+            picture=str(body.picture) if body.picture else None,
+            receive_updates=body.receive_updates
+        )
+    await get_container().cache_adapter.delete_key(f"user_profile:{current_user.id}")
+    return updated
+
+
+@router.delete("/me", dependencies=[Depends(verify_csrf)])
+@limiter.limit(rate_limit_settings.DEFAULT_RATE_LIMIT)
+async def delete_me(
+    request: Request,
+    current_user: Annotated[UserIdentity, Depends(get_current_user)],
+    jwt_payload: Annotated[dict, Depends(get_jwt_payload)],
+    uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)]
+):
+    """
+    Permanently delete the current user's account.
+    
+    This endpoint initiates a cascading deletion of the user's data:
+    1. Deletes the core User record (which cascades to delete OAuth links, passwords, and sessions in the database).
+    2. Blacklists the current JWT Access Token in Redis to immediately terminate the active session.
+    3. Deletes the `refresh_token` HTTP-Only cookie from the browser.
+    
+    **Warning:** This action is irreversible.
+    
+    **Returns:**
+    A 204 No Content response upon successful deletion.
+    """
+    
+    # 1. Delete user from database (this cascades to oauth accounts, passwords, and refresh tokens)
+    async with uow:
+        await user_profile_repository.delete_user(uow.session, current_user.id)
+    await get_container().cache_adapter.delete_key(f"user_profile:{current_user.id}")
+    
+    # 2. Blacklist the current access token
+    jti = jwt_payload.get("jti")
+    exp = jwt_payload.get("exp")
+    if jti and exp:
+        now = int(datetime.now(timezone.utc).timestamp())
+        ttl = exp - now
+        if ttl > 0:
+            max_ttl = token_settings.ACCESS_TOKEN_LIFETIME_MINUTES * 60
+            ttl = min(ttl, max_ttl)
+            await get_container().cache_adapter.set_string(f"blacklist:{jti}", "1", ttl)
+            
+    # 3. Clear the refresh token cookie
+    response = Response(status_code=204)
+    delete_refresh_token_cookie(response)
+    
+    return response

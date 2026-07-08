@@ -1,0 +1,22 @@
+{% extends "layouts/base_" ~ theme ~ ".html" %}
+{% block header_title %}New Login Detected - {{ proj_name }}{% endblock %}
+{% block content %}
+<p>Hello {{ name }},</p>
+<p>We detected a new login to your <strong>{{ proj_name }}</strong> account.</p>
+
+<div style="background-color: #f9f9f9; padding: 15px; border-radius: 6px; margin: 20px 0; font-family: monospace; font-size: 14px;">
+    <strong>Time:</strong> {{ time }}<br>
+    <strong>Device:</strong> {{ device_info }}<br>
+    <strong>IP Address:</strong> {{ ip_address }}
+</div>
+
+<p><strong>Was this you?</strong></p>
+<p>If you recently logged into your account, you can safely ignore this email.</p>
+
+<p><strong>Didn't do this?</strong></p>
+<p>If you did not authorize this login, your account may be compromised. Please secure your account immediately by resetting your password.</p>
+
+<div class="btn-container" style="margin-top: 30px;">
+    <a href="{{ forgot_password_url }}" class="btn">Secure My Account</a>
+</div>
+{% endblock %}

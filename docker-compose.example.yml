@@ -1,0 +1,164 @@
+name: cerberus
+
+networks:
+  cerberus_network:
+    driver: bridge
+
+x-backend-env: &backend_env
+  # ==========================================
+  # 1. APPLICATION & SERVER
+  # ==========================================
+  ENV: "production"
+  FRONTEND_URL: "https://your-domain.com"
+  CORS_ORIGINS: "https://your-domain.com"
+  ADMIN_EMAIL: "admin@your-domain.com"
+  LOG_RETENTION_DAYS: "28"
+  ACCOUNT_RETENTION_DAYS: "30"
+
+  # ==========================================
+  # 2. DATABASES & CACHE
+  # ==========================================
+  DB_ASYNC_URL: "postgresql+asyncpg://<DB_USER>:<DB_PASSWORD>@cerb-postgres:52193/<DB_NAME>"
+  CACHE_URL: "redis://<REDIS_USER>:<REDIS_PASSWORD>@cerb-redis:52192/0"
+  CELERY_BROKER_URL: "redis://<REDIS_USER>:<REDIS_PASSWORD>@cerb-redis:52192/1"
+  CELERY_RESULT_BACKEND: "redis://<REDIS_USER>:<REDIS_PASSWORD>@cerb-redis:52192/2"
+
+  # ==========================================
+  # 3. SECURITY & AUTHENTICATION
+  # ==========================================
+  SESSION_SECRET: "<YOUR_32_BYTE_SESSION_SECRET>"
+  ENCRYPTION_KEY: "<YOUR_32_BYTE_ENCRYPTION_KEY_BASE64_URL_SAFE>"
+  JWT_PRIVATE_KEY: |
+    -----BEGIN PRIVATE KEY-----
+    <YOUR_RSA_PRIVATE_KEY_HERE>
+    -----END PRIVATE KEY-----
+  JWT_PUBLIC_KEY: |
+    -----BEGIN PUBLIC KEY-----
+    <YOUR_RSA_PUBLIC_KEY_HERE>
+    -----END PUBLIC KEY-----
+  TOKEN_ACCESS_TOKEN_LIFETIME_MINUTES: "15"
+  TOKEN_REFRESH_TOKEN_LIFETIME_DAYS: "7"
+  VERIFICATION_OTP_EXPIRATION_SECONDS: "300"
+  VERIFICATION_OTP_RESEND_WINDOW_SECONDS: "900"
+  VERIFICATION_OTP_MAX_ATTEMPTS: "5"
+  VERIFICATION_PASSWORD_RESET_EXPIRY_SECONDS: "900"
+
+  # ==========================================
+  # 4. OAUTH PROVIDERS
+  # ==========================================
+  GOOGLE_CLIENT_ID: "<YOUR_GOOGLE_CLIENT_ID>"
+  GOOGLE_CLIENT_SECRET: "<YOUR_GOOGLE_CLIENT_SECRET>"
+  GITHUB_CLIENT_ID: "<YOUR_GITHUB_CLIENT_ID>"
+  GITHUB_CLIENT_SECRET: "<YOUR_GITHUB_CLIENT_SECRET>"
+
+  # ==========================================
+  # 5. EMAIL CONFIGURATION (Resend)
+  # ==========================================
+  EMAIL_API_KEY: "<YOUR_EMAIL_PROVIDER_API_KEY>"
+  EMAIL_FROM: "noreply@your-domain.com"
+  EMAIL_TEMPLATE_NAME: "elegant"
+
+  # ==========================================
+  # 6. RATE LIMITING
+  # ==========================================
+  RATE_LIMIT_REFRESH_RATE_LIMIT: "30/minute"
+  RATE_LIMIT_LOGIN_RATE_LIMIT: "5/minute"
+  RATE_LIMIT_DEFAULT_RATE_LIMIT: "60/minute"
+
+services:
+  cerb-postgres:
+    image: postgres:18
+    container_name: cerb-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: <DB_NAME>
+      POSTGRES_USER: <DB_USER>
+      POSTGRES_PASSWORD: "<DB_PASSWORD>"
+    volumes:
+      - ./postgres:/var/lib/postgresql
+    command: [ "postgres", "-p", "52193" ]
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -p 52193 -U <DB_USER> -d <DB_NAME>" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cerberus_network
+
+  cerb-redis:
+    image: redis:8.8.0
+    container_name: cerb-redis
+    restart: unless-stopped
+    volumes:
+      - ./redis/data:/data
+      - ./redis/redis.acl:/mnt/users.acl:ro
+    command: [ "redis-server", "--port", "52192", "--aclfile", "/mnt/users.acl" ]
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -p 52192 ping | grep -E '(PONG|NOAUTH)'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cerberus_network
+
+  cerb-fastapi:
+    image: avneesh11905/cerberus-fastapi:latest
+    restart: unless-stopped
+    depends_on:
+      cerb-postgres:
+        condition: service_healthy
+      cerb-redis:
+        condition: service_healthy
+    expose:
+      - "8000"
+    environment:
+      <<: *backend_env
+    networks:
+      - cerberus_network
+
+  cerb-celery-worker:
+    image: avneesh11905/cerberus-fastapi:latest
+    container_name: cerb-celery-worker
+    restart: unless-stopped
+    command: celery -A src.shared.adapters.task_runner.celery_app worker --loglevel=info
+    depends_on:
+      cerb-postgres:
+        condition: service_healthy
+      cerb-redis:
+        condition: service_healthy
+    environment:
+      <<: *backend_env
+    networks:
+      - cerberus_network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'    
+          memory: '512M' 
+
+  cerb-lb:
+    image: nginx:alpine
+    container_name: cerb-lb
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+      - "8000:8000"
+    volumes:
+      - ./nginx/lb.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - cerb-vite
+      - cerb-fastapi
+    networks:
+      - cerberus_network
+
+  cerb-vite:
+    image: avneesh11905/cerberus-vite:latest
+    restart: unless-stopped
+    depends_on:
+      - cerb-fastapi
+    expose:
+      - "3000"
+    environment:
+      VITE_API_URL: "https://api.your-domain.com"
+    networks:
+      - cerberus_network

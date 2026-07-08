@@ -1,0 +1,14 @@
+{% extends "layouts/base_" ~ theme ~ ".html" %}
+{% block header_title %}Welcome to {{ proj_name }}{% endblock %}
+{% block content %}
+<p style="font-size: 16px; line-height: 1.5; color: #374151;">Hi {{ name }},</p>
+<p style="font-size: 16px; line-height: 1.5; color: #374151;">Welcome to <strong>{{ proj_name }}</strong>! We're absolutely thrilled to have you on board. Your account has been successfully verified and is now ready to use.</p>
+
+<p style="font-size: 16px; line-height: 1.5; color: #374151;">You can now log in to your dashboard to set up your profile and start exploring all the features available to you.</p>
+
+<div class="btn-container" style="margin: 40px 0;">
+    <a href="{{ login_url }}" class="btn">Go to Dashboard</a>
+</div>
+
+<p style="font-size: 14px; line-height: 1.5; color: #6b7280;">If you have any questions or need assistance, simply reply to this email to get in touch with our support team.</p>
+{% endblock %}

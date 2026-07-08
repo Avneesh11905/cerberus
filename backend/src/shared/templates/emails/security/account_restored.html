@@ -1,0 +1,16 @@
+{% extends "layouts/base_" ~ theme ~ ".html" %}
+{% block header_title %}Account Restored - {{ proj_name }}{% endblock %}
+{% block content %}
+<p style="font-size: 16px; line-height: 1.5; color: #374151;">Hello {{ name }},</p>
+<p style="font-size: 16px; line-height: 1.5; color: #374151;">This is a security alert to confirm that your <strong>{{ proj_name }}</strong> account has been successfully restored.</p>
+<p style="font-size: 16px; line-height: 1.5; color: #374151;">Your account was previously scheduled for deletion, but your recent login has cancelled this request and fully reactivated your profile.</p>
+
+<p style="font-size: 14px; line-height: 1.5; color: #6b7280; margin-top: 30px;">
+    <strong>Didn't do this?</strong><br>
+    If you did not authorize this action, your account may have been accessed by someone else. Please reset your password immediately to secure your data.
+</p>
+
+<div class="btn-container" style="margin: 20px 0;">
+    <a href="{{ forgot_password_url }}" class="btn">Secure My Account</a>
+</div>
+{% endblock %}
