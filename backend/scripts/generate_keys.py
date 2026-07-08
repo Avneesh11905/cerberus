@@ -68,7 +68,9 @@ def main():
 
     final_string = "\n".join(output_lines)
 
-    env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), ".env")
+    root_env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), ".env")
+    backend_env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
+    env_path = backend_env_path if os.path.exists(backend_env_path) else root_env_path
     
     print("\n" + "=" * 50)
     print("Keys generated successfully!")
