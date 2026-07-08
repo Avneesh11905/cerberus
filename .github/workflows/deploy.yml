@@ -33,9 +33,9 @@ jobs:
           docker compose ps
           
           echo "Checking Frontend..."
-          curl -sS -f http://localhost:3001 > /dev/null
+          curl -sS -f http://localhost:3001/docs > /dev/null
           
-          echo "Checking Backend (Docs)..."
-          curl -sS -f http://localhost:8001/docs > /dev/null
+          echo "Checking Backend (Health)..."
+          curl -sS -f http://localhost:8001/health > /dev/null
           
           echo "All services are up and healthy!"
