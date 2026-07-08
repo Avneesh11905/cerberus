@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -40,7 +41,7 @@ jobs:
 
   python-ci:
     needs: changes
-    if: ${{ needs.changes.outputs.backend == 'true' }}
+    if: ${{ needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -66,7 +67,7 @@ jobs:
 
   node-ci:
     needs: changes
-    if: ${{ needs.changes.outputs.frontend == 'true' }}
+    if: ${{ needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -98,7 +99,7 @@ jobs:
 
   backend-build:
     needs: [changes, quality-gate]
-    if: ${{ needs.changes.outputs.backend == 'true' && github.ref == 'refs/heads/main' }}
+    if: ${{ (needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -136,7 +137,7 @@ jobs:
 
   frontend-build:
     needs: [changes, quality-gate]
-    if: ${{ needs.changes.outputs.frontend == 'true' && github.ref == 'refs/heads/main' }}
+    if: ${{ (needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     defaults:
       run:
