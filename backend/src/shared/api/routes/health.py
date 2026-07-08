@@ -2,6 +2,7 @@
 Exposes liveness and readiness probes for orchestrators (like Kubernetes or Docker Compose).
 Checks connectivity to the PostgreSQL database and Redis cache to ensure the application is healthy.
 """
+
 from typing import Annotated
 
 import redis.asyncio as redis
@@ -15,18 +16,20 @@ from src.shared.infrastructure.sql.uow import SQLAlchemyUnitOfWork, get_uow
 
 router = APIRouter()
 
+
 class HealthComponents(BaseModel):
     database: str
     cache: str
+
 
 class HealthResponse(BaseModel):
     status: str
     components: HealthComponents
 
+
 @router.get("/health", response_model=HealthResponse)
 async def health_check(
-    response: Response,
-    uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)]
+    response: Response, uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)]
 ):
     # Check DB
     try:
@@ -35,7 +38,7 @@ async def health_check(
         db_status = "ok"
     except Exception:
         db_status = "error"
-        
+
     # Check Redis/Cache
     cache_status = "ok"
     if database_settings.CACHE_URL.startswith("redis"):
@@ -50,14 +53,11 @@ async def health_check(
             await client.aclose()
 
     status_str = "ok" if db_status == "ok" and cache_status == "ok" else "degraded"
-    
+
     if status_str != "ok":
         response.status_code = 503
-        
+
     return HealthResponse(
         status=status_str,
-        components=HealthComponents(
-            database=db_status,
-            cache=cache_status
-        )
+        components=HealthComponents(database=db_status, cache=cache_status),
     )

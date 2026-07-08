@@ -13,7 +13,7 @@ ENV PYTHONUNBUFFERED=1
 # We copy this first to leverage Docker layer caching for pip install
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 # Copy the rest of the application code
 COPY . .
 
@@ -21,4 +21,4 @@ COPY . .
 EXPOSE 8000
 
 # Start the application with Gunicorn, running migrations first
-CMD ["sh", "-c", "alembic upgrade head && gunicorn src:app -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000"]
+CMD ["sh", "-c", "alembic upgrade head && gunicorn src:app -w 3 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000"]

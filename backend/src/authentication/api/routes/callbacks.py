@@ -3,6 +3,7 @@ Exposes HTTP endpoints for OAuth provider redirects.
 When Google/GitHub sends the user back, this route captures the authorization code,
 exchanges it for user details, and triggers the `OAuthCallbackUseCase` to establish a session.
 """
+
 from typing import Annotated
 from uuid import UUID
 
@@ -41,31 +42,44 @@ async def oauth_callback(
     """Handles the OAuth callback from the provider."""
     session_state = request.session.pop("oauth_state", {})
     state = request.query_params.get("state")
-    
+
     #  Always require a session state. An absent/expired session_state must never
     # be treated as a bypass — it means the OAuth flow was not initiated by us.
     if not session_state:
-        raise HTTPException(status_code=400, detail="Missing OAuth state. Please restart the login flow.")
+        raise HTTPException(
+            status_code=400,
+            detail="Missing OAuth state. Please restart the login flow.",
+        )
     if not state or state != session_state.get("nonce"):
         raise HTTPException(status_code=400, detail="Invalid OAuth state parameter")
 
-    project_id_str = session_state.get("project_id") or request.session.get("oauth_project_id")
+    project_id_str = session_state.get("project_id") or request.session.get(
+        "oauth_project_id"
+    )
     project_id = None
     fallback_frontend_url = None
 
     if project_id_str:
         project_id = UUID(project_id_str)
         async with uow:
-            result = await uow.session.execute(select(Project).where(Project.id == project_id))
+            result = await uow.session.execute(
+                select(Project).where(Project.id == project_id)
+            )
             project = result.scalars().first()
             if not project:
                 raise InvalidProviderException("Associated project not found")
             provider_config = project.oauth_config.get(provider, {})
             client_id = provider_config.get("client_id")
             client_secret_enc = provider_config.get("client_secret")
-            client_secret = shared_container.encryption_adapter.decrypt(client_secret_enc) if client_secret_enc else None
+            client_secret = (
+                shared_container.encryption_adapter.decrypt(client_secret_enc)
+                if client_secret_enc
+                else None
+            )
             if not client_id or not client_secret:
-                raise InvalidProviderException(f"Provider {provider} is not fully configured for project")
+                raise InvalidProviderException(
+                    f"Provider {provider} is not fully configured for project"
+                )
             oauth_client = get_dynamic_oauth_client(provider, client_id, client_secret)
             fallback_frontend_url = project.frontend_url
     else:
@@ -84,7 +98,7 @@ async def oauth_callback(
 
     client_meta = extract_client_metadata(request)
     role = UserRole.TENANT if project_id is None else UserRole.USER
-    
+
     async with uow:
         user, refresh_token, access_token, is_new_user = await usecase.execute(
             uow,

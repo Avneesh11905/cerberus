@@ -2,6 +2,7 @@
 Exposes internal endpoints strictly for debugging email templates during development.
 Allows developers to render Jinja2 HTML templates in the browser without actually sending an email.
 """
+
 import datetime
 import os
 from pathlib import Path
@@ -14,20 +15,29 @@ from src.shared.config import app_settings, email_settings, url_settings
 
 router = APIRouter(prefix="/dev")
 
+
 def dev_enabled():
     if app_settings.ENV != "development":
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dev routes disabled")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Dev routes disabled"
+        )
     return True
 
 
-@router.get("/email/preview/{template_path:path}", response_class=HTMLResponse, dependencies=[Depends(dev_enabled)])
-async def preview_email(request: Request, template_path: str = "", theme: str | None = None):
+@router.get(
+    "/email/preview/{template_path:path}",
+    response_class=HTMLResponse,
+    dependencies=[Depends(dev_enabled)],
+)
+async def preview_email(
+    request: Request, template_path: str = "", theme: str | None = None
+):
     """
     If no template_path is provided, renders the Gallery View of all templates.
     If template_path is provided, renders the specific template.
     """
     tmpl_root = Path(__file__).parents[2] / "templates" / "emails"
-    
+
     # --- GALLERY VIEW ---
     env = Environment(loader=FileSystemLoader(tmpl_root))
     if not template_path:
@@ -36,12 +46,14 @@ async def preview_email(request: Request, template_path: str = "", theme: str | 
             if "layouts" not in f.parts and f.name != "dev_gallery.html":
                 rel_path = f.relative_to(tmpl_root).as_posix()
                 templates.append(rel_path)
-                
+
         themes = ["modern", "minimal", "elegant"]
         active_theme = theme if theme in themes else email_settings.TEMPLATE_NAME
-        
+
         gallery_tmpl = env.get_template("dev_gallery.html")
-        html = gallery_tmpl.render(themes=themes, active_theme=active_theme, templates=templates)
+        html = gallery_tmpl.render(
+            themes=themes, active_theme=active_theme, templates=templates
+        )
         return HTMLResponse(content=html)
 
     # --- INDIVIDUAL TEMPLATE VIEW ---
@@ -66,7 +78,9 @@ async def preview_email(request: Request, template_path: str = "", theme: str | 
         "forgot_password_url": f"{url_settings.FRONTEND_URL}/forgot-password",
         "otp": "123456",
         "theme": active_theme,
-        "time": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+        "time": datetime.datetime.now(datetime.timezone.utc).strftime(
+            "%Y-%m-%d %H:%M:%S UTC"
+        ),
         "device_info": "Chrome on Windows 11",
         "ip_address": "192.168.1.100",
     }

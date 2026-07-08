@@ -1,11 +1,9 @@
-import os
-
 from celery import Celery  # type: ignore
 
-redis_url = os.environ.get("CACHE_URL", "redis://localhost:6379/0")
+from src.shared.config import database_settings
 
 celery_app = Celery(
     "auth_tasks",
-    broker=redis_url,
-    backend=redis_url
+    broker=database_settings.CELERY_BROKER_URL,
+    backend=database_settings.CELERY_RESULT_BACKEND,
 )

@@ -5,6 +5,7 @@ It implements an "Account Linking" strategy:
 2. Email match: If the email matches an existing local/OAuth user, link this new provider to their account to avoid duplicate accounts.
 3. Fallback: Create a brand new user.
 """
+
 from src.shared.core.ports.uow import UoWPort
 from typing import TYPE_CHECKING
 from uuid import UUID
@@ -49,24 +50,39 @@ class OAuthCallbackUseCase[SessionType]:
         self._claims_provider = claims_provider
         self._project_repo = project_repo
 
-    async def _check_new_login(self, session: SessionType, user: UserIdentity, client_meta: ClientMetadata | None) -> None:
+    async def _check_new_login(
+        self,
+        session: SessionType,
+        user: UserIdentity,
+        client_meta: ClientMetadata | None,
+    ) -> None:
         if not client_meta:
             return
         active_sessions = await self._refresh_repo.get_active_sessions(session, user.id)
         is_new_device = True
         for sess in active_sessions:
-            if sess.ip_address == client_meta.ip_address and sess.user_agent == client_meta.user_agent:
+            if (
+                sess.ip_address == client_meta.ip_address
+                and sess.user_agent == client_meta.user_agent
+            ):
                 is_new_device = False
                 break
-        
+
         if is_new_device:
             await self._email_sender.send_login_detected_email(
                 to_email=user.email,
                 ip_address=client_meta.ip_address or "Unknown IP",
-                device_info=client_meta.user_agent or "Unknown Device"
+                device_info=client_meta.user_agent or "Unknown Device",
             )
 
-    async def execute(self, uow: UoWPort[SessionType], user_info: OAuthUserInfo, client_meta: ClientMetadata | None = None, project_id: UUID | None = None, role: UserRole = UserRole.USER) -> tuple[UserIdentity, str, str, bool]:
+    async def execute(
+        self,
+        uow: UoWPort[SessionType],
+        user_info: OAuthUserInfo,
+        client_meta: ClientMetadata | None = None,
+        project_id: UUID | None = None,
+        role: UserRole = UserRole.USER,
+    ) -> tuple[UserIdentity, str, str, bool]:
         """
         Process an OAuth callback.
 
@@ -83,59 +99,89 @@ class OAuthCallbackUseCase[SessionType]:
         name = user_info.name
         picture = user_info.picture
 
-        if app_settings.ADMIN_EMAIL and email.strip().lower() == app_settings.ADMIN_EMAIL.strip().lower() and project_id is None:
+        if (
+            app_settings.ADMIN_EMAIL
+            and email.strip().lower() == app_settings.ADMIN_EMAIL.strip().lower()
+            and project_id is None
+        ):
             role = UserRole.ADMIN
 
         # Step 1: Check if this exact provider+sub already exists
-        user = await self._user_repo.find_by_oauth(uow.session, provider, oauth_sub, project_id=project_id)
+        user = await self._user_repo.find_by_oauth(
+            uow.session, provider, oauth_sub, project_id=project_id
+        )
         if user:
-            if getattr(user, 'deleted_at', None) is not None:
+            if getattr(user, "deleted_at", None) is not None:
                 await self._user_repo.undelete_user(uow.session, user.id)
                 user.deleted_at = None
-                await self._email_sender.send_account_restored_email(user.email, user.name)
-                
+                await self._email_sender.send_account_restored_email(
+                    user.email, user.name
+                )
+
             if role == UserRole.ADMIN and user.role != UserRole.ADMIN:
                 user.role = UserRole.ADMIN
-                
+
             await self._check_new_login(uow.session, user, client_meta)
-                
+
             # We explicitly DO NOT update the name/picture here so we don't overwrite user preferences
             family_id = uuid7()
-            refresh_token = await self._refresh_repo.create(uow.session, user.id, family_id=family_id, auth_provider=provider, client_meta=client_meta)
-            
-            custom_claims = await self._claims_provider.get_custom_claims(uow.session, user.id)
+            refresh_token = await self._refresh_repo.create(
+                uow.session,
+                user.id,
+                family_id=family_id,
+                auth_provider=provider,
+                client_meta=client_meta,
+            )
+
+            custom_claims = await self._claims_provider.get_custom_claims(
+                uow.session, user.id
+            )
             combined_claims: dict[str, object] = {"family_id": str(family_id)}
             if custom_claims:
                 combined_claims.update(custom_claims)
             access_token = self._access_token.create(user, extra_claims=combined_claims)
-            
+
             return user, refresh_token, access_token, False
         # Step 2: Check if a user with this email already exists (account linking)
-        user = await self._user_repo.find_by_email(uow.session, email, project_id=project_id)
+        user = await self._user_repo.find_by_email(
+            uow.session, email, project_id=project_id
+        )
         if user:
-            if getattr(user, 'deleted_at', None) is not None:
+            if getattr(user, "deleted_at", None) is not None:
                 await self._user_repo.undelete_user(uow.session, user.id)
                 user.deleted_at = None
-                await self._email_sender.send_account_restored_email(user.email, user.name)
-                
+                await self._email_sender.send_account_restored_email(
+                    user.email, user.name
+                )
+
             if role == UserRole.ADMIN and user.role != UserRole.ADMIN:
                 user.role = UserRole.ADMIN
-                
+
             await self._user_repo.link_oauth_account(
                 uow.session, user.id, provider, oauth_sub, project_id=project_id
             )
-            
+
             await self._check_new_login(uow.session, user, client_meta)
-            
+
             family_id = uuid7()
-            refresh_token = await self._refresh_repo.create(uow.session, user.id, family_id=family_id, auth_provider=provider, client_meta=client_meta)
-            
-            custom_claims = await self._claims_provider.get_custom_claims(uow.session, user.id)
+            refresh_token = await self._refresh_repo.create(
+                uow.session,
+                user.id,
+                family_id=family_id,
+                auth_provider=provider,
+                client_meta=client_meta,
+            )
+
+            custom_claims = await self._claims_provider.get_custom_claims(
+                uow.session, user.id
+            )
             combined_claims_email: dict[str, object] = {"family_id": str(family_id)}
             if custom_claims:
                 combined_claims_email.update(custom_claims)
-            access_token = self._access_token.create(user, extra_claims=combined_claims_email)
-            
+            access_token = self._access_token.create(
+                user, extra_claims=combined_claims_email
+            )
+
             return user, refresh_token, access_token, False
         # Step 3: Create brand new user
         new_user = await self._user_repo.create_user_with_oauth(
@@ -149,15 +195,31 @@ class OAuthCallbackUseCase[SessionType]:
             role=role,
         )
         family_id = uuid7()
-        refresh_token = await self._refresh_repo.create(uow.session, new_user.id, family_id=family_id, auth_provider=provider, client_meta=client_meta)
-        
-        custom_claims = await self._claims_provider.get_custom_claims(uow.session, new_user.id)
+        refresh_token = await self._refresh_repo.create(
+            uow.session,
+            new_user.id,
+            family_id=family_id,
+            auth_provider=provider,
+            client_meta=client_meta,
+        )
+
+        custom_claims = await self._claims_provider.get_custom_claims(
+            uow.session, new_user.id
+        )
         combined_claims_new: dict[str, object] = {"family_id": str(family_id)}
         if custom_claims:
             combined_claims_new.update(custom_claims)
-        private_key_override = await self._project_repo.get_private_key(uow.session, project_id) if project_id else None
-        access_token = self._access_token.create(new_user, extra_claims=combined_claims_new, private_key_override=private_key_override)
-        
+        private_key_override = (
+            await self._project_repo.get_private_key(uow.session, project_id)
+            if project_id
+            else None
+        )
+        access_token = self._access_token.create(
+            new_user,
+            extra_claims=combined_claims_new,
+            private_key_override=private_key_override,
+        )
+
         await self._email_sender.send_welcome_email(new_user.email, new_user.name)
 
         return new_user, refresh_token, access_token, True

@@ -21,59 +21,72 @@ from src.shared.core.ports.uow import UoWPort
 
 class RequestNewVerificationEmailUseCase[SessionType]:
     """Handles requesting a new verification OTP."""
-    
+
     def __init__(
-        self, user_repo: UserRepositoryPort[SessionType], logger: LoggerPort, 
-        email_sender: EmailSenderPort, cache: CachePort
+        self,
+        user_repo: UserRepositoryPort[SessionType],
+        logger: LoggerPort,
+        email_sender: EmailSenderPort,
+        cache: CachePort,
     ):
         self._user_repo = user_repo
         self._logger = logger
         self._email_sender = email_sender
         self._cache = cache
-        
-    async def execute(self, uow: UoWPort[SessionType], email: str, project_id: UUID | None = None) -> None:
+
+    async def execute(
+        self, uow: UoWPort[SessionType], email: str, project_id: UUID | None = None
+    ) -> None:
         email_hash = hashlib.sha256(email.encode()).hexdigest()
         scope = str(project_id) if project_id else "global"
         resend_key = f"otp_resends:{scope}:{email_hash}"
-        
+
         resends = await self._cache.incr(resend_key, ttl=3600)
         if resends > 3:
             await self._logger.warning(f"OTP resend rate limit exceeded for {email}")
             return
-            
-        user = await self._user_repo.find_by_email(uow.session, email, project_id=project_id)
+
+        user = await self._user_repo.find_by_email(
+            uow.session, email, project_id=project_id
+        )
         if not user:
             # User doesn't exist. Silently return to prevent email enumeration.
             return
-            
+
         if user.is_verified:
             # User is already verified. Silently return to prevent email enumeration.
             return
-            
-        redis_key = f"pending_reg:{str(project_id)}:{email_hash}" if project_id else f"pending_reg:global:{email_hash}"
-        
+
+        redis_key = (
+            f"pending_reg:{str(project_id)}:{email_hash}"
+            if project_id
+            else f"pending_reg:global:{email_hash}"
+        )
+
         existing_payload = await self._cache.get_dict(redis_key)
         if not existing_payload:
             # The pending registration expired. User must register again.
             return
-            
+
         otp = f"{secrets.randbelow(1000000):06d}"
         otp_expires_at = int(time.time()) + verification_settings.OTP_EXPIRATION_SECONDS
-        
+
         payload = {
             "otp": hash_otp(otp),
             "otp_expires_at": otp_expires_at,
             "pending_password_hash": existing_payload.get("pending_password_hash"),
             "pending_name": existing_payload.get("pending_name"),
-            "attempts": 0
+            "attempts": 0,
         }
-        
+
         # Save to Redis, refreshing the 15 minute total TTL
-        await self._cache.set_dict(redis_key, payload, verification_settings.OTP_RESEND_WINDOW_SECONDS) 
-        
+        await self._cache.set_dict(
+            redis_key, payload, verification_settings.OTP_RESEND_WINDOW_SECONDS
+        )
+
         # Reset the attempt counter atomically
         attempt_key = f"otp_attempts:{scope}:{email_hash}"
         await self._cache.delete_key(attempt_key)
-        
+
         await self._email_sender.send_verification_email(email, otp)
         await self._logger.info(f"Resent verification OTP to pending user {email}")

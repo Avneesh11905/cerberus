@@ -20,6 +20,7 @@ tests/
 # Local Database Volumes (CRITICAL ADDITIONS)
 postgres/
 redis/
+keys/
 *.sqlite3
 
 # Database Migrations 
@@ -36,9 +37,8 @@ Thumbs.db
 
 # Project Docs & Dev Configs
 README.md
-.env.example
 docker-compose.yml
-runserver.py
+main.py
 pytest.ini
 .gitignore
 .dockerignore

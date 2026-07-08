@@ -4,6 +4,7 @@ Port: Email Sender (Authentication Domain)
 Defines the interface for sending auth-specific transactional emails.
 Each domain defines its own email sender port with domain-specific methods.
 """
+
 from typing import Protocol
 
 
@@ -22,10 +23,14 @@ class EmailSenderPort(Protocol):
         """Send an email address verification email containing a 6-digit OTP."""
         ...
 
-    async def send_account_restored_email(self, to_email: str, name: str | None) -> None:
+    async def send_account_restored_email(
+        self, to_email: str, name: str | None
+    ) -> None:
         """Send an email notifying the user that their account has been restored."""
         ...
 
-    async def send_login_detected_email(self, to_email: str, ip_address: str, device_info: str) -> None:
+    async def send_login_detected_email(
+        self, to_email: str, ip_address: str, device_info: str
+    ) -> None:
         """Send an email notifying the user of a login from a new device or IP address."""
         ...

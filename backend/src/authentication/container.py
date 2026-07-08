@@ -71,7 +71,10 @@ class Container:
         self.email_sender = AuthEmailService(
             email_client=self.email_client,
             from_email=email_settings.FROM,
-            templates_dir=Path(__file__).parent.parent / "shared" / "templates" / "emails",
+            templates_dir=Path(__file__).parent.parent
+            / "shared"
+            / "templates"
+            / "emails",
             logger=AsyncSQLLogger("EmailSender"),
             proj_name="Cerberus",
             template_name=email_settings.TEMPLATE_NAME,
@@ -87,55 +90,65 @@ class Container:
         # 2. APPLICATION USE CASES
         # =====================================================================
         # --- AUTO-DISCOVERY PLUG-IN ---
-        # The Authentication domain automatically checks if the Authorization domain 
+        # The Authentication domain automatically checks if the Authorization domain
         # has exported a custom claims provider for RBAC systems.
         try:
-            self.claims_provider: ClaimsProviderPort = custom_claims_provider # type: ignore
+            self.claims_provider: ClaimsProviderPort = custom_claims_provider  # type: ignore
         except ImportError:
             # Fallback if the developer hasn't created one
             self.claims_provider = NullClaimsProviderAdapter()
 
-        self.oauth_callback_usecase: OAuthCallbackUseCase[AsyncSession] = OAuthCallbackUseCase(
-            user_repo=self.user_repo,
-            refresh_repo=self.refresh_token_repo,
-            email_sender=self.email_sender,
-            access_token=self.access_token_adapter,
-            claims_provider=self.claims_provider,
-            project_repo=self.project_repo,
+        self.oauth_callback_usecase: OAuthCallbackUseCase[AsyncSession] = (
+            OAuthCallbackUseCase(
+                user_repo=self.user_repo,
+                refresh_repo=self.refresh_token_repo,
+                email_sender=self.email_sender,
+                access_token=self.access_token_adapter,
+                claims_provider=self.claims_provider,
+                project_repo=self.project_repo,
+            )
         )
 
-        self.register_local_usecase: RegisterLocalUserUseCase[AsyncSession] = RegisterLocalUserUseCase(
-            user_repo=self.user_repo,
-            hasher=self.password_hasher,
-            logger=AsyncSQLLogger("RegisterLocalUseCase"),
-            email_sender=self.email_sender,
-            cache=self.cache_adapter,
+        self.register_local_usecase: RegisterLocalUserUseCase[AsyncSession] = (
+            RegisterLocalUserUseCase(
+                user_repo=self.user_repo,
+                hasher=self.password_hasher,
+                logger=AsyncSQLLogger("RegisterLocalUseCase"),
+                email_sender=self.email_sender,
+                cache=self.cache_adapter,
+            )
         )
 
-        self.login_local_usecase: LoginLocalUserUseCase[AsyncSession] = LoginLocalUserUseCase(
-            user_repo=self.user_repo,
-            refresh_repo=self.refresh_token_repo,
-            hasher=self.password_hasher,
-            logger=AsyncSQLLogger("LoginLocalUseCase"),
-            email_sender=self.email_sender,
-            access_token=self.access_token_adapter,
-            claims_provider=self.claims_provider,
-            project_repo=self.project_repo,
+        self.login_local_usecase: LoginLocalUserUseCase[AsyncSession] = (
+            LoginLocalUserUseCase(
+                user_repo=self.user_repo,
+                refresh_repo=self.refresh_token_repo,
+                hasher=self.password_hasher,
+                logger=AsyncSQLLogger("LoginLocalUseCase"),
+                email_sender=self.email_sender,
+                access_token=self.access_token_adapter,
+                claims_provider=self.claims_provider,
+                project_repo=self.project_repo,
+            )
         )
 
-        self.request_new_verification_email_usecase: RequestNewVerificationEmailUseCase[AsyncSession] = RequestNewVerificationEmailUseCase(
+        self.request_new_verification_email_usecase: RequestNewVerificationEmailUseCase[
+            AsyncSession
+        ] = RequestNewVerificationEmailUseCase(
             user_repo=self.user_repo,
             logger=AsyncSQLLogger("RequestNewVerificationEmailUseCase"),
             email_sender=self.email_sender,
             cache=self.cache_adapter,
         )
 
-        self.verify_email_usecase: VerifyEmailUseCase[AsyncSession] = VerifyEmailUseCase(
-            user_repo=self.user_repo,
-            cache=self.cache_adapter,
-            logger=AsyncSQLLogger("VerifyEmailUseCase"),
-            email_sender=self.email_sender,
-            refresh_repo=self.refresh_token_repo,
+        self.verify_email_usecase: VerifyEmailUseCase[AsyncSession] = (
+            VerifyEmailUseCase(
+                user_repo=self.user_repo,
+                cache=self.cache_adapter,
+                logger=AsyncSQLLogger("VerifyEmailUseCase"),
+                email_sender=self.email_sender,
+                refresh_repo=self.refresh_token_repo,
+            )
         )
 
         self.logout_usecase: LogoutUseCase[AsyncSession] = LogoutUseCase(
@@ -148,44 +161,58 @@ class Container:
             cache=self.cache_adapter,
         )
 
-        self.refresh_session_usecase: RefreshSessionUseCase[AsyncSession] = RefreshSessionUseCase(
-            refresh_repo=self.refresh_token_repo,
-            access_token=self.access_token_adapter,
-            claims_provider=self.claims_provider,
-            project_repo=self.project_repo,
+        self.refresh_session_usecase: RefreshSessionUseCase[AsyncSession] = (
+            RefreshSessionUseCase(
+                refresh_repo=self.refresh_token_repo,
+                access_token=self.access_token_adapter,
+                claims_provider=self.claims_provider,
+                project_repo=self.project_repo,
+            )
         )
 
-        self.request_password_reset_usecase: RequestPasswordResetUseCase[AsyncSession] = RequestPasswordResetUseCase(
+        self.request_password_reset_usecase: RequestPasswordResetUseCase[
+            AsyncSession
+        ] = RequestPasswordResetUseCase(
             user_repo=self.user_repo,
             cache=self.cache_adapter,
             email_sender=self.email_sender,
             frontend_url=url_settings.FRONTEND_URL,
         )
 
-        self.execute_password_reset_usecase: ExecutePasswordResetUseCase[AsyncSession] = ExecutePasswordResetUseCase(
+        self.execute_password_reset_usecase: ExecutePasswordResetUseCase[
+            AsyncSession
+        ] = ExecutePasswordResetUseCase(
             user_repo=self.user_repo,
             cache=self.cache_adapter,
             hasher=self.password_hasher,
             refresh_repo=self.refresh_token_repo,
         )
 
-        self.list_sessions_usecase: ListSessionsUseCase[AsyncSession] = ListSessionsUseCase(
-            refresh_repo=self.refresh_token_repo,
+        self.list_sessions_usecase: ListSessionsUseCase[AsyncSession] = (
+            ListSessionsUseCase(
+                refresh_repo=self.refresh_token_repo,
+            )
         )
 
-        self.revoke_session_usecase: RevokeSessionUseCase[AsyncSession] = RevokeSessionUseCase(
-            refresh_repo=self.refresh_token_repo,
+        self.revoke_session_usecase: RevokeSessionUseCase[AsyncSession] = (
+            RevokeSessionUseCase(
+                refresh_repo=self.refresh_token_repo,
+            )
         )
 
-        self.change_password_usecase: ChangePasswordUseCase[AsyncSession] = ChangePasswordUseCase(
-            user_repo=self.user_repo,
-            hasher=self.password_hasher,
-            logger=AsyncSQLLogger("ChangePasswordUseCase"),
-            refresh_repo=self.refresh_token_repo,
+        self.change_password_usecase: ChangePasswordUseCase[AsyncSession] = (
+            ChangePasswordUseCase(
+                user_repo=self.user_repo,
+                hasher=self.password_hasher,
+                logger=AsyncSQLLogger("ChangePasswordUseCase"),
+                refresh_repo=self.refresh_token_repo,
+            )
         )
+
 
 _container_instance = None
 _container_lock = threading.Lock()
+
 
 def get_container() -> Container:
     global _container_instance
@@ -195,8 +222,8 @@ def get_container() -> Container:
                 _container_instance = Container()
     return _container_instance
 
+
 def reset_container():
     global _container_instance
     with _container_lock:
         _container_instance = None
-

@@ -1,6 +1,7 @@
 """
 Tests for security features and edge cases.
 """
+
 import asyncio
 import hashlib
 import hashlib as _hashlib
@@ -38,7 +39,10 @@ from tests.conftest import (
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
-def _make_verify_usecase(user_repo, cache, email_sender=None, refresh_repo=None, logger=None):
+
+def _make_verify_usecase(
+    user_repo, cache, email_sender=None, refresh_repo=None, logger=None
+):
     return VerifyEmailUseCase(
         user_repo=user_repo,
         cache=cache,
@@ -47,7 +51,10 @@ def _make_verify_usecase(user_repo, cache, email_sender=None, refresh_repo=None,
         refresh_repo=refresh_repo or MockRefreshTokenPort(),
     )
 
-def _seed_pending_otp(cache, email: str, otp: str, attempts: int = 0, expired: bool = False):
+
+def _seed_pending_otp(
+    cache, email: str, otp: str, attempts: int = 0, expired: bool = False
+):
     """Directly write an OTP payload into the mock cache."""
     email_hash = hashlib.sha256(email.encode()).hexdigest()
     secret = app_settings.SESSION_SECRET.encode()
@@ -64,6 +71,7 @@ def _seed_pending_otp(cache, email: str, otp: str, attempts: int = 0, expired: b
 
 # ── Atomic OTP counter ────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_otp_max_attempts_enforced(mock_session):
     """After OTP_MAX_ATTEMPTS wrong guesses the account is locked."""
@@ -71,7 +79,9 @@ async def test_otp_max_attempts_enforced(mock_session):
     cache = MockCache()
     email = "brute@example.com"
 
-    await user_repo.create_user_with_password(mock_session, email, "Test", None, is_verified=False)
+    await user_repo.create_user_with_password(
+        mock_session, email, "Test", None, is_verified=False
+    )
     _seed_pending_otp(cache, email, "999999")
 
     usecase = _make_verify_usecase(user_repo, cache)
@@ -92,7 +102,9 @@ async def test_otp_attempt_counter_increments_atomically(mock_session):
     cache = MockCache()
     email = "atomic@example.com"
 
-    await user_repo.create_user_with_password(mock_session, email, "Test", None, is_verified=False)
+    await user_repo.create_user_with_password(
+        mock_session, email, "Test", None, is_verified=False
+    )
     _seed_pending_otp(cache, email, "999999")
 
     usecase = _make_verify_usecase(user_repo, cache)
@@ -112,7 +124,9 @@ async def test_otp_correct_code_succeeds_and_clears_counter(mock_session):
     cache = MockCache()
     email = "success@example.com"
 
-    await user_repo.create_user_with_password(mock_session, email, "Test", None, is_verified=False)
+    await user_repo.create_user_with_password(
+        mock_session, email, "Test", None, is_verified=False
+    )
     otp = "123456"
     _seed_pending_otp(cache, email, otp)
 
@@ -139,7 +153,9 @@ async def test_concurrent_otp_attempts_cannot_exceed_limit(mock_session):
     cache = MockCache()
     email = "concurrent@example.com"
 
-    await user_repo.create_user_with_password(mock_session, email, "Test", None, is_verified=False)
+    await user_repo.create_user_with_password(
+        mock_session, email, "Test", None, is_verified=False
+    )
     _seed_pending_otp(cache, email, "999999")
 
     usecase = _make_verify_usecase(user_repo, cache)
@@ -158,6 +174,7 @@ async def test_concurrent_otp_attempts_cannot_exceed_limit(mock_session):
 
 
 # ──  /  Session revocation ──────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_password_reset_revokes_all_sessions(mock_session):
@@ -216,6 +233,7 @@ async def test_change_password_revokes_all_sessions(mock_session):
 
 # ── Account restore notification ──────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_login_sends_restore_email_for_deleted_account(mock_session):
     """A soft-deleted account triggers a security notification email."""
@@ -224,7 +242,9 @@ async def test_login_sends_restore_email_for_deleted_account(mock_session):
     email_sender = MockEmailSender()
     email = "deleted@example.com"
 
-    await user_repo.create_user_with_password(mock_session, email, "Test", None, is_verified=True)
+    await user_repo.create_user_with_password(
+        mock_session, email, "Test", None, is_verified=True
+    )
     user = await user_repo.find_by_email(mock_session, email)
     assert user is not None
     user_repo.passwords[user.id] = "hashed_mypassword"
@@ -247,11 +267,13 @@ async def test_login_sends_restore_email_for_deleted_account(mock_session):
     )
     await usecase.execute(mock_session, email, "mypassword")
 
-    assert hasattr(email_sender, "send_account_restored_email") or hasattr(email_sender, "restore_notifications"), \
-        "send_account_restored_email must be called when a deleted account logs in"
+    assert hasattr(email_sender, "send_account_restored_email") or hasattr(
+        email_sender, "restore_notifications"
+    ), "send_account_restored_email must be called when a deleted account logs in"
 
 
 # ── OTP resend resets attempt counter ──────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_otp_resend_resets_attempt_count(mock_session):
@@ -261,7 +283,9 @@ async def test_otp_resend_resets_attempt_count(mock_session):
     email_sender = MockEmailSender()
     email = "resend@example.com"
 
-    await user_repo.create_user_with_password(mock_session, email, "Test", None, is_verified=False)
+    await user_repo.create_user_with_password(
+        mock_session, email, "Test", None, is_verified=False
+    )
     _seed_pending_otp(cache, email, "111111", attempts=4)
 
     email_hash = hashlib.sha256(email.encode()).hexdigest()
@@ -277,11 +301,13 @@ async def test_otp_resend_resets_attempt_count(mock_session):
 
     payload = await cache.get_dict(f"pending_reg:global:{email_hash}")
     assert payload is not None
-    assert cache.data.get(f"otp_attempts:global:{email_hash}") is None, \
+    assert cache.data.get(f"otp_attempts:global:{email_hash}") is None, (
         "Attempt counter must be cleared when resending OTP"
+    )
 
 
 # ── CSRF exception precision ──────────────────────────────────────────
+
 
 def test_csrf_bad_signature_returns_corrupted_message():
     """A tampered CSRF cookie raises 'corrupted', not 'not bound'."""
@@ -295,7 +321,9 @@ def test_csrf_bad_signature_returns_corrupted_message():
     )
     assert resp.status_code == 403
     detail = resp.json().get("detail", "")
-    assert "corrupted" in detail.lower(), f"Expected 'corrupted' in detail, got: {detail!r}"
+    assert "corrupted" in detail.lower(), (
+        f"Expected 'corrupted' in detail, got: {detail!r}"
+    )
 
 
 def test_csrf_mismatched_token_returns_not_bound_message():
@@ -314,4 +342,6 @@ def test_csrf_mismatched_token_returns_not_bound_message():
     )
     assert resp.status_code == 403
     detail = resp.json().get("detail", "")
-    assert "not bound" in detail.lower(), f"Expected 'not bound' in detail, got: {detail!r}"
+    assert "not bound" in detail.lower(), (
+        f"Expected 'not bound' in detail, got: {detail!r}"
+    )

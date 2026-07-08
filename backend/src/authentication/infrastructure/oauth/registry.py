@@ -1,6 +1,7 @@
 """
 Module: Registry
 """
+
 from typing import Any, Awaitable, Callable, Protocol
 
 from authlib.integrations.starlette_client import OAuth  # type: ignore
@@ -12,8 +13,12 @@ from src.shared.adapters.logger import AsyncSQLLogger
 
 
 class OAuthClientPort(Protocol):
-    async def authorize_redirect(self, request: Request, redirect_uri: str, **kwargs) -> object: ...
-    async def authorize_access_token(self, request: Request, **kwargs) -> dict[str, object]: ...
+    async def authorize_redirect(
+        self, request: Request, redirect_uri: str, **kwargs
+    ) -> object: ...
+    async def authorize_access_token(
+        self, request: Request, **kwargs
+    ) -> dict[str, object]: ...
 
 
 class ProviderMetadata(BaseModel):
@@ -21,7 +26,9 @@ class ProviderMetadata(BaseModel):
     display_name: str
     authlib_config: dict[str, Any]
     scopes: list[str] = Field(default_factory=list)
-    required_fields: list[str] = Field(default_factory=lambda: ["client_id", "client_secret"])
+    required_fields: list[str] = Field(
+        default_factory=lambda: ["client_id", "client_secret"]
+    )
 
 
 logger = AsyncSQLLogger("OAuthRegistry")
@@ -31,7 +38,10 @@ class OAuthRegistry:
     def __init__(self):
         self.oauth = OAuth()
         self.providers: dict[str, OAuthClientPort] = {}
-        self.parsers: dict[str, Callable[[OAuthClientPort, dict[str, object]], Awaitable[OAuthUserInfo]]] = {}
+        self.parsers: dict[
+            str,
+            Callable[[OAuthClientPort, dict[str, object]], Awaitable[OAuthUserInfo]],
+        ] = {}
         self.metadata: dict[str, ProviderMetadata] = {}
 
     def register_provider(
@@ -45,7 +55,12 @@ class OAuthRegistry:
         """
         Decorator to register a provider, its authlib config, metadata, and user parser.
         """
-        def decorator(parser_func: Callable[[OAuthClientPort, dict[str, object]], Awaitable[OAuthUserInfo]]):
+
+        def decorator(
+            parser_func: Callable[
+                [OAuthClientPort, dict[str, object]], Awaitable[OAuthUserInfo]
+            ],
+        ):
             self.oauth.register(name=name, **kwargs)
 
             provider_client = getattr(self.oauth, name)

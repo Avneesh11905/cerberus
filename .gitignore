@@ -6,7 +6,26 @@ docker-compose.yml
 
 # Docker Volumes
 postgres/
-redis
+redis/
+keys/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+*.sqlite3
+
+# Node / Frontend
+node_modules/
+dist/
+dist-ssr/
+.tanstack/
 
 # OS Files
 .DS_Store

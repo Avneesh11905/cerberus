@@ -1,6 +1,7 @@
 """
 Module: Google
 """
+
 from src.authentication.core.domain.user import OAuthUserInfo
 from src.authentication.infrastructure.oauth.registry import oauth_registry
 from src.shared.config import oauth_settings

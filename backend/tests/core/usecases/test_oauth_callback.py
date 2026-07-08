@@ -12,42 +12,49 @@ from src.authentication.core.usecases import OAuthCallbackUseCase
 async def test_brand_new_user_signup(user_repo, refresh_token_port, mock_session):
     email_sender = AsyncMock()
     access_token = Mock()
-    access_token.create.return_value = f"mock_token_for_{user_repo.users.get('id', 'new')}"
+    access_token.create.return_value = (
+        f"mock_token_for_{user_repo.users.get('id', 'new')}"
+    )
     claims_provider = AsyncMock()
     claims_provider.get_custom_claims.return_value = {}
     project_repo = AsyncMock()
     usecase: OAuthCallbackUseCase = OAuthCallbackUseCase(
-        user_repo=user_repo, 
-        refresh_repo=refresh_token_port, 
+        user_repo=user_repo,
+        refresh_repo=refresh_token_port,
         email_sender=email_sender,
         access_token=access_token,
         claims_provider=claims_provider,
-        project_repo=project_repo
+        project_repo=project_repo,
     )
-    
+
     user_info = OAuthUserInfo(
         provider="google",
         sub="google_123",
         email="test@example.com",
         name="Test User",
-        picture=cast(AnyHttpUrl, "https://example.com/pic.png")
+        picture=cast(AnyHttpUrl, "https://example.com/pic.png"),
     )
 
     user, token, _, is_new_user = await usecase.execute(mock_session, user_info)
 
     # Asserts
-    email_sender.send_welcome_email.assert_called_once_with("test@example.com", "Test User")
+    email_sender.send_welcome_email.assert_called_once_with(
+        "test@example.com", "Test User"
+    )
     assert user.email == "test@example.com"
     assert user.name == "Test User"
     assert token == f"mock_token_for_{user.id}"
     assert is_new_user is True
-    
+
     # Verify mock state
     assert len(user_repo.users) == 1
     assert len(user_repo.oauth_links) == 1
 
+
 @pytest.mark.asyncio
-async def test_existing_user_exact_oauth_match(user_repo, refresh_token_port, mock_session):
+async def test_existing_user_exact_oauth_match(
+    user_repo, refresh_token_port, mock_session
+):
     # Pre-seed the DB
     await user_repo.create_user_with_oauth(
         mock_session, "test@example.com", "Old Name", None, "google", "google_123"
@@ -55,26 +62,28 @@ async def test_existing_user_exact_oauth_match(user_repo, refresh_token_port, mo
 
     email_sender = AsyncMock()
     access_token = Mock()
-    access_token.create.return_value = f"mock_token_for_{user_repo.users.get('id', 'new')}"
+    access_token.create.return_value = (
+        f"mock_token_for_{user_repo.users.get('id', 'new')}"
+    )
     claims_provider = AsyncMock()
     claims_provider.get_custom_claims.return_value = {}
     project_repo = AsyncMock()
     usecase: OAuthCallbackUseCase = OAuthCallbackUseCase(
-        user_repo=user_repo, 
-        refresh_repo=refresh_token_port, 
+        user_repo=user_repo,
+        refresh_repo=refresh_token_port,
         email_sender=email_sender,
         access_token=access_token,
         claims_provider=claims_provider,
-        project_repo=project_repo
+        project_repo=project_repo,
     )
-    
+
     # Login again with same provider/sub, but updated profile data
     user_info = OAuthUserInfo(
         provider="google",
         sub="google_123",
         email="test@example.com",
         name="New Name",
-        picture=cast(AnyHttpUrl, "http://example.com/newpic.png")
+        picture=cast(AnyHttpUrl, "http://example.com/newpic.png"),
     )
 
     user, token, _, is_new_user = await usecase.execute(mock_session, user_info)
@@ -83,15 +92,23 @@ async def test_existing_user_exact_oauth_match(user_repo, refresh_token_port, mo
     email_sender.send_welcome_email.assert_not_called()
     assert user.name == "Old Name"  # Profile should NOT be overwritten on login
     assert user.picture is None
-    assert len(user_repo.users) == 1 # Still only 1 user
-    assert len(user_repo.oauth_links) == 1 # Still only 1 link
+    assert len(user_repo.users) == 1  # Still only 1 user
+    assert len(user_repo.oauth_links) == 1  # Still only 1 link
     assert is_new_user is False
 
+
 @pytest.mark.asyncio
-async def test_account_linking_different_provider_same_email(user_repo, refresh_token_port, mock_session):
+async def test_account_linking_different_provider_same_email(
+    user_repo, refresh_token_port, mock_session
+):
     # Pre-seed the DB with Google
     original_user = await user_repo.create_user_with_oauth(
-        mock_session, "test@example.com", "Test User", "https://example.com/pic.png", "google", "google_123"
+        mock_session,
+        "test@example.com",
+        "Test User",
+        "https://example.com/pic.png",
+        "google",
+        "google_123",
     )
 
     email_sender = AsyncMock()
@@ -101,21 +118,21 @@ async def test_account_linking_different_provider_same_email(user_repo, refresh_
     claims_provider.get_custom_claims.return_value = {}
     project_repo = AsyncMock()
     usecase: OAuthCallbackUseCase = OAuthCallbackUseCase(
-        user_repo=user_repo, 
-        refresh_repo=refresh_token_port, 
+        user_repo=user_repo,
+        refresh_repo=refresh_token_port,
         email_sender=email_sender,
         access_token=access_token,
         claims_provider=claims_provider,
-        project_repo=project_repo
+        project_repo=project_repo,
     )
-    
+
     # Login with GitHub but SAME email
     user_info = OAuthUserInfo(
         provider="github",
         sub="github_456",
         email="test@example.com",
-        name=None, # GitHub doesn't provide a name
-        picture=cast(AnyHttpUrl, "https://example.com/github.png")
+        name=None,  # GitHub doesn't provide a name
+        picture=cast(AnyHttpUrl, "https://example.com/github.png"),
     )
 
     user, token, _, is_new_user = await usecase.execute(mock_session, user_info)
@@ -123,9 +140,9 @@ async def test_account_linking_different_provider_same_email(user_repo, refresh_
     # Asserts
     email_sender.send_welcome_email.assert_not_called()
     assert user.id == original_user.id  # Same user!
-    assert user.name == "Test User" # Fallback to existing name
-    
+    assert user.name == "Test User"  # Fallback to existing name
+
     # Verify mock state
-    assert len(user_repo.users) == 1 # Did NOT create a new user
-    assert len(user_repo.oauth_links) == 2 # Did create a second oauth link
+    assert len(user_repo.users) == 1  # Did NOT create a new user
+    assert len(user_repo.oauth_links) == 2  # Did create a second oauth link
     assert is_new_user is False

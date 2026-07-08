@@ -2,6 +2,7 @@
 Contains shared utility functions for the API layer.
 Includes custom response formatters and generic error handlers to maintain a consistent JSON structure across the entire app.
 """
+
 import hashlib
 import uuid
 
@@ -92,11 +93,11 @@ def generate_csrf_token(refresh_token: str) -> str:
 
 
 async def create_exchange_code(
-    cache, 
-    refresh_token: str, 
+    cache,
+    refresh_token: str,
     is_new_user: bool = False,
     access_token: str | None = None,
-    user_id: str | None = None
+    user_id: str | None = None,
 ) -> str:
     """
     Creates a one-time 2-minute token in Redis linking to the refresh_token.
@@ -104,10 +105,17 @@ async def create_exchange_code(
     code = str(uuid.uuid4())
     await cache.set_dict(
         f"exchange_code:{code}",
-        {"refresh_token": refresh_token, "is_new_user": is_new_user, "access_token": access_token, "user_id": user_id},
+        {
+            "refresh_token": refresh_token,
+            "is_new_user": is_new_user,
+            "access_token": access_token,
+            "user_id": user_id,
+        },
         ttl=120,  # 2 minutes — plenty for a browser redirect
     )
     return code
+
+
 async def build_auth_redirect_async(
     refresh_token: str,
     cache,
@@ -122,6 +130,12 @@ async def build_auth_redirect_async(
     No cookies are set on this response.
     """
     base_url = (frontend_url if frontend_url else url_settings.FRONTEND_URL).rstrip("/")
-    code = await create_exchange_code(cache, refresh_token, is_new_user=is_new_user, access_token=access_token, user_id=user_id)
+    code = await create_exchange_code(
+        cache,
+        refresh_token,
+        is_new_user=is_new_user,
+        access_token=access_token,
+        user_id=user_id,
+    )
     redirect_url = f"{base_url}/auth/callback?code={code}&new_user={'true' if is_new_user else 'false'}"
     return RedirectResponse(url=redirect_url)

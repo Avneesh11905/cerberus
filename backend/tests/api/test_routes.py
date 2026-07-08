@@ -12,7 +12,11 @@ from src.shared.api.dependencies import limiter
 import src.authentication.infrastructure.oauth as oauth_infra
 from src import app
 from src.authentication.api import usecase_dependencies as deps
-from src.authentication.api.dependencies import get_current_user, get_jwt_payload, get_optional_project_id
+from src.authentication.api.dependencies import (
+    get_current_user,
+    get_jwt_payload,
+    get_optional_project_id,
+)
 from src.authentication.core.domain.user import UserIdentity, UserRole
 from src.authorization.api.dependencies import require_permission, require_role
 from src.authorization.container import custom_claims_provider
@@ -34,23 +38,26 @@ limiter.enabled = False
 rate_limit_settings.LOGIN_RATE_LIMIT = "1000/minute"
 rate_limit_settings.DEFAULT_RATE_LIMIT = "1000/minute"
 
+
 @pytest.fixture(scope="module")
 def mock_usecases():
     class MockUseCase:
         async def execute(self, *args, **kwargs):
             return "mocked_response"
-            
+
     class MockLoginUseCase:
         async def execute(self, *args, **kwargs):
             # return user, refresh_token
             class MockUser:
                 id = "123"
+
             return MockUser(), "mock_refresh_token", "mock_access_token"
 
     class MockVerifyEmailUseCase:
         async def execute(self, *args, **kwargs):
             class MockUser:
                 id = "123"
+
             return MockUser(), "mock_refresh_token"
 
     class MockOAuthCallbackUseCase:
@@ -59,8 +66,9 @@ def mock_usecases():
             class MockUser:
                 id = "123"
                 is_verified = True
+
             return MockUser(), "mock_refresh_token", "mock_access_token", True
-            
+
     class MockExecutePasswordResetUseCase:
         async def execute(self, *args, **kwargs):
             token = kwargs.get("token") or (args[1] if len(args) > 1 else None)
@@ -98,107 +106,162 @@ def mock_usecases():
         deps.get_revoke_session_usecase: MockRevokeSessionUseCase(),
     }
 
+
 @pytest.fixture(scope="module")
 def test_client(mock_usecases):
     """Provides a TestClient with overridden UseCases to isolate router testing."""
+
     class DummySession:
         async def commit(self):
             pass
+
         async def flush(self):
             pass
 
     app.dependency_overrides[get_db] = lambda: DummySession()
-    
+
     from src.shared.infrastructure.sql.uow import get_uow
+
     class DummyUoW:
         session = DummySession()
-        async def __aenter__(self): return self
-        async def __aexit__(self, exc_type, exc_val, exc_tb): pass
-        async def commit(self): pass
-        async def rollback(self): pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc_val, exc_tb):
+            pass
+
+        async def commit(self):
+            pass
+
+        async def rollback(self):
+            pass
+
     app.dependency_overrides[get_uow] = lambda: DummyUoW()
-    
-    mock_id = uuid.UUID('12345678-1234-5678-1234-567812345678')
-    app.dependency_overrides[get_current_user] = lambda: UserIdentity(id=mock_id, email="test@test.com", is_verified=True, role=UserRole.USER)
-    app.dependency_overrides[get_jwt_payload] = lambda: {"jti": "mock_jti", "exp": 9999999999, "_user_obj": UserIdentity(id=mock_id, email="test@test.com", is_verified=True, role=UserRole.USER)}
+
+    mock_id = uuid.UUID("12345678-1234-5678-1234-567812345678")
+    app.dependency_overrides[get_current_user] = lambda: UserIdentity(
+        id=mock_id, email="test@test.com", is_verified=True, role=UserRole.USER
+    )
+    app.dependency_overrides[get_jwt_payload] = lambda: {
+        "jti": "mock_jti",
+        "exp": 9999999999,
+        "_user_obj": UserIdentity(
+            id=mock_id, email="test@test.com", is_verified=True, role=UserRole.USER
+        ),
+    }
     app.dependency_overrides[get_optional_project_id] = lambda: None
-    
+
     for dep, mock_obj in mock_usecases.items():
         app.dependency_overrides[dep] = lambda mock_obj=mock_obj: mock_obj
-        
+
     # Mocking profile repo and oauth clients
-    
+
     mock_profile_repo = AsyncMock()
-    mock_profile = UserProfile(id="123", email="test@test.com", name="Test", picture=None, receive_updates=False, login_methods=["local"], role="user", project_id=None)
+    mock_profile = UserProfile(
+        id="123",
+        email="test@test.com",
+        name="Test",
+        picture=None,
+        receive_updates=False,
+        login_methods=["local"],
+        role="user",
+        project_id=None,
+    )
     mock_profile_repo.get_profile.return_value = mock_profile
     mock_profile_repo.update_profile.return_value = mock_profile
-    
+
     class MockOAuthClient:
-        async def authorize_redirect(self, request: Request, redirect_uri: str, **kwargs) -> object:
+        async def authorize_redirect(
+            self, request: Request, redirect_uri: str, **kwargs
+        ) -> object:
             return RedirectResponse("https://provider.com/auth")
-        async def authorize_access_token(self, request: Request, **kwargs) -> dict[str, object]:
+
+        async def authorize_access_token(
+            self, request: Request, **kwargs
+        ) -> dict[str, object]:
             return {"token": "mock_token"}
-            
+
     oauth_infra.PROVIDERS["google"] = MockOAuthClient()
     oauth_infra.PARSERS["google"] = AsyncMock(return_value=None)
-    
-    with patch("src.users.api.routes.profile.user_profile_repository", mock_profile_repo), \
-         patch("src.authentication.api.routes.local.user_profile_repository", mock_profile_repo), \
-         patch("src.__init__.start_log_worker_task", new_callable=AsyncMock), \
-         patch("src.__init__.start_token_cleanup_task"), \
-         patch("src.__init__.start_log_cleanup_task"), \
-         patch("src.__init__.stop_token_cleanup_task"), \
-         patch("src.__init__.stop_log_cleanup_task"):
+
+    with (
+        patch(
+            "src.users.api.routes.profile.user_profile_repository", mock_profile_repo
+        ),
+        patch(
+            "src.authentication.api.routes.local.user_profile_repository",
+            mock_profile_repo,
+        ),
+        patch("src.__init__.start_log_worker_task", new_callable=AsyncMock),
+        patch("src.__init__.start_token_cleanup_task"),
+        patch("src.__init__.start_log_cleanup_task"),
+        patch("src.__init__.stop_token_cleanup_task"),
+        patch("src.__init__.stop_log_cleanup_task"),
+    ):
         with TestClient(app) as client:
             yield client
-        
+
     app.dependency_overrides.clear()
 
 
 def test_register_local_requires_project_key(test_client):
     response = test_client.post(
         "/auth/register",
-        json={"email": "test@example.com", "password": "StrongPassword123!", "name": "Test User"}
+        json={
+            "email": "test@example.com",
+            "password": "StrongPassword123!",
+            "name": "Test User",
+        },
     )
     assert response.status_code == 400
-    assert response.json()["detail"] == "Project API key is required for project user registration"
+    assert (
+        response.json()["detail"]
+        == "Project API key is required for project user registration"
+    )
 
 
 def test_register_tenant(test_client):
     response = test_client.post(
         "/auth/register/tenant",
-        json={"email": "tenant@example.com", "password": "StrongPassword123!", "name": "Tenant User"}
+        json={
+            "email": "tenant@example.com",
+            "password": "StrongPassword123!",
+            "name": "Tenant User",
+        },
     )
     assert response.status_code == 201
     assert "message" in response.json()
 
+
 def test_login_local(test_client):
     response = test_client.post(
         "/auth/login/local",
-        json={"email": "test@example.com", "password": "StrongPassword123!"}
+        json={"email": "test@example.com", "password": "StrongPassword123!"},
     )
     assert response.status_code == 200
     assert "message" in response.json()
     assert "refresh_token" in response.cookies
 
+
 def test_verify_email(test_client):
     response = test_client.post(
-        "/auth/verify-email",
-        json={"email": "test@example.com", "otp": "123456"}
+        "/auth/verify-email", json={"email": "test@example.com", "otp": "123456"}
     )
     assert response.status_code == 200
 
+
 def test_request_password_reset(test_client):
     response = test_client.post(
-        "/auth/password/forgot",
-        json={"email": "test@example.com"}
+        "/auth/password/forgot", json={"email": "test@example.com"}
     )
     assert response.status_code == 200
+
 
 def test_execute_password_reset(test_client):
     response = test_client.post(
         "/auth/password/reset",
-        json={"token": "reset_token_123", "new_password": "NewStrongPassword123!"}
+        json={"token": "reset_token_123", "new_password": "NewStrongPassword123!"},
     )
     assert response.status_code == 200
 
@@ -209,19 +272,19 @@ def test_logout(test_client):
     response = test_client.post(
         "/auth/logout",
         headers={"X-CSRF": _get_valid_csrf("mock_refresh_token")},
-        follow_redirects=False
+        follow_redirects=False,
     )
     assert response.status_code == 200
 
+
 def test_oauth_login_redirect(test_client):
     response = test_client.get(
-        "/auth/login/google", 
+        "/auth/login/google",
         follow_redirects=False,
-        headers={"X-Forwarded-For": str(uuid.uuid4())}
+        headers={"X-Forwarded-For": str(uuid.uuid4())},
     )
     assert response.status_code == 307
     assert "provider.com" in response.headers["location"]
-
 
 
 @patch("src.authentication.api.routes.callbacks.PROVIDERS")
@@ -230,16 +293,20 @@ def test_oauth_callback(mock_parsers, mock_providers, test_client):
     class MockOAuthClient:
         async def authorize_access_token(self, request):
             return {"access_token": "mock_token"}
-            
+
     async def mock_parser(client, token):
         return {"email": "test@example.com", "name": "Test"}
-        
+
     mock_providers.get.return_value = MockOAuthClient()
     mock_parsers.get.return_value = mock_parser
-    
-    with patch("starlette.requests.Request.session", new_callable=PropertyMock) as mock_session:
+
+    with patch(
+        "starlette.requests.Request.session", new_callable=PropertyMock
+    ) as mock_session:
         mock_session.return_value = {"oauth_state": {"nonce": "xyz"}}
-        response = test_client.get("/auth/callback/google?code=abc&state=xyz", follow_redirects=False)
+        response = test_client.get(
+            "/auth/callback/google?code=abc&state=xyz", follow_redirects=False
+        )
         assert response.status_code == 307
         assert "?code=" in response.headers.get("location", "")
 
@@ -248,49 +315,57 @@ def test_refresh_token(test_client):
     test_client.cookies.set("refresh_token", "mock_refresh_token")
     test_client.cookies.set("csrf_token", _get_valid_csrf("mock_refresh_token"))
     response = test_client.post(
-        "/auth/refresh", 
-        headers={"X-CSRF": _get_valid_csrf("mock_refresh_token")}
+        "/auth/refresh", headers={"X-CSRF": _get_valid_csrf("mock_refresh_token")}
     )
     assert response.status_code == 200
     assert "access_token" in response.json()
+
 
 def test_list_sessions(test_client):
     response = test_client.get("/auth/sessions")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
+
 def test_revoke_session(test_client):
     response = test_client.delete("/auth/sessions/12345678-1234-5678-1234-567812345678")
     assert response.status_code == 204
+
 
 def test_get_profile(test_client):
     response = test_client.get("/users/me")
     assert response.status_code == 200
     assert response.json()["name"] == "Test"
 
+
 def test_update_profile(test_client):
     test_client.cookies.set("csrf_token", _get_valid_csrf("mock_refresh_token"))
     response = test_client.patch(
         "/users/me",
         json={"name": "New Test"},
-        headers={"X-CSRF": _get_valid_csrf("mock_refresh_token")}
+        headers={"X-CSRF": _get_valid_csrf("mock_refresh_token")},
     )
     assert response.status_code == 200
     assert response.json()["name"] == "Test"
+
 
 def test_update_profile_receive_updates(test_client):
     test_client.cookies.set("csrf_token", _get_valid_csrf("mock_refresh_token"))
     response = test_client.patch(
         "/users/me",
         json={"receive_updates": True},
-        headers={"X-CSRF": _get_valid_csrf("mock_refresh_token")}
+        headers={"X-CSRF": _get_valid_csrf("mock_refresh_token")},
     )
     assert response.status_code == 200
 
+
 def test_delete_me(test_client):
     test_client.cookies.set("csrf_token", _get_valid_csrf("mock_refresh_token"))
-    response = test_client.delete("/users/me", headers={"X-CSRF": _get_valid_csrf("mock_refresh_token")})
+    response = test_client.delete(
+        "/users/me", headers={"X-CSRF": _get_valid_csrf("mock_refresh_token")}
+    )
     assert response.status_code == 204
+
 
 def test_rate_limiting(test_client):
     original_storage = limiter._storage
@@ -301,7 +376,9 @@ def test_rate_limiting(test_client):
         # Use a unique IP to avoid affecting other test runs stored in Redis.
         headers = {"X-Forwarded-For": "9.9.9.9"}
         for _ in range(10):
-            response = test_client.get("/auth/login/google", follow_redirects=False, headers=headers)
+            response = test_client.get(
+                "/auth/login/google", follow_redirects=False, headers=headers
+            )
             if response.status_code == 429:
                 break
         assert response.status_code == 429
@@ -309,37 +386,62 @@ def test_rate_limiting(test_client):
         limiter.enabled = False
         limiter._storage = original_storage
 
+
 def test_authorization_dependencies(test_client):
 
     # Add a dummy protected route to the test app
-    @test_client.app.get("/test/admin-only", dependencies=[Depends(require_role("admin"))])
+    @test_client.app.get(
+        "/test/admin-only", dependencies=[Depends(require_role("admin"))]
+    )
     def admin_only():
         return {"msg": "ok"}
-        
-    @test_client.app.get("/test/write-doc", dependencies=[Depends(require_permission("write", "document"))])
+
+    @test_client.app.get(
+        "/test/write-doc",
+        dependencies=[Depends(require_permission("write", "document"))],
+    )
     def write_doc():
         return {"msg": "ok"}
 
     # Mock the current JWT payload for roles
-    
+
     # 1. Test role missing
-    test_client.app.dependency_overrides[get_jwt_payload] = lambda: {"roles": ["user"], "sub": "123"}
-    resp = test_client.get("/test/admin-only", headers={"X-CSRF": _get_valid_csrf("mock_refresh_token")})
+    test_client.app.dependency_overrides[get_jwt_payload] = lambda: {
+        "roles": ["user"],
+        "sub": "123",
+    }
+    resp = test_client.get(
+        "/test/admin-only", headers={"X-CSRF": _get_valid_csrf("mock_refresh_token")}
+    )
     assert resp.status_code == 403
-    
+
     # 2. Test role present
-    test_client.app.dependency_overrides[get_jwt_payload] = lambda: {"roles": ["user", "admin"], "sub": "123"}
-    resp = test_client.get("/test/admin-only", headers={"X-CSRF": _get_valid_csrf("mock_refresh_token")})
+    test_client.app.dependency_overrides[get_jwt_payload] = lambda: {
+        "roles": ["user", "admin"],
+        "sub": "123",
+    }
+    resp = test_client.get(
+        "/test/admin-only", headers={"X-CSRF": _get_valid_csrf("mock_refresh_token")}
+    )
     assert resp.status_code == 200
-    
+
     # 3. Test permission missing (default deny)
     # The default CustomAuthorizationAdapter returns False
-    resp = test_client.get("/test/write-doc", headers={"X-CSRF": _get_valid_csrf("mock_refresh_token")})
+    resp = test_client.get(
+        "/test/write-doc", headers={"X-CSRF": _get_valid_csrf("mock_refresh_token")}
+    )
     assert resp.status_code == 403
-    
+
     # 4. Test permission present
-    with patch.object(custom_claims_provider, "has_permission", new_callable=AsyncMock, return_value=True):
-        resp = test_client.get("/test/write-doc", headers={"X-CSRF": _get_valid_csrf("mock_refresh_token")})
+    with patch.object(
+        custom_claims_provider,
+        "has_permission",
+        new_callable=AsyncMock,
+        return_value=True,
+    ):
+        resp = test_client.get(
+            "/test/write-doc", headers={"X-CSRF": _get_valid_csrf("mock_refresh_token")}
+        )
         assert resp.status_code == 200
 
 
@@ -347,7 +449,7 @@ def test_register_rejects_weak_password(test_client):
     """Password shorter than 8 chars must return 422 Unprocessable Entity."""
     resp = test_client.post(
         "/auth/register",
-        json={"email": "weak@example.com", "password": "short", "name": "User"}
+        json={"email": "weak@example.com", "password": "short", "name": "User"},
     )
     assert resp.status_code == 422
 
@@ -356,7 +458,7 @@ def test_register_rejects_invalid_email(test_client):
     """Malformed email must return 422."""
     resp = test_client.post(
         "/auth/register",
-        json={"email": "not-an-email", "password": "StrongPass123!", "name": "User"}
+        json={"email": "not-an-email", "password": "StrongPass123!", "name": "User"},
     )
     assert resp.status_code == 422
 
@@ -390,7 +492,7 @@ def test_password_reset_invalid_token_returns_400(test_client):
     """An invalid reset token must return 400, not 500."""
     resp = test_client.post(
         "/auth/password/reset",
-        json={"token": "nonexistent_token", "new_password": "NewPass123!"}
+        json={"token": "nonexistent_token", "new_password": "NewPass123!"},
     )
     assert resp.status_code == 400
 
@@ -406,30 +508,35 @@ def test_csrf_missing_header_returns_403(test_client):
     resp = test_client.post("/auth/logout")
     assert resp.status_code == 403
 
+
 def test_api_key_middleware(test_client):
     """Ensure API Key middleware correctly extracts project_id or fails if invalid."""
     from fastapi import Depends
     from src.authentication.api.dependencies import get_optional_project_id
-    
+
     @test_client.app.get("/test/api-key")
-    def api_key_test(project_id = Depends(get_optional_project_id)):
+    def api_key_test(project_id=Depends(get_optional_project_id)):
         return {"project_id": str(project_id) if project_id else None}
-        
+
     # 1. No key -> global Cerberus context
     test_client.app.dependency_overrides.pop(get_optional_project_id, None)
     resp = test_client.get("/test/api-key")
     assert resp.status_code == 200
     assert resp.json()["project_id"] is None
-    
+
     # 2. Valid admin key header -> Also returns None (global context)
-    resp = test_client.get("/test/api-key", headers={"X-Cerberus-Admin-Key": "test_admin_key"})
+    resp = test_client.get(
+        "/test/api-key", headers={"X-Cerberus-Admin-Key": "test_admin_key"}
+    )
     assert resp.status_code == 200
     assert resp.json()["project_id"] is None
-    
+
     # 3. Invalid format API key -> 401
-    resp = test_client.get("/test/api-key", headers={"X-Cerberus-API-Key": "invalid_format"})
+    resp = test_client.get(
+        "/test/api-key", headers={"X-Cerberus-API-Key": "invalid_format"}
+    )
     assert resp.status_code == 401
-    
+
     # 4. Valid format but not in DB -> 401
     with patch("src.authentication.api.dependencies.get_db") as _:
         mock_db = AsyncMock()
@@ -439,7 +546,7 @@ def test_api_key_middleware(test_client):
 
 
 def test_list_oauth_providers(test_client):
-    mock_id = uuid.UUID('12345678-1234-5678-1234-567812345678')
+    mock_id = uuid.UUID("12345678-1234-5678-1234-567812345678")
     saved = test_client.app.dependency_overrides.get(get_current_user)
     test_client.app.dependency_overrides[get_current_user] = lambda: UserIdentity(
         id=mock_id,
@@ -458,5 +565,3 @@ def test_list_oauth_providers(test_client):
     finally:
         if saved:
             test_client.app.dependency_overrides[get_current_user] = saved
-
-

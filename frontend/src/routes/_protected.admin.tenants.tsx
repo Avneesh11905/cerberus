@@ -31,13 +31,20 @@ function AdminTenants() {
     return <Navigate to="/dashboard" />
   }
 
-  const handleToggleStatus = async (tenantId: string, currentStatus: boolean) => {
-    await updateTenantStatus.mutateAsync({ tenantId, is_active: !currentStatus })
+  const handleToggleStatus = async (
+    tenantId: string,
+    currentStatus: boolean,
+  ) => {
+    await updateTenantStatus.mutateAsync({
+      tenantId,
+      is_active: !currentStatus,
+    })
   }
 
-  const filteredTenants = tenants.filter(t => 
-    t.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    t.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredTenants = tenants.filter(
+    (t) =>
+      t.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      t.email.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   const tenantColumns: ColumnDef<any>[] = [
@@ -52,20 +59,22 @@ function AdminTenants() {
             </div>
           </div>
         )
-      }
+      },
     },
     { header: 'Email', accessorKey: 'email' },
-    { 
-      header: 'Status', 
+    {
+      header: 'Status',
       accessorKey: 'is_active',
       cell: ({ row }) => {
         const isActive = row.original.is_active !== false
         return (
-          <span className={`px-2 py-1 rounded text-xs font-medium ${isActive ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : 'bg-destructive/10 text-destructive border border-destructive/20'}`}>
+          <span
+            className={`px-2 py-1 rounded text-xs font-medium ${isActive ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : 'bg-destructive/10 text-destructive border border-destructive/20'}`}
+          >
             {isActive ? 'Active' : 'Disabled'}
           </span>
         )
-      }
+      },
     },
     {
       header: 'Actions',
@@ -83,8 +92,8 @@ function AdminTenants() {
             {isActive ? 'Disable' : 'Enable'}
           </Button>
         )
-      }
-    }
+      },
+    },
   ]
 
   return (
@@ -92,7 +101,9 @@ function AdminTenants() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Tenants</h2>
-          <p className="text-muted-foreground">Manage all organizations registered on Cerberus.</p>
+          <p className="text-muted-foreground">
+            Manage all organizations registered on Cerberus.
+          </p>
         </div>
       </div>
 

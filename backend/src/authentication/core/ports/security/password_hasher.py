@@ -4,6 +4,7 @@ Port: Password Hasher
 This module defines the interface (Port) for password hasher.
 Core business logic relies on these interfaces rather than concrete implementations.
 """
+
 from typing import Protocol
 
 

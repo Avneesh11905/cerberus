@@ -3,6 +3,7 @@ Provides global FastAPI dependencies.
 Includes components like the Redis-based rate limiter (SlowAPI), which protects all endpoints from abuse,
 and common pagination or sorting extractors used across multiple domains.
 """
+
 import hashlib
 from typing import Annotated, Optional, Callable, Any
 from uuid import UUID
@@ -23,6 +24,7 @@ def get_client_ip(request: Request) -> str:
         return cf_ip.strip()
     return request.client.host if request.client else "127.0.0.1"
 
+
 class DynamicLimiter(Limiter):
     def _check_request_limit(
         self,
@@ -35,9 +37,10 @@ class DynamicLimiter(Limiter):
         if project_id:
             environments = getattr(request.app.state, "project_environments", {})
             if environments.get(project_id) == "development":
-                return # Bypass rate limiting for development projects!
-                
+                return  # Bypass rate limiting for development projects!
+
         super()._check_request_limit(request, endpoint_func, in_middleware)
+
 
 limiter = DynamicLimiter(
     key_func=get_client_ip,
@@ -50,9 +53,12 @@ def hash_api_key(api_key: str) -> str:
     """Uses SHA-256 for fast, deterministic API key hashing to allow quick DB lookups."""
     return hashlib.sha256(api_key.encode()).hexdigest()
 
+
 async def get_project_id_from_api_key(
-    x_cerberus_api_key: Annotated[str | None, Header(alias="X-Cerberus-API-Key")] = None,
-    db: AsyncSession = Depends(get_db)
+    x_cerberus_api_key: Annotated[
+        str | None, Header(alias="X-Cerberus-API-Key")
+    ] = None,
+    db: AsyncSession = Depends(get_db),
 ) -> UUID | None:
     """
     Dependency that extracts the API key from headers, hashes it, and returns the project ID.
@@ -61,12 +67,14 @@ async def get_project_id_from_api_key(
     """
     if not x_cerberus_api_key:
         return None
-    
+
     api_key_hash = hash_api_key(x_cerberus_api_key)
-    result = await db.execute(select(Project.id).where(Project.api_key_hash == api_key_hash))
+    result = await db.execute(
+        select(Project.id).where(Project.api_key_hash == api_key_hash)
+    )
     project_id = result.scalar_one_or_none()
-    
+
     if not project_id:
         raise HTTPException(status_code=401, detail="Invalid API Key")
-        
+
     return project_id

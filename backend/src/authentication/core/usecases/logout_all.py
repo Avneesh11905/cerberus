@@ -3,6 +3,7 @@ Terminates ALL sessions for a user.
 Revokes every active refresh token family for the authenticated user and
 blacklists the current access token in Redis.
 """
+
 from datetime import datetime, timezone
 from uuid import UUID
 

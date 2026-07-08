@@ -1,6 +1,7 @@
 """
 Module: User
 """
+
 from datetime import datetime
 from enum import Enum
 from uuid import UUID
@@ -16,6 +17,7 @@ class UserRole(str, Enum):
 
 class UserIdentity(BaseModel):
     """Pure domain entity — now powered by Pydantic."""
+
     id: UUID
     email: EmailStr
     is_verified: bool
@@ -29,6 +31,7 @@ class UserIdentity(BaseModel):
 
 class OAuthUserInfo(BaseModel):
     """Structured data returned by OAuth providers."""
+
     provider: str
     sub: str
     email: EmailStr

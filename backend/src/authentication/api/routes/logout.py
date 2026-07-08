@@ -2,14 +2,22 @@
 Exposes HTTP endpoints for ending user sessions.
 Extracts the active tokens from cookies and headers and delegates to the `LogoutUseCase` to invalidate them.
 """
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request, Response
 
 from src.authentication.api.schemas import MessageResponse
 
-from src.authentication.api.dependencies import get_current_user, verify_csrf, get_jwt_payload
-from src.authentication.api.usecase_dependencies import get_logout_usecase, get_logout_all_usecase
+from src.authentication.api.dependencies import (
+    get_current_user,
+    verify_csrf,
+    get_jwt_payload,
+)
+from src.authentication.api.usecase_dependencies import (
+    get_logout_usecase,
+    get_logout_all_usecase,
+)
 from src.authentication.core.domain import UserIdentity
 from src.authentication.core.usecases import LogoutUseCase
 from src.authentication.core.usecases.logout_all import LogoutAllUseCase
@@ -21,7 +29,9 @@ from src.shared.infrastructure.sql.uow import SQLAlchemyUnitOfWork, get_uow
 router = APIRouter()
 
 
-@router.post("/logout", dependencies=[Depends(verify_csrf)], response_model=MessageResponse)
+@router.post(
+    "/logout", dependencies=[Depends(verify_csrf)], response_model=MessageResponse
+)
 @limiter.limit(rate_limit_settings.DEFAULT_RATE_LIMIT)
 async def logout(
     request: Request,
@@ -32,13 +42,13 @@ async def logout(
 ):
     """
     Log out the current user and invalidate their session.
-    
+
     This endpoint securely terminates the user's session by:
     1. Extracting the **Refresh Token** from the `refresh_token` HTTP-Only cookie.
     2. Revoking the refresh token family in the database to prevent future use.
     3. Blacklisting the current access token in Redis by its `jti` until natural expiration.
     4. Instructing the browser to delete the `refresh_token` cookie.
-    
+
     **Returns:**
     A 200 OK response with a success message.
     """
@@ -54,7 +64,9 @@ async def logout(
     return MessageResponse(message="Logged out")
 
 
-@router.post("/logout/all", dependencies=[Depends(verify_csrf)], response_model=MessageResponse)
+@router.post(
+    "/logout/all", dependencies=[Depends(verify_csrf)], response_model=MessageResponse
+)
 @limiter.limit(rate_limit_settings.DEFAULT_RATE_LIMIT)
 async def logout_all(
     request: Request,

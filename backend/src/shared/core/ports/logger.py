@@ -4,6 +4,7 @@ Port: Logger
 This module defines the interface (Port) for logger.
 Core business logic relies on these interfaces rather than concrete implementations.
 """
+
 from typing import Protocol
 
 

@@ -1,6 +1,7 @@
 from cryptography.fernet import Fernet
 from src.shared.core.ports.encryption import EncryptionPort
 
+
 class FernetEncryptionAdapter(EncryptionPort):
     def __init__(self, key: str):
         self._fernet = Fernet(key.encode("utf-8"))

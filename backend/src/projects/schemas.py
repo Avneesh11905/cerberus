@@ -74,6 +74,7 @@ class ProviderConfig(BaseModel):
     client_id: str | None = None
     client_secret: str | None = None
 
+
 class ProjectOauthUpdateReq(BaseModel):
     oauth_config: dict[str, ProviderConfig]
 
@@ -84,14 +85,18 @@ class OAuthProviderRes(BaseModel):
     scopes: list[str]
     required_fields: list[str]
 
+
 class ProjectOriginsUpdateReq(BaseModel):
     allowed_origins: list[str] = Field(max_length=5)
+
 
 class ProjectEnvUpdateReq(BaseModel):
     environment: Literal["development", "production"]
 
+
 class ProjectFrontendUrlUpdateReq(BaseModel):
     frontend_url: str | None = None
+
 
 class ProjectNameUpdateReq(BaseModel):
     name: str
@@ -101,8 +106,10 @@ class ProjectSecretsRes(BaseModel):
     api_key_hash: str
     public_key: str
 
+
 class ProjectRotateApiKeyRes(BaseModel):
     api_key: str
+
 
 class ProjectRotateRsaKeysRes(BaseModel):
     public_key: str

@@ -6,6 +6,7 @@ This is the ONLY file that needs to change when swapping the email provider.
 To swap to SendGrid, create src/shared/adapters/sendgrid_email_client.py and
 implement the same SharedEmailClientPort interface.
 """
+
 import resend
 
 from src.shared.core.ports.email_client import SharedEmailClientPort  # noqa: F401

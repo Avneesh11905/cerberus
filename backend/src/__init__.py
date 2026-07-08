@@ -41,15 +41,18 @@ from src.admin.api.routes import admin_router
 
 logger = AsyncSQLLogger(__name__)
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     is_testing = "pytest" in sys.modules
     if not is_testing:
-        start_token_cleanup_task() # Start the 24-hour cron job that deletes expired refresh tokens
-        start_user_cleanup_task() # Start the 24-hour cron job that deletes unverified user accounts
-        start_log_cleanup_task() # Start the cron job that cleans up old system logs from the DB
-        start_log_worker_task() # Start the background queue worker that flushes active logs to the DB in batches
-        start_project_config_sync_task(app) # Starts the project config sync background task
+        start_token_cleanup_task()  # Start the 24-hour cron job that deletes expired refresh tokens
+        start_user_cleanup_task()  # Start the 24-hour cron job that deletes unverified user accounts
+        start_log_cleanup_task()  # Start the cron job that cleans up old system logs from the DB
+        start_log_worker_task()  # Start the background queue worker that flushes active logs to the DB in batches
+        start_project_config_sync_task(
+            app
+        )  # Starts the project config sync background task
     yield
     # Gracefully shut down all background tasks before the app exits
     stop_token_cleanup_task()
@@ -62,12 +65,12 @@ async def lifespan(app: FastAPI):
 openapi_tags = [
     {
         "name": "Auth",
-        "description": "Core authentication flows including email/password registration, OAuth2 social logins, OTP email verification, secure session management, and password reset pipelines."
+        "description": "Core authentication flows including email/password registration, OAuth2 social logins, OTP email verification, secure session management, and password reset pipelines.",
     },
     {
         "name": "Users",
-        "description": "User profile management. Endpoints to fetch, update, and securely delete user accounts and their associated session data."
-    }
+        "description": "User profile management. Endpoints to fetch, update, and securely delete user accounts and their associated session data.",
+    },
 ]
 
 app = FastAPI(
@@ -86,11 +89,19 @@ register_exception_handlers(app)
 
 # In dev mode, we automatically whitelist common local frontend ports to save developers headaches
 dev_origins = [
-    "http://localhost:3000", "http://127.0.0.1:3000",   # Create React App / Next.js
-    "http://localhost:5173", "http://127.0.0.1:5173",   # Vite (React/Vue/Svelte)
-    "http://localhost:8000", "http://127.0.0.1:8000"    # FastAPI Swagger UI
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",  # Create React App / Next.js
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",  # Vite (React/Vue/Svelte)
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",  # FastAPI Swagger UI
 ]
-origins = list(set(app_settings.cors_origins_list + (dev_origins if app_settings.ENV == "development" else [])))
+origins = list(
+    set(
+        app_settings.cors_origins_list
+        + (dev_origins if app_settings.ENV == "development" else [])
+    )
+)
 
 app.add_middleware(
     DynamicCORSMiddleware,
@@ -98,7 +109,14 @@ app.add_middleware(
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "OPTIONS", "PATCH", "DELETE"],
-    allow_headers=["Authorization", "Content-Type", "X-CSRF", "X-Cerberus-API-Key", "X-Cerberus-Admin-Key", "CF-Connecting-IP"]
+    allow_headers=[
+        "Authorization",
+        "Content-Type",
+        "X-CSRF",
+        "X-Cerberus-API-Key",
+        "X-Cerberus-Admin-Key",
+        "CF-Connecting-IP",
+    ],
 )
 
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
@@ -109,7 +127,7 @@ app.add_middleware(
     secret_key=app_settings.SESSION_SECRET,
     https_only=(app_settings.ENV != "development"),
     same_site="none" if app_settings.ENV != "development" else "lax",
-)   
+)
 
 app.include_router(auth_router)
 app.include_router(users_router)
@@ -122,6 +140,6 @@ app.include_router(admin_router)
 async def favicon():
     return FileResponse("src/static/favicon.webp", media_type="image/webp")
 
+
 if app_settings.ENV == "development":
     app.include_router(debug_email_router)
-

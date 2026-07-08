@@ -1,6 +1,7 @@
 """
 Dependency Injection Container for Authorization Boilerplate
 """
+
 from src.authorization.adapters.custom_authorization import CustomAuthorizationAdapter
 
 # This adapter is automatically picked up by `src/authentication/container.py`

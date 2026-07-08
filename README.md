@@ -53,12 +53,14 @@ git clone https://github.com/Avneesh11905/cerberus.git
 cd cerberus
 
 # 2. Configure
-cp backend/.env.example backend/.env
-# Edit backend/.env with your Postgres, Redis, and email credentials
-# Generate RSA keys: cd backend && uv run python scripts/generate_keys.py
+cp example.env .env
+# Edit .env with your Postgres, Redis, and email credentials
+# Generate RSA keys (they will be saved to backend/keys/):
+cd backend && uv run scripts/generate_keys.py && cd ..
 
 # 3. Run
-docker compose up --build
+docker compose pull
+docker compose up -d
 ```
 
 **Access:**

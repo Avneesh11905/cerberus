@@ -5,6 +5,7 @@ Defines the generic interface for a key-value cache with TTL support.
 Any domain can depend on this port. Infrastructure adapters (Redis, Memcached, Memory)
 live in src/shared/adapters/.
 """
+
 from typing import Protocol
 
 
@@ -39,7 +40,9 @@ class CachePort(Protocol):
         """Atomically increment a key and return the new value. If ttl is given, sets expiry on first creation only (NX)."""
         ...
 
-    async def increment_and_check_exceeds(self, attempt_key: str, payload_key: str, ttl: int, max_attempts: int) -> bool:
+    async def increment_and_check_exceeds(
+        self, attempt_key: str, payload_key: str, ttl: int, max_attempts: int
+    ) -> bool:
         """
         Atomically increments attempt_key. If it exceeds max_attempts, deletes payload_key and returns True.
         Sets ttl on attempt_key if it's newly created.

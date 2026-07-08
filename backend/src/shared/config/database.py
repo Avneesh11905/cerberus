@@ -2,6 +2,7 @@
 Loads PostgreSQL-specific configuration.
 Builds the async SQLAlchemy connection string and manages connection pool settings.
 """
+
 import re
 
 from pydantic import field_validator
@@ -16,6 +17,10 @@ class DatabaseSettings(_BaseSettings):
     @classmethod
     def ensure_asyncpg(cls, v: str) -> str:
         # Replaces postgres://, postgresql://, postgresql+psycopg2:// etc with postgresql+asyncpg://
-        return re.sub(r"^postgres(?:ql)?(?:\+[a-zA-Z0-9_]+)?://", "postgresql+asyncpg://", v)
+        return re.sub(
+            r"^postgres(?:ql)?(?:\+[a-zA-Z0-9_]+)?://", "postgresql+asyncpg://", v
+        )
 
     CACHE_URL: str = "redis://localhost:6379/0"
+    CELERY_BROKER_URL: str = "redis://localhost:6379/1"
+    CELERY_RESULT_BACKEND: str = "redis://localhost:6379/2"

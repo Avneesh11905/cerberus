@@ -4,6 +4,7 @@ Generates a cryptographically secure 32-byte URL-safe token, stores it in Redis
 with a 15-minute TTL, and dispatches an email to the user with a reset link.
 Fails silently if the email does not exist to prevent enumeration attacks.
 """
+
 from src.shared.core.ports.uow import UoWPort
 import secrets
 from uuid import UUID
@@ -16,26 +17,44 @@ from src.shared.core.ports.cache import CachePort
 
 class RequestPasswordResetUseCase[SessionType]:
     """Handles generating a reset token and sending the email."""
-    
-    def __init__(self, user_repo: UserRepositoryPort, cache: CachePort, email_sender: EmailSenderPort, frontend_url: str):
+
+    def __init__(
+        self,
+        user_repo: UserRepositoryPort,
+        cache: CachePort,
+        email_sender: EmailSenderPort,
+        frontend_url: str,
+    ):
         self.user_repo = user_repo
         self.cache = cache
         self.email_sender = email_sender
         self.frontend_url = frontend_url
-        
-    async def execute(self, uow: UoWPort[SessionType], email: str, project_id: UUID | None = None, frontend_url: str | None = None) -> None:
-        user = await self.user_repo.find_by_email(uow.session, email, project_id=project_id)
+
+    async def execute(
+        self,
+        uow: UoWPort[SessionType],
+        email: str,
+        project_id: UUID | None = None,
+        frontend_url: str | None = None,
+    ) -> None:
+        user = await self.user_repo.find_by_email(
+            uow.session, email, project_id=project_id
+        )
         if not user or not user.is_verified:
             # Silently return to prevent email enumeration attacks
             return
-            
+
         # Generate token
         token = secrets.token_urlsafe(32)
-        
+
         # Store in cache with 15 minute TTL
         # Key: "pwd_reset:{token}" -> Value: user.id
-        await self.cache.set_string(f"pwd_reset:{token}", str(user.id), verification_settings.PASSWORD_RESET_EXPIRY_SECONDS)
-        
+        await self.cache.set_string(
+            f"pwd_reset:{token}",
+            str(user.id),
+            verification_settings.PASSWORD_RESET_EXPIRY_SECONDS,
+        )
+
         base_url = (frontend_url if frontend_url else self.frontend_url).rstrip("/")
         reset_url = f"{base_url}/reset-password?token={token}"
         await self.email_sender.send_password_reset_email(email, reset_url)

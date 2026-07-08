@@ -1,5 +1,6 @@
 from typing import Protocol
 
+
 class EncryptionPort(Protocol):
     def encrypt(self, plaintext: str) -> str:
         """Encrypts a plaintext string and returns the ciphertext."""

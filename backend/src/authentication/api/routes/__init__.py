@@ -10,7 +10,7 @@ from src.authentication.api.routes.reset_password import router as reset_passwor
 from src.authentication.api.routes.sessions import router as sessions_router
 from src.authentication.api.routes.verify_email import router as verify_email_router
 
-auth_router = APIRouter(prefix='/auth', tags=['Auth'])
+auth_router = APIRouter(prefix="/auth", tags=["Auth"])
 auth_router.include_router(login_router)
 auth_router.include_router(logout_router)
 auth_router.include_router(refresh_router)

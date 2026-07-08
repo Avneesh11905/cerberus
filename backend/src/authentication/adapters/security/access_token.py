@@ -3,6 +3,7 @@ Generates and validates stateless JSON Web Tokens (JWT).
 Access Tokens are short-lived (e.g. 15 minutes) and signed using RS256 with asymmetric key pairs to prevent tampering.
 They contain the minimal user claims needed by the API to identify the caller without querying the database.
 """
+
 from datetime import datetime, timezone
 from uuid import UUID
 
@@ -22,7 +23,12 @@ class JWTAccessTokenAdapter:
 
         self._lifetime_seconds = lifetime_minutes * 60
 
-    def create(self, user: UserIdentity, extra_claims: dict[str, object] | None = None, private_key_override: str | None = None) -> str:
+    def create(
+        self,
+        user: UserIdentity,
+        extra_claims: dict[str, object] | None = None,
+        private_key_override: str | None = None,
+    ) -> str:
         now = int(datetime.now(timezone.utc).timestamp())
         expires = now + self._lifetime_seconds
         payload = {
@@ -38,20 +44,24 @@ class JWTAccessTokenAdapter:
         if extra_claims:
             # We don't want extra claims to overwrite critical JWT fields
             safe_claims = {k: v for k, v in extra_claims.items() if k not in payload}
-            payload.update(safe_claims) # type: ignore
-            
+            payload.update(safe_claims)  # type: ignore
+
         key = private_key_override if private_key_override else self._private_key
         return jwt.encode(payload, key, algorithm=self._algorithm)
-            
-    def verify(self, token: str, public_key_override: str | None = None) -> tuple[UserIdentity | None, dict[str, object] | None]:
+
+    def verify(
+        self, token: str, public_key_override: str | None = None
+    ) -> tuple[UserIdentity | None, dict[str, object] | None]:
         key = public_key_override if public_key_override else self._public_key
         try:
             payload = jwt.decode(token, key, algorithms=[self._algorithm])
             user = UserIdentity(
-                id=UUID(payload["sub"]),   # str → UUID at JWT boundary
+                id=UUID(payload["sub"]),  # str → UUID at JWT boundary
                 email=payload["email"],
                 role=payload.get("role", "user"),
-                project_id=UUID(payload["project_id"]) if payload.get("project_id") else None,
+                project_id=UUID(payload["project_id"])
+                if payload.get("project_id")
+                else None,
                 is_verified=payload.get("is_verified", True),
             )
             return user, payload

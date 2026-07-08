@@ -14,8 +14,8 @@ import {
 } from '#/components/ui/dialog'
 
 interface ProfileDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }
 
 export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
@@ -48,7 +48,7 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
       await updateProfile({ name, picture })
       onOpenChange(false)
     } catch (err: any) {
-      console.error("Failed to update profile", err)
+      console.error('Failed to update profile', err)
       setError(err?.response?.data?.detail || 'Failed to update profile.')
     } finally {
       setIsSaving(false)
@@ -64,20 +64,26 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
             Update your public profile details.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSaveProfile} className="space-y-6 py-4" noValidate>
-          
+        <form
+          onSubmit={handleSaveProfile}
+          className="space-y-6 py-4"
+          noValidate
+        >
           <div className="flex flex-col items-center gap-4 mb-2">
             <div className="relative group">
               <Avatar className="w-24 h-24 border-2 border-border shadow-sm">
-                <AvatarImage src={picture || user?.picture || ''} alt={name || user?.name || ''} />
+                <AvatarImage
+                  src={picture || user?.picture || ''}
+                  alt={name || user?.name || ''}
+                />
                 <AvatarFallback className="text-2xl bg-primary/10 text-primary">
                   {(name || user?.name || 'U').charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <Button 
+              <Button
                 size="icon"
                 variant="outline"
-                type="button" 
+                type="button"
                 onClick={() => setIsEditingPicture(!isEditingPicture)}
                 className="absolute bottom-0 right-0 w-8 h-8 bg-black text-white dark:bg-white dark:text-black rounded-full shadow-sm hover:opacity-90 hover:bg-black dark:hover:bg-white transition-opacity cursor-pointer border-2 border-background"
                 title="Edit Profile Picture"
@@ -85,7 +91,7 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
                 <Pencil className="w-4 h-4" />
               </Button>
             </div>
-            
+
             {isEditingPicture && (
               <div className="w-full space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
                 <Label>Profile Picture URL</Label>
@@ -110,11 +116,18 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label>Email Address</Label>
-              <Input type="text" disabled value={user?.email || ''} className="bg-muted text-muted-foreground" />
-              <p className="text-xs text-muted-foreground">Your email cannot be changed for security reasons.</p>
+              <Input
+                type="text"
+                disabled
+                value={user?.email || ''}
+                className="bg-muted text-muted-foreground"
+              />
+              <p className="text-xs text-muted-foreground">
+                Your email cannot be changed for security reasons.
+              </p>
             </div>
           </div>
 

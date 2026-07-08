@@ -7,9 +7,9 @@ import viteReact, { reactCompilerPreset } from '@vitejs/plugin-react'
 import babel from '@rolldown/plugin-babel'
 import tailwindcss from '@tailwindcss/vite'
 
-const allowedHosts = process.env.ALLOWED_HOSTS 
-  ? process.env.ALLOWED_HOSTS.split(',').map(h => h.trim()) 
-  : ['localhost'];
+const allowedHosts = process.env.ALLOWED_HOSTS
+  ? process.env.ALLOWED_HOSTS.split(',').map((h) => h.trim())
+  : ['localhost']
 
 const config = defineConfig({
   resolve: { tsconfigPaths: true },
@@ -34,12 +34,12 @@ const config = defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            return 'vendor';
+            return 'vendor'
           }
-        }
-      }
-    }
-  }
+        },
+      },
+    },
+  },
 })
 
 export default config

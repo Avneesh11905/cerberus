@@ -2,6 +2,7 @@
 Executes database queries for user profiles using SQLAlchemy.
 Maps raw database rows into pure `UserProfile` domain entities to prevent ORM leakage.
 """
+
 from uuid import UUID
 
 from sqlalchemy import select
@@ -15,9 +16,10 @@ from src.users.core.domain.exceptions import UserNotFoundException
 
 from src.authentication.core.ports import RefreshTokenRepositoryPort
 
+
 class SQLUserProfileRepository:
     """Implements UserProfileRepositoryPort using SQLAlchemy."""
-    
+
     def __init__(self, refresh_repo: RefreshTokenRepositoryPort):
         self._refresh_repo = refresh_repo
 
@@ -27,7 +29,7 @@ class SQLUserProfileRepository:
             methods.append("local")
         for account in user.oauth_accounts:
             methods.append(account.provider)
-            
+
         return UserProfile(
             id=str(user.id),
             email=user.email,
@@ -36,20 +38,35 @@ class SQLUserProfileRepository:
             name=user.name,
             picture=user.picture,
             receive_updates=user.receive_updates,
-            login_methods=methods
+            login_methods=methods,
         )
 
-    async def get_profile(self, session: AsyncSession, user_id: UUID) -> UserProfile | None:
-        result = await session.execute(select(User).options(selectinload(User.oauth_accounts)).where(User.id == user_id))
+    async def get_profile(
+        self, session: AsyncSession, user_id: UUID
+    ) -> UserProfile | None:
+        result = await session.execute(
+            select(User)
+            .options(selectinload(User.oauth_accounts))
+            .where(User.id == user_id)
+        )
         user = result.scalar_one_or_none()
         if not user:
             return None
         return self._to_profile(user)
 
     async def update_profile(
-        self, session: AsyncSession, user_id: UUID, name: str | None = None, picture: str | None = None, receive_updates: bool | None = None
+        self,
+        session: AsyncSession,
+        user_id: UUID,
+        name: str | None = None,
+        picture: str | None = None,
+        receive_updates: bool | None = None,
     ) -> UserProfile:
-        result = await session.execute(select(User).options(selectinload(User.oauth_accounts)).where(User.id == user_id))
+        result = await session.execute(
+            select(User)
+            .options(selectinload(User.oauth_accounts))
+            .where(User.id == user_id)
+        )
         user = result.scalar_one_or_none()
         if not user:
             raise UserNotFoundException()

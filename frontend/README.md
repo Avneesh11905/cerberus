@@ -33,6 +33,7 @@
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - **Node.js** 20+
 - Cerberus backend running on `http://localhost:8000`
 
@@ -55,14 +56,14 @@ Visit [http://localhost:3000](http://localhost:3000).
 
 ## 🏗️ Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | [Vite](https://vitejs.dev/) + [TanStack Router](https://tanstack.com/router) (file-based routing) |
-| UI Components | [Shadcn UI](https://ui.shadcn.com/) (`radix-ui`) |
-| Styling | Tailwind CSS v4 |
-| Icons | Lucide React |
-| HTTP Client | Axios (with silent token refresh interceptor) |
-| State / Data | TanStack Query |
+| Layer         | Technology                                                                                        |
+| ------------- | ------------------------------------------------------------------------------------------------- |
+| Framework     | [Vite](https://vitejs.dev/) + [TanStack Router](https://tanstack.com/router) (file-based routing) |
+| UI Components | [Shadcn UI](https://ui.shadcn.com/) (`radix-ui`)                                                  |
+| Styling       | Tailwind CSS v4                                                                                   |
+| Icons         | Lucide React                                                                                      |
+| HTTP Client   | Axios (with silent token refresh interceptor)                                                     |
+| State / Data  | TanStack Query                                                                                    |
 
 ---
 
@@ -89,10 +90,10 @@ frontend/
 
 API keys are **never stored in plaintext**. Only a SHA-256 hash is persisted in the database.
 
-| Moment | What the UI shows |
-|---|---|
+| Moment                        | What the UI shows                                          |
+| ----------------------------- | ---------------------------------------------------------- |
 | Project created / key rotated | Full key displayed **once** with a "Save this now" warning |
-| Every subsequent visit | Masked display: `cerb_XXXXXXXXXX` |
+| Every subsequent visit        | Masked display: `cerb_XXXXXXXXXX`                          |
 
 If a key is lost, use the **Rotate API Key** button to invalidate the old key and receive a new one.
 

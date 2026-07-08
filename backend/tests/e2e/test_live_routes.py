@@ -1,4 +1,5 @@
 import os
+
 # Override environment variables before any app modules are imported
 os.environ["CERBERUS_E2E_DB_URL"] = "sqlite+aiosqlite:///./test_live_e2e.db"
 os.environ["DB_ASYNC_URL"] = "sqlite+aiosqlite:///./test_live_e2e.db"
@@ -21,7 +22,9 @@ from src import app
 TEST_DB_URL = "sqlite+aiosqlite:///./test_live_e2e.db"
 
 test_engine = create_async_engine(TEST_DB_URL)
-TestSessionLocal = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
+TestSessionLocal = async_sessionmaker(
+    test_engine, class_=AsyncSession, expire_on_commit=False
+)
 
 # Test Data
 TEST_EMAIL = f"live_e2e_test_{uuid.uuid4().hex[:8]}@example.com"
@@ -29,47 +32,56 @@ TEST_PASSWORD = "StrongPassword123!"
 TEST_NEW_NAME = "Live Test User Updated"
 
 
-
 async def override_get_db():
     async with TestSessionLocal() as session:
         yield session
+
 
 async def override_get_uow():
     async with TestSessionLocal() as session:
         yield SQLAlchemyUnitOfWork(lambda: session)
 
+
 app.dependency_overrides[get_db] = override_get_db
 app.dependency_overrides[get_uow] = override_get_uow
+
 
 @pytest.fixture(scope="module", autouse=True)
 def setup_test_environment():
     loop = asyncio.new_event_loop()
-    
+
     async def init_db():
         async with test_engine.begin() as conn:
             await conn.run_sync(Base.metadata.drop_all)
             await conn.run_sync(Base.metadata.create_all)
+
     loop.run_until_complete(init_db())
-    
-    from src.authentication.container import reset_container
+
+    from src.authentication.container import reset_container, get_container
+    from src.users.container import user_profile_repository
+
     reset_container()
     old_cache = shared_container.cache_adapter
     shared_container.cache_adapter = MockCache()  # type: ignore
+    user_profile_repository._refresh_repo = get_container().refresh_token_repo
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_uow] = override_get_uow
-    
+
     yield
     reset_container()
     shared_container.cache_adapter = old_cache
-    
+    user_profile_repository._refresh_repo = get_container().refresh_token_repo
+
     async def drop_db():
         async with test_engine.begin() as conn:
             await conn.run_sync(Base.metadata.drop_all)
+
     loop.run_until_complete(drop_db())
     loop.close()
-    
+
     app.dependency_overrides.clear()
     shared_container.cache_adapter = old_cache  # type: ignore
+
 
 @pytest.fixture(scope="module")
 def client():
@@ -77,35 +89,48 @@ def client():
     with TestClient(app, base_url="http://testserver") as c:
         yield c
 
+
 @pytest.fixture(scope="module")
 def state():
     """Simple dictionary to pass state between sequential tests."""
     return {}
 
+
 @pytest.mark.asyncio
 async def db_verify_user(email: str):
     from sqlalchemy import select
     from src.shared.infrastructure.sql.tables import User, UserPassword
+
     hasher = Argon2PasswordHasher()
     hashed_pw = await hasher.hash_password(TEST_PASSWORD)
-    
+
     async with TestSessionLocal() as session:
-        user = (await session.execute(select(User).where(User.email == email))).scalar_one_or_none()
+        user = (
+            await session.execute(select(User).where(User.email == email))
+        ).scalar_one_or_none()
         if user:
             user.is_verified = True
-            existing_pw = (await session.execute(select(UserPassword).where(UserPassword.user_id == user.id))).scalar_one_or_none()
+            existing_pw = (
+                await session.execute(
+                    select(UserPassword).where(UserPassword.user_id == user.id)
+                )
+            ).scalar_one_or_none()
             if not existing_pw:
                 pw = UserPassword(user_id=user.id, password_hash=hashed_pw)
                 session.add(pw)
             await session.commit()
+
 
 @pytest.mark.asyncio
 async def db_delete_user(email: str):
     """Fallback cleanup just in case."""
     from sqlalchemy import select
     from src.shared.infrastructure.sql.tables import User
+
     async with TestSessionLocal() as session:
-        user = (await session.execute(select(User).where(User.email == email))).scalar_one_or_none()
+        user = (
+            await session.execute(select(User).where(User.email == email))
+        ).scalar_one_or_none()
         if user:
             await session.delete(user)
             await session.commit()
@@ -113,16 +138,19 @@ async def db_delete_user(email: str):
 
 class TestLiveRoutesSequential:
     """
-    Runs E2E tests sequentially. 
+    Runs E2E tests sequentially.
     State is shared via the 'client' (for cookies) and 'state' dict (for IDs and tokens).
     """
 
     def test_01_register_user(self, client: httpx.Client):
-        response = client.post("/auth/register/tenant", json={
-            "email": TEST_EMAIL,
-            "password": TEST_PASSWORD,
-            "name": "Live Test User"
-        })
+        response = client.post(
+            "/auth/register/tenant",
+            json={
+                "email": TEST_EMAIL,
+                "password": TEST_PASSWORD,
+                "name": "Live Test User",
+            },
+        )
         assert response.status_code == 201, f"Failed: {response.text}"
         assert "Successfully registered" in response.json()["message"]
 
@@ -133,32 +161,24 @@ class TestLiveRoutesSequential:
 
     def test_03_login_user(self, client: httpx.Client, state: dict):
         response = client.post(
-            "/auth/login/local",
-            json={
-                "email": TEST_EMAIL,
-                "password": TEST_PASSWORD
-            }
+            "/auth/login/local", json={"email": TEST_EMAIL, "password": TEST_PASSWORD}
         )
         assert response.status_code == 200, f"Failed: {response.text}"
         assert response.json()["message"] == "Authenticated successfully"
-        
+
         # Now get the access token by refreshing
         csrf_token = client.cookies.get("csrf_token") or ""
-        refresh_resp = client.post(
-            "/auth/refresh", 
-            headers={"X-CSRF": csrf_token}
-        )
+        refresh_resp = client.post("/auth/refresh", headers={"X-CSRF": csrf_token})
         assert refresh_resp.status_code == 200, f"Refresh Failed: {refresh_resp.text}"
         data = refresh_resp.json()
         assert "access_token" in data
-        
+
         # Save token for later
         state["access_token"] = data["access_token"]
 
     def test_04_get_profile(self, client: httpx.Client, state: dict):
         response = client.get(
-            "/users/me",
-            headers={"Authorization": f"Bearer {state['access_token']}"}
+            "/users/me", headers={"Authorization": f"Bearer {state['access_token']}"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -171,9 +191,9 @@ class TestLiveRoutesSequential:
             "/users/me",
             headers={
                 "Authorization": f"Bearer {state.get('access_token', '')}",
-                "X-CSRF": csrf_token
+                "X-CSRF": csrf_token,
             },
-            json={"name": TEST_NEW_NAME}
+            json={"name": TEST_NEW_NAME},
         )
         assert response.status_code == 200
         assert response.json()["name"] == TEST_NEW_NAME
@@ -184,9 +204,9 @@ class TestLiveRoutesSequential:
             "/projects/",
             headers={
                 "Authorization": f"Bearer {state.get('access_token', '')}",
-                "X-CSRF": csrf_token
+                "X-CSRF": csrf_token,
             },
-            json={"name": "Live E2E Project"}
+            json={"name": "Live E2E Project"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -196,10 +216,7 @@ class TestLiveRoutesSequential:
 
     def test_07_list_projects(self, client: httpx.Client, state: dict):
         response = client.get(
-            "/projects/",
-            headers={
-                "Authorization": f"Bearer {state['access_token']}"
-            }
+            "/projects/", headers={"Authorization": f"Bearer {state['access_token']}"}
         )
         assert response.status_code == 200
         projects = response.json()
@@ -212,9 +229,9 @@ class TestLiveRoutesSequential:
             f"/projects/{state['project_id']}/environment",
             headers={
                 "Authorization": f"Bearer {state['access_token']}",
-                "X-CSRF": csrf_token
+                "X-CSRF": csrf_token,
             },
-            json={"environment": "development"}
+            json={"environment": "development"},
         )
         assert response.status_code == 200
         assert response.json()["environment"] == "development"
@@ -222,9 +239,7 @@ class TestLiveRoutesSequential:
     def test_09_project_secrets(self, client: httpx.Client, state: dict):
         response = client.get(
             f"/projects/{state['project_id']}/secrets",
-            headers={
-                "Authorization": f"Bearer {state['access_token']}"
-            }
+            headers={"Authorization": f"Bearer {state['access_token']}"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -237,8 +252,8 @@ class TestLiveRoutesSequential:
             f"/projects/{state['project_id']}/keys/rotate-api-key",
             headers={
                 "Authorization": f"Bearer {state['access_token']}",
-                "X-CSRF": csrf_token
-            }
+                "X-CSRF": csrf_token,
+            },
         )
         assert response_api.status_code == 200
         data_api = response_api.json()
@@ -248,8 +263,8 @@ class TestLiveRoutesSequential:
             f"/projects/{state['project_id']}/keys/rotate-jwt-secret",
             headers={
                 "Authorization": f"Bearer {state['access_token']}",
-                "X-CSRF": csrf_token
-            }
+                "X-CSRF": csrf_token,
+            },
         )
         assert response_jwt.status_code == 200
         data_jwt = response_jwt.json()
@@ -257,11 +272,10 @@ class TestLiveRoutesSequential:
 
     def test_11_refresh_token(self, client: httpx.Client, state: dict):
         csrf_token = client.cookies.get("csrf_token") or ""
-        response = client.post(
-            "/auth/refresh", 
-            headers={"X-CSRF": csrf_token}
+        response = client.post("/auth/refresh", headers={"X-CSRF": csrf_token})
+        assert response.status_code == 200, (
+            f"Failed: {response.status_code} - {response.text}"
         )
-        assert response.status_code == 200, f"Failed: {response.status_code} - {response.text}"
         data = response.json()
         assert "access_token" in data
         # Update access token for subsequent requests
@@ -273,8 +287,8 @@ class TestLiveRoutesSequential:
             f"/projects/{state['project_id']}",
             headers={
                 "Authorization": f"Bearer {state['access_token']}",
-                "X-CSRF": csrf_token
-            }
+                "X-CSRF": csrf_token,
+            },
         )
         assert response.status_code == 204
 
@@ -284,33 +298,28 @@ class TestLiveRoutesSequential:
             "/auth/logout",
             headers={
                 "Authorization": f"Bearer {state.get('access_token', '')}",
-                "X-CSRF": csrf_token
-            }
+                "X-CSRF": csrf_token,
+            },
         )
-        assert response.status_code == 200, f"Failed: {response.status_code} - {response.text}"
+        assert response.status_code == 200, (
+            f"Failed: {response.status_code} - {response.text}"
+        )
         assert response.json()["message"] == "Logged out"
 
     def test_14_delete_profile(self, client: httpx.Client, state: dict):
         # We logged out, so we need to log in again to delete the profile
         login_resp = client.post(
-            "/auth/login/local",
-            json={
-                "email": TEST_EMAIL,
-                "password": TEST_PASSWORD
-            }
+            "/auth/login/local", json={"email": TEST_EMAIL, "password": TEST_PASSWORD}
         )
         assert login_resp.status_code == 200
-        
+
         csrf_token = client.cookies.get("csrf_token") or ""
         refresh_resp = client.post("/auth/refresh", headers={"X-CSRF": csrf_token})
         access_token = refresh_resp.json()["access_token"]
 
         response = client.delete(
             "/users/me",
-            headers={
-                "Authorization": f"Bearer {access_token}",
-                "X-CSRF": csrf_token
-            }
+            headers={"Authorization": f"Bearer {access_token}", "X-CSRF": csrf_token},
         )
         assert response.status_code == 204
 

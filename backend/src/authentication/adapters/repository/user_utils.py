@@ -3,6 +3,7 @@ Shared utilities for mapping SQLAlchemy ORM models to pure Domain Entities.
 Ensures that the core Use Cases only ever interact with `UserIdentity` Pydantic models,
 preventing SQLAlchemy dependencies from leaking into the business logic layer.
 """
+
 from typing import cast
 
 from pydantic import AnyHttpUrl

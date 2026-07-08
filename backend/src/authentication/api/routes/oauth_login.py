@@ -14,6 +14,7 @@ Two initiation strategies are supported:
    GET /auth/login/{provider}?api_key=cerb_xxx — original flow kept for backwards
    compatibility. The api_key appears in browser history; prefer the preflight flow.
 """
+
 import hashlib
 import secrets
 from fastapi import APIRouter, HTTPException, Request, Depends
@@ -62,14 +63,20 @@ async def _resolve_project_for_oauth(
     provider_config = project.oauth_config.get(provider, {})
     client_id = provider_config.get("client_id")
     client_secret_enc = provider_config.get("client_secret")
-    client_secret = shared_container.encryption_adapter.decrypt(client_secret_enc) if client_secret_enc else None
+    client_secret = (
+        shared_container.encryption_adapter.decrypt(client_secret_enc)
+        if client_secret_enc
+        else None
+    )
     if not provider_config.get("enabled") or not client_id or not client_secret:
         raise HTTPException(status_code=400, detail="Provider not available")
 
     request.session["oauth_project_id"] = str(project_id)
 
     # Validate and persist the request origin so the callback can redirect back safely.
-    request_origin = _origin_from_url(request.headers.get("origin")) or _origin_from_url(request.headers.get("referer"))
+    request_origin = _origin_from_url(
+        request.headers.get("origin")
+    ) or _origin_from_url(request.headers.get("referer"))
     allowed_origins = {origin.rstrip("/") for origin in (project.allowed_origins or [])}
     if request_origin and request_origin in allowed_origins:
         request.session["oauth_tenant_url"] = request_origin
@@ -77,9 +84,15 @@ async def _resolve_project_for_oauth(
     return get_dynamic_oauth_client(provider, client_id, client_secret)
 
 
-@router.post("/oauth/preflight/{provider}", status_code=200, response_model=OAuthPreflightResponse)
+@router.post(
+    "/oauth/preflight/{provider}",
+    status_code=200,
+    response_model=OAuthPreflightResponse,
+)
 @limiter.limit(rate_limit_settings.LOGIN_RATE_LIMIT)
-async def oauth_preflight(provider: str, request: Request, db: AsyncSession = Depends(get_db)):
+async def oauth_preflight(
+    provider: str, request: Request, db: AsyncSession = Depends(get_db)
+):
     """
     Establish OAuth session context without exposing the API key in a browser URL.
 
@@ -109,7 +122,11 @@ async def oauth_preflight(provider: str, request: Request, db: AsyncSession = De
     provider_config = project.oauth_config.get(provider, {})
     client_id = provider_config.get("client_id")
     client_secret_enc = provider_config.get("client_secret")
-    client_secret = shared_container.encryption_adapter.decrypt(client_secret_enc) if client_secret_enc else None
+    client_secret = (
+        shared_container.encryption_adapter.decrypt(client_secret_enc)
+        if client_secret_enc
+        else None
+    )
     if not provider_config.get("enabled") or not client_id or not client_secret:
         raise HTTPException(status_code=400, detail="Provider not available")
 
@@ -122,7 +139,12 @@ async def oauth_preflight(provider: str, request: Request, db: AsyncSession = De
 
 @router.get("/login/{provider}")
 @limiter.limit(rate_limit_settings.LOGIN_RATE_LIMIT)
-async def login(provider: str, request: Request, api_key: str | None = None, db: AsyncSession = Depends(get_db)):
+async def login(
+    provider: str,
+    request: Request,
+    api_key: str | None = None,
+    db: AsyncSession = Depends(get_db),
+):
     """
     Redirect the browser to the OAuth provider's authorization page.
 
@@ -145,14 +167,18 @@ async def login(provider: str, request: Request, api_key: str | None = None, db:
         if not api_key.startswith("cerb_"):
             raise HTTPException(status_code=401, detail="Invalid API Key format")
         key_hash = hashlib.sha256(api_key.encode()).hexdigest()
-        result = await db.execute(select(Project).where(Project.api_key_hash == key_hash))
+        result = await db.execute(
+            select(Project).where(Project.api_key_hash == key_hash)
+        )
         project = result.scalars().first()
         if not project:
             raise HTTPException(status_code=401, detail="Invalid API Key")
         project_id = project.id
 
     if project_id:
-        oauth_client = await _resolve_project_for_oauth(provider, project_id, request, db)
+        oauth_client = await _resolve_project_for_oauth(
+            provider, project_id, request, db
+        )
     else:
         request.session.pop("oauth_project_id", None)
         oauth_client = PROVIDERS.get(provider)
@@ -160,10 +186,11 @@ async def login(provider: str, request: Request, api_key: str | None = None, db:
             raise HTTPException(status_code=400, detail=f"Invalid provider: {provider}")
 
     nonce = secrets.token_urlsafe(16)
-    request.session["oauth_state"] = {"project_id": str(project_id) if project_id else None, "nonce": nonce}
+    request.session["oauth_state"] = {
+        "project_id": str(project_id) if project_id else None,
+        "nonce": nonce,
+    }
 
     return await oauth_client.authorize_redirect(
-        request,
-        str(request.url_for("oauth_callback", provider=provider)),
-        state=nonce
+        request, str(request.url_for("oauth_callback", provider=provider)), state=nonce
     )

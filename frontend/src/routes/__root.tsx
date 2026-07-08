@@ -62,7 +62,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     api.get('/health').catch(() => {
       toast.error('Backend is unreachable', {
-        description: 'Failed to connect to the Cerberus backend. Ensure the server is running.',
+        description:
+          'Failed to connect to the Cerberus backend. Ensure the server is running.',
       })
     })
   }, [])

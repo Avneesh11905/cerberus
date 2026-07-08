@@ -117,15 +117,16 @@ Cerberus runs a background synchronization task (`ProjectConfigSyncTask`) that c
 ### 3.2 Setup Instructions
 
 **Using Docker (Recommended)**
-1. Copy the configuration:
+1. Copy the configuration from the root directory:
    ```bash
-   cp .env.example .env
+   cp example.env .env
    ```
 2. **Generate Security Keys (RS256)**:
-   Ensure you generate a secure RSA keypair for JWT signing. You can run the utility script `uv run python scripts/generate_keys.py` and paste the output into `.env`.
+   Ensure you generate a secure RSA keypair for JWT signing. You can run the utility script `uv run scripts/generate_keys.py`. The keys will be saved as `.pem` files in the `backend/keys/` directory, which the Docker containers will automatically mount and read.
 3. Spin up the entire stack (API, Celery Worker, PostgreSQL, Redis) with a single command:
    ```bash
-   docker compose up --build
+   docker compose pull
+   docker compose up -d
    ```
 
 **Local Python Setup (Using uv)**
@@ -141,7 +142,7 @@ Cerberus runs a background synchronization task (`ProjectConfigSyncTask`) that c
    ```
 5. Start the FastAPI server:
    ```bash
-   uv run fastapi dev runserver.py
+   uv run fastapi dev main.py
    ```
 6. In a new terminal, start the Celery worker for background jobs:
    ```bash
@@ -161,7 +162,7 @@ The `.env` and `docker-compose.yml` files control the entire behavior of the app
 | `ENV` | `"development"` enables development routes and swagger UI. `"production"` enforces strict cross-origin policies and disables debug endpoints. |
 | `CORS_ORIGINS` | Comma-separated list of allowed frontend URLs for the *Cerberus Dashboard itself*. |
 | `SESSION_SECRET` | Used to cryptographically sign the `X-CSRF` state validation. |
-| `JWT_PRIVATE_KEY` / `PUBLIC_KEY` | RSA Keys used to *sign* and *verify* the Access Tokens. |
+| `JWT_PRIVATE_KEY_PATH` / `JWT_PUBLIC_KEY_PATH` | Path to the RSA `.pem` keys used to *sign* and *verify* Access Tokens. |
 | `ACCOUNT_RETENTION_DAYS` | Number of days to retain soft-deleted user accounts before permanent deletion (e.g. `30`). |
 
 ### 4.2 Infrastructure

@@ -2,6 +2,7 @@
 Shared Infrastructure Container
 Instantiates cross-cutting infrastructure adapters exactly once.
 """
+
 from redis.asyncio import Redis
 
 from src.shared.adapters.cache.redis_cache import RedisCacheAdapter
@@ -22,7 +23,9 @@ class SharedContainer:
         # 2. CACHE ADAPTER
         # =====================================================================
         # Instantiate the async Redis client using connection pooling
-        redis_client = Redis.from_url(database_settings.CACHE_URL, decode_responses=True)
+        redis_client = Redis.from_url(
+            database_settings.CACHE_URL, decode_responses=True
+        )
         self.cache_adapter = RedisCacheAdapter(client=redis_client)
 
         # =====================================================================
@@ -36,7 +39,10 @@ class SharedContainer:
         # =====================================================================
         # 4. ENCRYPTION ADAPTER
         # =====================================================================
-        self.encryption_adapter = FernetEncryptionAdapter(key=app_settings.ENCRYPTION_KEY)
+        self.encryption_adapter = FernetEncryptionAdapter(
+            key=app_settings.ENCRYPTION_KEY
+        )
+
 
 # Singleton instance
 shared_container = SharedContainer()

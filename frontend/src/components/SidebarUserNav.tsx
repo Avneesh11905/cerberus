@@ -1,5 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router'
-import { LogOut, Settings,ChevronsUpDown } from 'lucide-react'
+import { LogOut, Settings, ChevronsUpDown } from 'lucide-react'
 import { useAuth } from '#/lib/auth'
 import { API_URL } from '#/lib/api'
 import {
@@ -10,22 +10,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '#/components/ui/dropdown-menu'
+import { Avatar, AvatarFallback, AvatarImage } from '#/components/ui/avatar'
 import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from '#/components/ui/avatar'
-import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '#/components/ui/sidebar'
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+} from '#/components/ui/sidebar'
 
 export function SidebarUserNav() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
 
   const getAvatarUrl = (url?: string) => {
-    if (!url) return undefined;
-    if (url.startsWith('http') || url.startsWith('data:')) return url;
-    return `${API_URL}${url.startsWith('/') ? '' : '/'}${url}`;
-  };
+    if (!url) return undefined
+    if (url.startsWith('http') || url.startsWith('data:')) return url
+    return `${API_URL}${url.startsWith('/') ? '' : '/'}${url}`
+  }
 
   if (!user) return null
 
@@ -43,7 +43,10 @@ export function SidebarUserNav() {
             >
               <Avatar className="h-8 w-8 rounded-lg">
                 {user.picture ? (
-                  <AvatarImage src={getAvatarUrl(user.picture)} alt={displayName} />
+                  <AvatarImage
+                    src={getAvatarUrl(user.picture)}
+                    alt={displayName}
+                  />
                 ) : null}
                 <AvatarFallback className="rounded-lg">
                   {initial}
@@ -65,7 +68,10 @@ export function SidebarUserNav() {
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   {user.picture ? (
-                    <AvatarImage src={getAvatarUrl(user.picture)} alt={displayName} />
+                    <AvatarImage
+                      src={getAvatarUrl(user.picture)}
+                      alt={displayName}
+                    />
                   ) : null}
                   <AvatarFallback className="rounded-lg">
                     {initial}
@@ -73,13 +79,15 @@ export function SidebarUserNav() {
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">{displayName}</span>
-                  {user.name && <span className="truncate text-xs text-muted-foreground">{user.email}</span>}
+                  {user.name && (
+                    <span className="truncate text-xs text-muted-foreground">
+                      {user.email}
+                    </span>
+                  )}
                 </div>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            
-
 
             <DropdownMenuItem asChild>
               <Link to="/settings" className="cursor-pointer flex items-center">
@@ -87,7 +95,7 @@ export function SidebarUserNav() {
                 <span>Settings</span>
               </Link>
             </DropdownMenuItem>
-            
+
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="text-destructive focus:bg-destructive/10 cursor-pointer flex items-center"

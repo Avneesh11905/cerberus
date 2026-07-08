@@ -27,7 +27,9 @@ function OAuthCallback() {
     }
 
     api
-      .post<{ is_new_user: boolean; csrf_token: string }>('/auth/exchange', { code })
+      .post<{ is_new_user: boolean; csrf_token: string }>('/auth/exchange', {
+        code,
+      })
       .then((res) => {
         // Store the CSRF token in memory — the cookie is host-only on
         // cerberus-api.aymahajan.in so document.cookie on cerberus.aymahajan.in
@@ -50,7 +52,11 @@ function OAuthCallback() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 dark:bg-[#0a0a0a] selection:bg-slate-200 dark:selection:bg-slate-800">
       <div className="flex flex-col items-center gap-8 p-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
-        <img src="/logo.webp" alt="Cerberus" className="w-20 h-20 animate-pulse select-none pointer-events-none" />
+        <img
+          src="/logo.webp"
+          alt="Cerberus"
+          className="w-20 h-20 animate-pulse select-none pointer-events-none"
+        />
 
         {/* Spinner */}
         <div className="relative w-10 h-10">
@@ -58,7 +64,9 @@ function OAuthCallback() {
           <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-slate-900 dark:border-t-white animate-spin" />
         </div>
 
-        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Authenticating...</p>
+        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          Authenticating...
+        </p>
       </div>
     </div>
   )

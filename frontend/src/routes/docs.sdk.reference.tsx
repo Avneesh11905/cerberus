@@ -17,24 +17,24 @@ function DocsSdkReference() {
   }, [])
 
   const sections = [
-    { 
-      id: 'interceptor', 
+    {
+      id: 'interceptor',
       title: 'Token Refresh Pipeline',
       subItems: [
         { id: 'interceptor-axios', title: 'Axios Interceptors' },
         { id: 'interceptor-manual', title: 'Manual Retrieval' },
-        { id: 'interceptor-react', title: 'Reacting to Changes' }
-      ]
+        { id: 'interceptor-react', title: 'Reacting to Changes' },
+      ],
     },
-    { 
-      id: 'schemas', 
+    {
+      id: 'schemas',
       title: 'Type Schemas',
       subItems: [
         { id: 'schema-user', title: 'User' },
         { id: 'schema-session', title: 'Session' },
-        { id: 'schema-responses', title: 'Message Responses' }
-      ]
-    }
+        { id: 'schema-responses', title: 'Message Responses' },
+      ],
+    },
   ]
 
   useEffect(() => {
@@ -46,7 +46,7 @@ function DocsSdkReference() {
           }
         })
       },
-      { rootMargin: '-15% 0px -60% 0px' }
+      { rootMargin: '-15% 0px -60% 0px' },
     )
 
     sections.forEach((section) => {
@@ -63,21 +63,23 @@ function DocsSdkReference() {
 
   const scrollToSection = (id: string) => {
     setActiveSection(id)
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    document
+      .getElementById(id)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
   return (
     <>
       <main className="flex-1 min-w-0 max-w-4xl font-outfit pb-[50vh]">
         <div className="prose prose-slate dark:prose-invert max-w-none">
-          
           <div className="mb-12">
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-6 flex items-center gap-4">
               <Workflow className="w-10 h-10 text-blue-500" />
               Advanced Reference
             </h1>
             <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
-              In-depth details on the internal token refresh pipeline, custom integrations, and TypeScript schemas.
+              In-depth details on the internal token refresh pipeline, custom
+              integrations, and TypeScript schemas.
             </p>
           </div>
 
@@ -86,45 +88,112 @@ function DocsSdkReference() {
               Token Refresh Pipeline
             </h2>
             <p className="text-base text-slate-600 dark:text-slate-400 mb-4">
-              Handling short-lived Access Tokens manually can lead to complex race conditions. The <code>CerberusClient</code> comes built-in with an advanced Axios interceptor queue:
+              Handling short-lived Access Tokens manually can lead to complex
+              race conditions. The <code>CerberusClient</code> comes built-in
+              with an advanced Axios interceptor queue:
             </p>
-            
+
             <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-4">
               {[
-                { title: 'Initial Request', desc: 'A request is sent using the in-memory Access Token.' },
-                { title: 'Token Expiry', desc: <>If it fails with a <code className="text-xs bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-red-600 dark:text-red-400">401 Unauthorized</code> (token expired), the SDK catches the error.</> },
-                { title: 'Queue Requests', desc: <>It <strong>pauses</strong> all other incoming API requests in a queue to prevent race conditions.</> },
-                { title: 'Silent Refresh', desc: <>It silently makes a background call to <code className="text-xs bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">POST /auth/refresh</code> using the secure <code>HttpOnly</code> cookie.</> },
-                { title: 'Token Injection', desc: 'Upon success, it extracts the newly issued JWT and sets it as the default header for future requests.' },
-                { title: 'Resume Queue', desc: <>It safely <strong>replays</strong> all paused requests transparently.</> }
+                {
+                  title: 'Initial Request',
+                  desc: 'A request is sent using the in-memory Access Token.',
+                },
+                {
+                  title: 'Token Expiry',
+                  desc: (
+                    <>
+                      If it fails with a{' '}
+                      <code className="text-xs bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-red-600 dark:text-red-400">
+                        401 Unauthorized
+                      </code>{' '}
+                      (token expired), the SDK catches the error.
+                    </>
+                  ),
+                },
+                {
+                  title: 'Queue Requests',
+                  desc: (
+                    <>
+                      It <strong>pauses</strong> all other incoming API requests
+                      in a queue to prevent race conditions.
+                    </>
+                  ),
+                },
+                {
+                  title: 'Silent Refresh',
+                  desc: (
+                    <>
+                      It silently makes a background call to{' '}
+                      <code className="text-xs bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">
+                        POST /auth/refresh
+                      </code>{' '}
+                      using the secure <code>HttpOnly</code> cookie.
+                    </>
+                  ),
+                },
+                {
+                  title: 'Token Injection',
+                  desc: 'Upon success, it extracts the newly issued JWT and sets it as the default header for future requests.',
+                },
+                {
+                  title: 'Resume Queue',
+                  desc: (
+                    <>
+                      It safely <strong>replays</strong> all paused requests
+                      transparently.
+                    </>
+                  ),
+                },
               ].map((step, i) => (
-                <div key={i} className="flex gap-4 items-start p-4 bg-slate-50 dark:bg-[#1c1c1c] border border-slate-200 dark:border-slate-800/80 rounded-xl transition-all hover:border-blue-300 dark:hover:border-blue-800/50 hover:shadow-sm">
+                <div
+                  key={i}
+                  className="flex gap-4 items-start p-4 bg-slate-50 dark:bg-[#1c1c1c] border border-slate-200 dark:border-slate-800/80 rounded-xl transition-all hover:border-blue-300 dark:hover:border-blue-800/50 hover:shadow-sm"
+                >
                   <div className="shrink-0 w-8 h-8 flex items-center justify-center bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 font-bold rounded-full border border-blue-200 dark:border-blue-500/30">
                     {i + 1}
                   </div>
                   <div>
-                    <h4 className="font-semibold text-slate-900 dark:text-white text-base">{step.title}</h4>
-                    <p className="text-slate-600 dark:text-slate-400 mt-1 leading-relaxed text-sm">{step.desc}</p>
+                    <h4 className="font-semibold text-slate-900 dark:text-white text-base">
+                      {step.title}
+                    </h4>
+                    <p className="text-slate-600 dark:text-slate-400 mt-1 leading-relaxed text-sm">
+                      {step.desc}
+                    </p>
                   </div>
                 </div>
               ))}
             </div>
 
-            <h3 id="interceptor-axios" className="text-2xl font-semibold mt-8 mb-3 scroll-mt-8">Custom Axios Instance Integration</h3>
+            <h3
+              id="interceptor-axios"
+              className="text-2xl font-semibold mt-8 mb-3 scroll-mt-8"
+            >
+              Custom Axios Instance Integration
+            </h3>
             <p className="text-base text-slate-600 dark:text-slate-400 mb-4">
-              If your frontend application uses its own Axios instance to talk to your proprietary backend, you can seamlessly attach Cerberus's token rotation logic to it. This automatically injects the <code>Authorization: Bearer &lt;token&gt;</code> header and silently rotates the token in the background if your backend returns a <code>401</code>.
+              If your frontend application uses its own Axios instance to talk
+              to your proprietary backend, you can seamlessly attach Cerberus's
+              token rotation logic to it. This automatically injects the{' '}
+              <code>Authorization: Bearer &lt;token&gt;</code> header and
+              silently rotates the token in the background if your backend
+              returns a <code>401</code>.
             </p>
-            
-            <ApiRef 
+
+            <ApiRef
               name="cerberus.attachInterceptor(clientInstance)"
               desc="Attaches Cerberus token rotation interceptors to your own Axios instance."
               args={[
-                { name: 'clientInstance', type: 'AxiosInstance', desc: 'Your configured Axios instance.' }
+                {
+                  name: 'clientInstance',
+                  type: 'AxiosInstance',
+                  desc: 'Your configured Axios instance.',
+                },
               ]}
               ret="void"
             />
 
-            <CodeBlock 
+            <CodeBlock
               language="typescript"
               code={`import axios from 'axios';
 import { cerberus } from './cerberus';
@@ -143,33 +212,55 @@ await myBackendApi.get('/some-protected-route');
 `}
             />
 
-            <h3 id="interceptor-manual" className="text-2xl font-semibold mt-8 mb-3 scroll-mt-8">Manual Token Retrieval</h3>
+            <h3
+              id="interceptor-manual"
+              className="text-2xl font-semibold mt-8 mb-3 scroll-mt-8"
+            >
+              Manual Token Retrieval
+            </h3>
             <p className="text-base text-slate-600 dark:text-slate-400 mb-4">
-              If you are not using Axios and need to manually fetch the access token (e.g. for a WebSocket connection or fetch API), use <code>getToken()</code>. This method will automatically decode the JWT and trigger a silent background refresh if the token expires within the next 30 seconds.
+              If you are not using Axios and need to manually fetch the access
+              token (e.g. for a WebSocket connection or fetch API), use{' '}
+              <code>getToken()</code>. This method will automatically decode the
+              JWT and trigger a silent background refresh if the token expires
+              within the next 30 seconds.
             </p>
-            
-            <ApiRef 
+
+            <ApiRef
               name="cerberus.getToken()"
               desc="Retrieves the current access token safely, automatically refreshing it if it expires within 30 seconds."
               args={[]}
               ret="Promise<string | null>"
             />
 
-            <h3 id="interceptor-react" className="text-2xl font-semibold mt-8 mb-3 scroll-mt-8">Reacting to Token Changes</h3>
+            <h3
+              id="interceptor-react"
+              className="text-2xl font-semibold mt-8 mb-3 scroll-mt-8"
+            >
+              Reacting to Token Changes
+            </h3>
             <p className="text-base text-slate-600 dark:text-slate-400 mb-4">
-              You can listen for changes to the Access Token using <code>onTokenChange</code>. This is extremely useful for keeping your frontend UI framework (like React or Vue) in sync with the SDK's internal state. Whenever the token rotates or the user logs in/out, the listener will be called.
+              You can listen for changes to the Access Token using{' '}
+              <code>onTokenChange</code>. This is extremely useful for keeping
+              your frontend UI framework (like React or Vue) in sync with the
+              SDK's internal state. Whenever the token rotates or the user logs
+              in/out, the listener will be called.
             </p>
-            
-            <ApiRef 
+
+            <ApiRef
               name="cerberus.onTokenChange(listener)"
               desc="Registers a listener that is called whenever the access token is updated or cleared."
               args={[
-                { name: 'listener', type: '(token: string | null) => void', desc: 'The callback function to execute.' }
+                {
+                  name: 'listener',
+                  type: '(token: string | null) => void',
+                  desc: 'The callback function to execute.',
+                },
               ]}
               ret="() => void (An unsubscribe function)"
             />
 
-            <CodeBlock 
+            <CodeBlock
               language="typescript"
               code={`import { useEffect, useState } from 'react';
 import { cerberus } from './cerberus';
@@ -201,11 +292,17 @@ export function useCerberusAuth() {
               Type Schemas
             </h2>
             <p className="text-base text-slate-600 dark:text-slate-400 mb-4">
-              The SDK is fully typed and exports the following interfaces for your convenience.
+              The SDK is fully typed and exports the following interfaces for
+              your convenience.
             </p>
-            
-            <h3 id="schema-user" className="text-2xl font-semibold mb-3 scroll-mt-8">User</h3>
-            <CodeBlock 
+
+            <h3
+              id="schema-user"
+              className="text-2xl font-semibold mb-3 scroll-mt-8"
+            >
+              User
+            </h3>
+            <CodeBlock
               language="typescript"
               code={`export interface User {
   id: string;
@@ -221,8 +318,13 @@ export function useCerberusAuth() {
 }`}
             />
 
-            <h3 id="schema-session" className="text-2xl font-semibold mt-8 mb-3 scroll-mt-8">Session</h3>
-            <CodeBlock 
+            <h3
+              id="schema-session"
+              className="text-2xl font-semibold mt-8 mb-3 scroll-mt-8"
+            >
+              Session
+            </h3>
+            <CodeBlock
               language="typescript"
               code={`export interface Session {
   family_id: string;
@@ -235,8 +337,13 @@ export function useCerberusAuth() {
 }`}
             />
 
-            <h3 id="schema-responses" className="text-2xl font-semibold mt-8 mb-3 scroll-mt-8">Message Responses</h3>
-            <CodeBlock 
+            <h3
+              id="schema-responses"
+              className="text-2xl font-semibold mt-8 mb-3 scroll-mt-8"
+            >
+              Message Responses
+            </h3>
+            <CodeBlock
               language="typescript"
               code={`export interface MessageResponse {
   message: string;
@@ -248,19 +355,21 @@ export interface LoginResponse {
 }`}
             />
           </section>
-
         </div>
       </main>
 
       <aside className="hidden xl:block w-56 shrink-0 self-start sticky top-12 pl-6 ml-6 border-l border-slate-200 dark:border-slate-800/50 max-h-[calc(100vh-6rem)] overflow-y-auto pb-8 scrollbar-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-        <h4 className="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider mb-4">On this page</h4>
+        <h4 className="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider mb-4">
+          On this page
+        </h4>
         <div className="flex flex-col gap-2">
-          {sections.map(section => (
+          {sections.map((section) => (
             <div key={section.id} className="flex flex-col gap-1 w-full">
               <button
                 onClick={() => scrollToSection(section.id)}
                 className={`text-left text-sm transition-colors ${
-                  activeSection === section.id || section.subItems.some(sub => activeSection === sub.id)
+                  activeSection === section.id ||
+                  section.subItems.some((sub) => activeSection === sub.id)
                     ? 'text-blue-600 dark:text-blue-400 font-medium'
                     : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                 }`}
@@ -268,7 +377,7 @@ export interface LoginResponse {
                 {section.title}
               </button>
               <div className="flex flex-col gap-1 pl-3 border-l-2 border-slate-200 dark:border-slate-800 ml-1">
-                {section.subItems.map(subItem => (
+                {section.subItems.map((subItem) => (
                   <button
                     key={subItem.id}
                     onClick={() => scrollToSection(subItem.id)}

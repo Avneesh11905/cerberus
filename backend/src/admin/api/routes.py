@@ -22,9 +22,7 @@ async def list_tenants(
 ):
     """List all tenants in the system."""
     async with uow:
-        result = await uow.session.execute(
-            select(User).where(User.role == "tenant")
-        )
+        result = await uow.session.execute(select(User).where(User.role == "tenant"))
         tenants = result.scalars().all()
     return tenants
 
@@ -42,7 +40,7 @@ async def update_tenant_status(
             select(User).where(User.id == tenant_id, User.role == "tenant")
         )
         tenant = result.scalar_one_or_none()
-        
+
         if not tenant:
             raise HTTPException(status_code=404, detail="Tenant not found")
 
@@ -51,12 +49,15 @@ async def update_tenant_status(
 
         if not req.is_active:
             container = get_container()
-            await container.refresh_token_repo.revoke_all_for_user(uow.session, tenant.id)
+            await container.refresh_token_repo.revoke_all_for_user(
+                uow.session, tenant.id
+            )
             #  TTL must match refresh token lifetime so the flag persists across refresh.
             # Previously 900 (15 min) let a disabled tenant regain access after waiting.
             await container.cache_adapter.set_string(
-                f"disabled_user:{tenant.id}", "1",
-                ttl=token_settings.REFRESH_TOKEN_LIFETIME_DAYS * 86400
+                f"disabled_user:{tenant.id}",
+                "1",
+                ttl=token_settings.REFRESH_TOKEN_LIFETIME_DAYS * 86400,
             )
             # INFO-2: Removed explicit commit — UoW __aexit__ handles it; double-commit is redundant.
         await uow.session.refresh(tenant)
@@ -76,15 +77,15 @@ async def list_system_logs(
     """Fetch paginated system logs (server-side). true backend pagination."""
     async with uow:
         stmt = select(SystemLog).order_by(desc(SystemLog.created_at))
-        
+
         if level:
             stmt = stmt.where(SystemLog.level == level)
         if source:
             stmt = stmt.where(SystemLog.source == source)
-        
+
         #  offset/limit applied in SQL — no more fetching 500 rows client-side.
         stmt = stmt.offset(offset).limit(limit)
-        
+
         result = await uow.session.execute(stmt)
         logs = result.scalars().all()
 

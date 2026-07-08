@@ -8,6 +8,7 @@ and delegates the actual dispatch to the injected SharedEmailClientPort.
 To swap the email provider (e.g. Resend -> SendGrid), replace the SharedEmailClientPort
 implementation in the container — this file never changes.
 """
+
 import asyncio
 import datetime
 from pathlib import Path
@@ -53,15 +54,21 @@ class AuthEmailService:
         )
         self._jinja_env.globals["now"] = datetime.datetime.now
 
-    async def _render_and_send(self, to_email: str, subject: str, template_name: str, context: dict) -> None:
+    async def _render_and_send(
+        self, to_email: str, subject: str, template_name: str, context: dict
+    ) -> None:
         try:
             template = self._jinja_env.get_template(template_name)
             html_content = template.render(**context)
             loop = asyncio.get_running_loop()
-            await loop.run_in_executor(None, self._client.send_email, to_email, subject, html_content)
+            await loop.run_in_executor(
+                None, self._client.send_email, to_email, subject, html_content
+            )
             await self._logger.info(f"Email '{subject}' sent to {to_email}")
         except Exception as e:
-            await self._logger.error(f"Failed to send email '{subject}' to {to_email}: {e}")
+            await self._logger.error(
+                f"Failed to send email '{subject}' to {to_email}: {e}"
+            )
 
     async def send_welcome_email(self, to_email: str, name: str | None) -> None:
         display_name = name or "there"
@@ -107,7 +114,9 @@ class AuthEmailService:
             context=context,
         )
 
-    async def send_account_restored_email(self, to_email: str, name: str | None) -> None:
+    async def send_account_restored_email(
+        self, to_email: str, name: str | None
+    ) -> None:
         display_name = name or "there"
         context = {
             "name": display_name,
@@ -123,12 +132,16 @@ class AuthEmailService:
             context=context,
         )
 
-    async def send_login_detected_email(self, to_email: str, ip_address: str, device_info: str) -> None:
+    async def send_login_detected_email(
+        self, to_email: str, ip_address: str, device_info: str
+    ) -> None:
         context = {
             "proj_name": self._proj_name,
             "theme": self._template_name,
             "forgot_password_url": f"{self._frontend_url}/forgot-password",
-            "time": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "time": datetime.datetime.now(datetime.timezone.utc).strftime(
+                "%Y-%m-%d %H:%M:%S UTC"
+            ),
             "ip_address": ip_address,
             "device_info": device_info,
         }

@@ -9,6 +9,7 @@ The frontend redeems the code here. Because this request originates from the
 frontend JS (not an OAuth provider redirect), the Origin header is correct and
 cookies are set host-only on cerberus-api. No broad cookie domain is ever needed.
 """
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
@@ -77,11 +78,13 @@ async def exchange(
     is_new_user: bool = data.get("is_new_user", False)
     access_token: str = data.get("access_token", "")
     user_id_str: str | None = data.get("user_id")
-    
+
     profile = None
     if user_id_str:
         async with uow:
-            profile = await user_profile_repository.get_profile(uow.session, UUID(user_id_str))
+            profile = await user_profile_repository.get_profile(
+                uow.session, UUID(user_id_str)
+            )
 
     set_refresh_token_cookie(response, refresh_token)
 
@@ -91,8 +94,8 @@ async def exchange(
     csrf_token = generate_csrf_token(refresh_token)
 
     return ExchangeResponse(
-        is_new_user=is_new_user, 
+        is_new_user=is_new_user,
         csrf_token=csrf_token,
         access_token=access_token,
-        user=profile.model_dump(mode="json") if profile else {}
+        user=profile.model_dump(mode="json") if profile else {},
     )

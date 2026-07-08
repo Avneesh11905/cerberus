@@ -5,6 +5,7 @@ Implements CachePort using Redis for production-grade shared caching.
 Required when running multiple workers (gunicorn, uvicorn workers) to share
 cache state across processes (rate limiting, JWT blacklisting, response caching).
 """
+
 import json
 from typing import cast
 
@@ -48,10 +49,14 @@ class RedisCacheAdapter:
     async def incr(self, key: str, ttl: int | None = None) -> int:
         val = await self._client.incr(key)
         if ttl is not None:
-            await self._client.expire(key, ttl, nx=True)  # NX = only if no TTL exists (first creation)
+            await self._client.expire(
+                key, ttl, nx=True
+            )  # NX = only if no TTL exists (first creation)
         return val
 
-    async def increment_and_check_exceeds(self, attempt_key: str, payload_key: str, ttl: int, max_attempts: int) -> bool:
+    async def increment_and_check_exceeds(
+        self, attempt_key: str, payload_key: str, ttl: int, max_attempts: int
+    ) -> bool:
         script = """
         local current = redis.call('INCR', KEYS[1])
         if current == 1 then
@@ -63,5 +68,7 @@ class RedisCacheAdapter:
         end
         return 0
         """
-        result = await self._client.eval(script, 2, attempt_key, payload_key, ttl, max_attempts)
+        result = await self._client.eval(
+            script, 2, attempt_key, payload_key, ttl, max_attempts
+        )
         return result == 1

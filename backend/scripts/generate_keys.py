@@ -3,6 +3,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 import secrets
 import subprocess
+import os
 
 
 def generate_rsa_keypair() -> tuple[str, str]:
@@ -14,12 +15,16 @@ def generate_rsa_keypair() -> tuple[str, str]:
     private_pem = private_key.private_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PrivateFormat.PKCS8,
-        encryption_algorithm=serialization.NoEncryption()
+        encryption_algorithm=serialization.NoEncryption(),
     ).decode("utf-8")
-    public_pem = private_key.public_key().public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo
-    ).decode("utf-8")
+    public_pem = (
+        private_key.public_key()
+        .public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
+        )
+        .decode("utf-8")
+    )
     return private_pem, public_pem
 
 
@@ -40,12 +45,21 @@ def main():
     private_pem, public_pem = generate_rsa_keypair()
     encryption_key = generate_fernet_key()
 
+    # Save PEM files to backend/keys/
+    keys_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "keys")
+    os.makedirs(keys_dir, exist_ok=True)
+    
+    private_key_path = os.path.join(keys_dir, "jwt_private.pem")
+    public_key_path = os.path.join(keys_dir, "jwt_public.pem")
+    
+    with open(private_key_path, "w", encoding="utf-8") as f:
+        f.write(private_pem)
+        
+    with open(public_key_path, "w", encoding="utf-8") as f:
+        f.write(public_pem)
+
     output_lines = [
         f'SESSION_SECRET="{session_secret}"',
-        "",
-        f'JWT_PRIVATE_KEY="{private_pem}"',
-        "",
-        f'JWT_PUBLIC_KEY="{public_pem}"',
         "",
         "# --- At-rest encryption key (/4) ---",
         "# Used to encrypt OAuth client_secret and RSA private keys in the database.",
@@ -55,23 +69,44 @@ def main():
 
     final_string = "\n".join(output_lines)
 
+    env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), ".env")
+    
     print("\n" + "=" * 50)
     print("Keys generated successfully!")
-    print("=" * 50 + "\n")
-    print(final_string)
+    print(f"  - RSA Private Key saved to: {private_key_path}")
+    print(f"  - RSA Public Key saved to: {public_key_path}")
+    
+    if os.path.exists(env_path):
+        import re
+        with open(env_path, "r", encoding="utf-8") as f:
+            content = f.read()
 
-    try:
-        subprocess.run(["clip"], input=final_string, text=True, check=True)
-        print("\n" + "=" * 50)
-        print("SUCCESS: Keys copied to clipboard! Paste into your .env file.")
-    except Exception as e:
-        print(f"\nCould not copy to clipboard automatically: {e}")
-        print("Please copy the text above manually.")
+        content = re.sub(
+            r'^SESSION_SECRET=.*$',
+            f'SESSION_SECRET="{session_secret}"',
+            content,
+            flags=re.MULTILINE
+        )
+        content = re.sub(
+            r'^ENCRYPTION_KEY=.*$',
+            f'ENCRYPTION_KEY="{encryption_key}"',
+            content,
+            flags=re.MULTILINE
+        )
+
+        with open(env_path, "w", encoding="utf-8") as f:
+            f.write(content)
+            
+        print(f"  - Automatically updated SESSION_SECRET and ENCRYPTION_KEY in {env_path}")
+    else:
+        print(f"\nWARNING: {env_path} not found. Could not automatically update keys.")
+        print("Please copy the text below manually into your .env file:\n")
+        print(final_string)
 
     print("=" * 50 + "\n")
     print("SECURITY NOTES:")
-    print("  - Never share or commit JWT_PRIVATE_KEY or ENCRYPTION_KEY.")
-    print("  - JWT_PUBLIC_KEY can be distributed to services that verify your JWTs.")
+    print(f"  - Never share or commit {private_key_path} or ENCRYPTION_KEY.")
+    print(f"  - {public_key_path} can be distributed to services that verify your JWTs.")
     print("  - ENCRYPTION_KEY rotation requires a full DB re-encryption migration.")
 
 

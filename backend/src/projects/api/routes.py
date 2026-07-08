@@ -57,12 +57,21 @@ def _is_localhost(hostname: str | None) -> bool:
 def _normalize_origin(origin: str, environment: str) -> str:
     parsed = urlparse(origin.strip())
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
-        raise HTTPException(status_code=400, detail="Allowed origins must be absolute http(s) origins")
+        raise HTTPException(
+            status_code=400, detail="Allowed origins must be absolute http(s) origins"
+        )
 
     if parsed.path not in {"", "/"} or parsed.query or parsed.fragment:
-        raise HTTPException(status_code=400, detail="Allowed origins must not include path, query, or fragment")
+        raise HTTPException(
+            status_code=400,
+            detail="Allowed origins must not include path, query, or fragment",
+        )
 
-    if environment == "production" and parsed.scheme != "https" and not _is_localhost(parsed.hostname):
+    if (
+        environment == "production"
+        and parsed.scheme != "https"
+        and not _is_localhost(parsed.hostname)
+    ):
         raise HTTPException(status_code=400, detail="Production origins must use HTTPS")
 
     return f"{parsed.scheme}://{parsed.netloc}".rstrip("/")
@@ -71,13 +80,23 @@ def _normalize_origin(origin: str, environment: str) -> str:
 def _validate_frontend_url(frontend_url: str, environment: str) -> str:
     parsed = urlparse(frontend_url.strip())
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
-        raise HTTPException(status_code=400, detail="Frontend URL must be an absolute http(s) URL")
+        raise HTTPException(
+            status_code=400, detail="Frontend URL must be an absolute http(s) URL"
+        )
 
     if parsed.query or parsed.fragment:
-        raise HTTPException(status_code=400, detail="Frontend URL must not include query or fragment")
+        raise HTTPException(
+            status_code=400, detail="Frontend URL must not include query or fragment"
+        )
 
-    if environment == "production" and parsed.scheme != "https" and not _is_localhost(parsed.hostname):
-        raise HTTPException(status_code=400, detail="Production frontend URL must use HTTPS")
+    if (
+        environment == "production"
+        and parsed.scheme != "https"
+        and not _is_localhost(parsed.hostname)
+    ):
+        raise HTTPException(
+            status_code=400, detail="Production frontend URL must use HTTPS"
+        )
 
     return frontend_url.strip().rstrip("/")
 
@@ -135,7 +154,9 @@ async def list_oauth_providers(
             scopes=metadata.scopes,
             required_fields=metadata.required_fields,
         )
-        for metadata in sorted(PROVIDER_METADATA.values(), key=lambda item: item.display_name)
+        for metadata in sorted(
+            PROVIDER_METADATA.values(), key=lambda item: item.display_name
+        )
     ]
 
 
@@ -162,7 +183,9 @@ async def delete_project(
     """Delete a project and cascade delete all its end-users."""
     async with uow:
         result = await uow.session.execute(
-            select(Project).where(Project.id == project_id, Project.tenant_id == user.id)
+            select(Project).where(
+                Project.id == project_id, Project.tenant_id == user.id
+            )
         )
         project = result.scalar_one_or_none()
         if not project:
@@ -182,7 +205,9 @@ async def update_project_oauth(
     """Update OAuth configuration (client_id, client_secret) for a project."""
     async with uow:
         result = await uow.session.execute(
-            select(Project).where(Project.id == project_id, Project.tenant_id == user.id)
+            select(Project).where(
+                Project.id == project_id, Project.tenant_id == user.id
+            )
         )
         project = result.scalar_one_or_none()
         if not project:
@@ -202,9 +227,17 @@ async def update_project_oauth(
                 and isinstance(existing_config.get(provider), dict)
                 and existing_config[provider].get("client_secret")
             ):
-                provider_config["client_secret"] = existing_config[provider]["client_secret"]
-            elif isinstance(provider_config, dict) and provider_config.get("client_secret"):
-                provider_config["client_secret"] = shared_container.encryption_adapter.encrypt(provider_config["client_secret"])
+                provider_config["client_secret"] = existing_config[provider][
+                    "client_secret"
+                ]
+            elif isinstance(provider_config, dict) and provider_config.get(
+                "client_secret"
+            ):
+                provider_config["client_secret"] = (
+                    shared_container.encryption_adapter.encrypt(
+                        provider_config["client_secret"]
+                    )
+                )
 
         project.oauth_config = incoming_config
         await uow.session.flush()
@@ -222,7 +255,9 @@ async def update_project_origins(
     """Update CORS allowed origins for a project."""
     async with uow:
         result = await uow.session.execute(
-            select(Project).where(Project.id == project_id, Project.tenant_id == user.id)
+            select(Project).where(
+                Project.id == project_id, Project.tenant_id == user.id
+            )
         )
         project = result.scalar_one_or_none()
         if not project:
@@ -233,11 +268,13 @@ async def update_project_origins(
             for origin in req.allowed_origins
             if origin.strip()
         ]
-        
+
         project.allowed_origins = cleaned_origins
         await uow.session.flush()
         await uow.session.refresh(project)
     return project
+
+
 @projects_router.put("/{project_id}/environment", response_model=ProjectRes)
 async def update_project_environment(
     project_id: UUID,
@@ -248,7 +285,9 @@ async def update_project_environment(
     """Update environment mode for a project."""
     async with uow:
         result = await uow.session.execute(
-            select(Project).where(Project.id == project_id, Project.tenant_id == user.id)
+            select(Project).where(
+                Project.id == project_id, Project.tenant_id == user.id
+            )
         )
         project = result.scalar_one_or_none()
         if not project:
@@ -258,6 +297,7 @@ async def update_project_environment(
         await uow.session.flush()
         await uow.session.refresh(project)
     return project
+
 
 @projects_router.put("/{project_id}/frontend-url", response_model=ProjectRes)
 async def update_project_frontend_url(
@@ -269,7 +309,9 @@ async def update_project_frontend_url(
     """Update frontend URL for a project."""
     async with uow:
         result = await uow.session.execute(
-            select(Project).where(Project.id == project_id, Project.tenant_id == user.id)
+            select(Project).where(
+                Project.id == project_id, Project.tenant_id == user.id
+            )
         )
         project = result.scalar_one_or_none()
         if not project:
@@ -278,15 +320,21 @@ async def update_project_frontend_url(
         if req.frontend_url:
             frontend_url = _validate_frontend_url(req.frontend_url, project.environment)
             frontend_origin = _origin_from_url(frontend_url)
-            allowed_origins = {origin.rstrip("/") for origin in (project.allowed_origins or [])}
+            allowed_origins = {
+                origin.rstrip("/") for origin in (project.allowed_origins or [])
+            }
             if allowed_origins and frontend_origin not in allowed_origins:
-                raise HTTPException(status_code=400, detail="Frontend URL origin must be in allowed origins")
+                raise HTTPException(
+                    status_code=400,
+                    detail="Frontend URL origin must be in allowed origins",
+                )
             project.frontend_url = frontend_url
         else:
             project.frontend_url = None
         await uow.session.flush()
         await uow.session.refresh(project)
     return project
+
 
 @projects_router.put("/{project_id}/name", response_model=ProjectRes)
 async def update_project_name(
@@ -298,7 +346,9 @@ async def update_project_name(
     """Update name for a project."""
     async with uow:
         result = await uow.session.execute(
-            select(Project).where(Project.id == project_id, Project.tenant_id == user.id)
+            select(Project).where(
+                Project.id == project_id, Project.tenant_id == user.id
+            )
         )
         project = result.scalar_one_or_none()
         if not project:
@@ -308,6 +358,7 @@ async def update_project_name(
         await uow.session.flush()
         await uow.session.refresh(project)
     return project
+
 
 @projects_router.get("/{project_id}/secrets", response_model=ProjectSecretsRes)
 async def get_project_secrets(
@@ -321,7 +372,9 @@ async def get_project_secrets(
     """
     async with uow:
         result = await uow.session.execute(
-            select(Project).where(Project.id == project_id, Project.tenant_id == user.id)
+            select(Project).where(
+                Project.id == project_id, Project.tenant_id == user.id
+            )
         )
         project = result.scalar_one_or_none()
         if not project:
@@ -333,7 +386,9 @@ async def get_project_secrets(
     )
 
 
-@projects_router.post("/{project_id}/keys/rotate-api-key", response_model=ProjectRotateApiKeyRes)
+@projects_router.post(
+    "/{project_id}/keys/rotate-api-key", response_model=ProjectRotateApiKeyRes
+)
 async def rotate_project_api_key(
     project_id: UUID,
     uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
@@ -342,7 +397,9 @@ async def rotate_project_api_key(
     """Rotates the API key, invalidating the old one immediately."""
     async with uow:
         result = await uow.session.execute(
-            select(Project).where(Project.id == project_id, Project.tenant_id == user.id)
+            select(Project).where(
+                Project.id == project_id, Project.tenant_id == user.id
+            )
         )
         project = result.scalar_one_or_none()
         if not project:
@@ -354,11 +411,13 @@ async def rotate_project_api_key(
         project.api_key_hash = hashed_api_key
 
         await uow.session.flush()
-        
+
     return ProjectRotateApiKeyRes(api_key=api_key)
 
 
-@projects_router.post("/{project_id}/keys/rotate-jwt-secret", response_model=ProjectRotateRsaKeysRes)
+@projects_router.post(
+    "/{project_id}/keys/rotate-jwt-secret", response_model=ProjectRotateRsaKeysRes
+)
 async def rotate_project_jwt_secret(
     project_id: UUID,
     uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
@@ -370,7 +429,9 @@ async def rotate_project_jwt_secret(
     """
     async with uow:
         result = await uow.session.execute(
-            select(Project).where(Project.id == project_id, Project.tenant_id == user.id)
+            select(Project).where(
+                Project.id == project_id, Project.tenant_id == user.id
+            )
         )
         project = result.scalar_one_or_none()
         if not project:
@@ -382,5 +443,5 @@ async def rotate_project_jwt_secret(
         project.public_key = public_pem
 
         await uow.session.flush()
-        
+
     return ProjectRotateRsaKeysRes(public_key=public_pem)

@@ -9,6 +9,7 @@ class DynamicCORSMiddleware(CORSMiddleware):
     It checks the statically configured origins first, and then checks an
     in-memory set on the FastAPI app state that is periodically refreshed.
     """
+
     def __init__(
         self,
         app: ASGIApp,
@@ -37,7 +38,9 @@ class DynamicCORSMiddleware(CORSMiddleware):
         # First check standard static configuration
         if super().is_allowed_origin(origin):
             return True
-        
+
         # Check dynamic origins
-        dynamic_origins: set[str] = getattr(self.fastapi_app.state, "dynamic_cors_origins", set())
+        dynamic_origins: set[str] = getattr(
+            self.fastapi_app.state, "dynamic_cors_origins", set()
+        )
         return origin in dynamic_origins

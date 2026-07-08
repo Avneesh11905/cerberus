@@ -2,6 +2,7 @@
 Exposes HTTP endpoints for the email verification flow.
 Handles validating the 6-digit OTP sent via email and allowing users to request a new OTP if it expired.
 """
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request, Response
@@ -37,22 +38,25 @@ async def verify_email(
     req: VerifyEmailRequest,
     uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
     usecase: Annotated[VerifyEmailUseCase, Depends(get_verify_email_usecase)],
-    project_id: Annotated[UUID | None, Depends(get_optional_project_id)]
+    project_id: Annotated[UUID | None, Depends(get_optional_project_id)],
 ):
     """
     Verify a user's email address using a 6-digit OTP.
-    
+
     This endpoint accepts the email address and the 6-digit One Time Password (OTP) that was emailed to the user upon registration.
     - If the OTP matches and hasn't expired (5-minute window), the user is permanently created in the database and marked as verified.
     - Once verified, the user can proceed to the `/login/local` endpoint.
-    
+
     **Returns:**
     A success message upon successful verification.
     """
     async with uow:
-        user, refresh_token = await usecase.execute(uow, req.email, req.otp, project_id=project_id)
+        user, refresh_token = await usecase.execute(
+            uow, req.email, req.otp, project_id=project_id
+        )
     set_refresh_token_cookie(response, refresh_token)
     return MessageResponse(message="Email verified successfully")
+
 
 @router.post("/verify-email/resend", response_model=MessageResponse)
 @limiter.limit(rate_limit_settings.DEFAULT_RATE_LIMIT)
@@ -60,18 +64,23 @@ async def resend_verification(
     request: Request,
     req: RequestNewVerificationEmail,
     uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
-    usecase: Annotated[RequestNewVerificationEmailUseCase, Depends(get_request_new_verification_email_usecase)],
-    project_id: Annotated[UUID | None, Depends(get_optional_project_id)]
+    usecase: Annotated[
+        RequestNewVerificationEmailUseCase,
+        Depends(get_request_new_verification_email_usecase),
+    ],
+    project_id: Annotated[UUID | None, Depends(get_optional_project_id)],
 ):
     """
     Resend the 6-digit verification OTP.
-    
+
     If the user's previous OTP expired or they didn't receive the email, this endpoint generates a fresh 6-digit OTP and extends the verification window for another 5 minutes.
     The new OTP is sent to the user's email address.
-    
+
     **Returns:**
     A generic success message.
     """
     async with uow:
         await usecase.execute(uow, req.email, project_id=project_id)
-    return MessageResponse(message="If the email is registered and unverified, a new OTP has been sent.")
+    return MessageResponse(
+        message="If the email is registered and unverified, a new OTP has been sent."
+    )

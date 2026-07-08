@@ -5,9 +5,11 @@ class Role(BaseModel):
     name: str
     description: str | None = None
 
+
 class Permission(BaseModel):
     action: str
     resource: str
+
 
 class UserAuthorizationContext(BaseModel):
     user_id: str
