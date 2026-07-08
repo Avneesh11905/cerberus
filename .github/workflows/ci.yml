@@ -173,5 +173,7 @@ jobs:
           tags: |
             ${{ env.FRONTEND_IMAGE_NAME }}:latest
             ${{ env.FRONTEND_IMAGE_NAME }}:${{ steps.version.outputs.VERSION }}
+          build-args: |
+            VITE_API_URL=https://cerberus-api.aymahajan.in
           cache-from: type=registry,ref=${{ env.FRONTEND_IMAGE_NAME }}:buildcache
           cache-to: type=registry,ref=${{ env.FRONTEND_IMAGE_NAME }}:buildcache,mode=max
