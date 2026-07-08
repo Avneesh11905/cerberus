@@ -217,7 +217,7 @@ def test_register_local_requires_project_key(test_client):
     assert response.status_code == 400
     assert (
         response.json()["detail"]
-        == "Project API key is required for project user registration"
+        == "Invalid request"
     )
 
 

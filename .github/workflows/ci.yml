@@ -100,14 +100,8 @@ jobs:
           npm run check
           npm run test
 
-  quality-gate:
-    needs: [python-ci, node-ci]
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Quality Gate Passed!"
-
   backend-build:
-    needs: [changes, quality-gate]
+    needs: [changes, python-ci]
     if: ${{ (needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     defaults:
@@ -145,7 +139,7 @@ jobs:
           cache-to: type=registry,ref=${{ env.BACKEND_IMAGE_NAME }}:buildcache,mode=max
 
   frontend-build:
-    needs: [changes, quality-gate]
+    needs: [changes, node-ci]
     if: ${{ (needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     defaults:
