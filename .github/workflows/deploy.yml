@@ -22,6 +22,8 @@ jobs:
         run: |
           docker compose pull
           docker compose up -d
+          # Restart Nginx so it clears its cached IP address of the old cerb-fastapi container
+          docker compose restart cerb-lb
 
       - name: Health Check
         working-directory: /home/avneesh/cerberus
