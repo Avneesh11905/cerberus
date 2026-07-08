@@ -119,7 +119,7 @@ Cerberus runs a background synchronization task (`ProjectConfigSyncTask`) that c
 **Using Docker (Recommended)**
 1. Copy the configuration from the root directory:
    ```bash
-   cp example.env .env
+   cp .env.example .env
    ```
 2. **Generate Security Keys (RS256)**:
    Ensure you generate a secure RSA keypair for JWT signing. You can run the utility script `uv run scripts/generate_keys.py`. The keys will be saved as `.pem` files in the `backend/keys/` directory, which the Docker containers will automatically mount and read.
@@ -135,7 +135,10 @@ Cerberus runs a background synchronization task (`ProjectConfigSyncTask`) that c
    ```bash
    uv sync
    ```
-3. Copy `.env.example` to `.env` and fill out your Postgres and Redis URLs.
+3. Set up the environment variables (you can use the `.env.example` in the root folder):
+   ```bash
+   cp .env.example .env
+   ```
 4. Run database migrations:
    ```bash
    uv run alembic upgrade head
