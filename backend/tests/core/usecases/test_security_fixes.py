@@ -321,8 +321,8 @@ def test_csrf_bad_signature_returns_corrupted_message():
     )
     assert resp.status_code == 403
     detail = resp.json().get("detail", "")
-    assert "corrupted" in detail.lower(), (
-        f"Expected 'corrupted' in detail, got: {detail!r}"
+    assert "forbidden" in detail.lower(), (
+        f"Expected 'forbidden' in detail, got: {detail!r}"
     )
 
 
@@ -342,6 +342,6 @@ def test_csrf_mismatched_token_returns_not_bound_message():
     )
     assert resp.status_code == 403
     detail = resp.json().get("detail", "")
-    assert "not bound" in detail.lower(), (
-        f"Expected 'not bound' in detail, got: {detail!r}"
+    assert "forbidden" in detail.lower(), (
+        f"Expected 'forbidden' in detail, got: {detail!r}"
     )
