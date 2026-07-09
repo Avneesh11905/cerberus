@@ -179,6 +179,9 @@ class MockCache:
     async def get_string(self, key: str):
         return self.data.get(key)
 
+    async def mget_strings(self, keys: list[str]) -> list[str | None]:
+        return [self.data.get(key) for key in keys]
+
     async def set_dict(self, key: str, data: dict, ttl: int):
         self.data[key] = data
 
