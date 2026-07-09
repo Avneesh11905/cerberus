@@ -7,7 +7,7 @@ Wraps `asyncio.create_task` or a message broker client to ensure "fire-and-forge
 import asyncio
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import delete
+from sqlalchemy import delete, select
 
 from src.shared.adapters.logger import AsyncSQLLogger
 from src.shared.config import log_settings
@@ -26,13 +26,32 @@ async def _periodic_log_cleanup():
                 cutoff_date = datetime.now(timezone.utc) - timedelta(
                     days=log_settings.RETENTION_DAYS
                 )
-                result = await db.execute(
-                    delete(SystemLog).where(SystemLog.created_at < cutoff_date)
-                )
-                await db.commit()
-                rowcount = getattr(result, "rowcount", 0)
-                if rowcount > 0:
-                    await logger.info(f"Cleaned up {rowcount} old logs")
+                total_deleted = 0
+                while True:
+                    # Select IDs to delete in small batches to avoid table locks
+                    ids_to_delete_result = await db.execute(
+                        select(SystemLog.id)
+                        .where(SystemLog.created_at < cutoff_date)
+                        .limit(5000)
+                    )
+                    ids_to_delete = ids_to_delete_result.scalars().all()
+                    
+                    if not ids_to_delete:
+                        break
+                        
+                    result = await db.execute(
+                        delete(SystemLog).where(SystemLog.id.in_(ids_to_delete))
+                    )
+                    await db.commit()
+                    
+                    deleted_batch = getattr(result, "rowcount", 0)
+                    total_deleted += deleted_batch
+                    
+                    # Yield back to event loop to prevent blocking
+                    await asyncio.sleep(0.5)
+
+                if total_deleted > 0:
+                    await logger.info(f"Cleaned up {total_deleted} old logs")
         except asyncio.CancelledError:
             break
         except Exception as e:

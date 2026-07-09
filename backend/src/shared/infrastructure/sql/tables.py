@@ -90,6 +90,10 @@ class Project(Base):
         cascade="all, delete-orphan",
     )
 
+    __table_args__ = (
+        Index("idx_allowed_origins_gin", "allowed_origins", postgresql_using="gin"),
+    )
+
 
 class User(Base):
     __tablename__ = "users"
@@ -108,7 +112,7 @@ class User(Base):
 
     # Tenancy & Role Control
     role: Mapped[UserRole] = mapped_column(
-        SQLEnum(UserRole, native_enum=False, length=20),
+        SQLEnum(UserRole, native_enum=True),
         server_default=text("'user'"),
         nullable=False,
     )
@@ -167,6 +171,11 @@ class User(Base):
             "project_id",
             postgresql_where=text("project_id IS NOT NULL"),
             unique=True,
+        ),
+        Index(
+            "idx_active_users",
+            "is_active",
+            postgresql_where=text("deleted_at IS NULL AND is_active = true")
         ),
     )
 
