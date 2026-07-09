@@ -121,8 +121,9 @@ Cerberus runs a background synchronization task (`ProjectConfigSyncTask`) that c
    ```bash
    cp .env.example .env
    ```
-2. **Generate Security Keys (RS256)**:
-   Ensure you generate a secure RSA keypair for JWT signing. You can run the utility script `uv run scripts/generate_keys.py`. The keys will be saved as `.pem` files in the `backend/keys/` directory, which the Docker containers will automatically mount and read.
+2. **Generate Security Keys & Credentials**:
+   Ensure you generate a secure RSA keypair for JWT signing by running `uv run scripts/generate_keys.py`. The keys will be saved as `.pem` files in the `backend/keys/` directory, which the Docker containers will automatically mount and read.
+   Additionally, you must secure your Redis instance by generating an ACL file with `uv run scripts/generate_redis_acl.py`.
 3. Spin up the entire stack (API, Celery Worker, PostgreSQL, Redis) with a single command:
    ```bash
    docker compose pull

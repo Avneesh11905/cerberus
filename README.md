@@ -55,8 +55,11 @@ cd cerberus
 # 2. Configure
 cp .env.example .env
 # Edit .env with your Postgres, Redis, and email credentials
-# Generate RSA keys (they will be saved to backend/keys/):
-cd backend && uv run scripts/generate_keys.py && cd ..
+# Generate RSA keys and secure Redis ACLs:
+cd backend
+uv run scripts/generate_keys.py
+uv run scripts/generate_redis_acl.py
+cd ..
 
 # 3. Run
 docker compose pull
