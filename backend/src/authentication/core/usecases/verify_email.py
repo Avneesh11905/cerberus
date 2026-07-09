@@ -4,7 +4,6 @@ If the OTP matches the one stored in the ephemeral cache (Redis), the user
 is permanently marked as verified in the database, and the Welcome Email is dispatched.
 """
 
-from src.shared.core.ports.uow import UoWPort
 import hashlib
 import time
 from uuid import UUID
@@ -17,10 +16,11 @@ from src.authentication.core.domain.exceptions import (
 from src.authentication.core.domain.session import ClientMetadata
 from src.authentication.core.ports import RefreshTokenRepositoryPort, UserRepositoryPort
 from src.authentication.core.ports.email_sender import EmailSenderPort
-from src.authentication.core.utils import verify_otp_hash, anonymize_email
+from src.authentication.core.utils import anonymize_email, verify_otp_hash
 from src.shared.config import verification_settings
 from src.shared.core.ports.cache import CachePort
 from src.shared.core.ports.logger import LoggerPort
+from src.shared.core.ports.uow import UoWPort
 
 
 class VerifyEmailUseCase[SessionType]:
@@ -140,11 +140,20 @@ class VerifyEmailUseCase[SessionType]:
 
         await uow.session.flush()  # type: ignore
 
-        # 6. Clean up Redis (both registration payload and attempts counter)
-        await self._cache.delete_key(redis_key)
-        await self._cache.delete_key(attempt_key)
+        # Clean up Redis (registration payload and attempts counter).
+        # This runs before the UoW commit completes. If the commit later fails the
+        # DB rolls back, but these Redis keys are already gone. The user will need
+        # to re-register — acceptable since they're within the OTP resend window.
+        # Wrapped in try/except so a transient Redis error does not block verification.
+        try:
+            await self._cache.delete_key(redis_key)
+            await self._cache.delete_key(attempt_key)
+        except Exception:
+            await self._logger.warning(
+                "Redis cleanup after email verification failed — keys will expire naturally via TTL"
+            )
 
-        # 7. Send the welcome email
+        # Send the welcome email
         await self._email_sender.send_welcome_email(user.email, user.name)
 
         await self._logger.info(f"User {user.id} email verified successfully")

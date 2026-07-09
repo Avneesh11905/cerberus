@@ -4,11 +4,11 @@ Handles validating the 6-digit OTP sent via email and allowing users to request 
 """
 
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Request, Response
-from uuid import UUID
-from src.authentication.api.dependencies import get_optional_project_id
 
+from src.authentication.api.dependencies import get_optional_project_id
 from src.authentication.api.schemas import (
     MessageResponse,
     RequestNewVerificationEmail,

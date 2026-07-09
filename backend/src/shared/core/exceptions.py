@@ -5,6 +5,7 @@ The API layer catches them and translates them into appropriate HTTP responses.
 """
 
 import traceback
+
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -112,7 +113,9 @@ async def user_domain_exception_handler(
     await logger.warning(
         f"User Error ({exc.__class__.__name__}) at {request.url.path}: {str(exc)}"
     )
-    return build_error_response(code, str(exc))
+    # Sanitize detail in production to avoid leaking internal error messages
+    sanitized = str(exc) if app_settings.ENV == "development" else "Request could not be completed"
+    return build_error_response(code, sanitized)
 
 
 def register_exception_handlers(app: FastAPI):

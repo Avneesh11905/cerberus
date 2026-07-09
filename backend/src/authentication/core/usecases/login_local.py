@@ -5,8 +5,10 @@ verified their email address, and issuing a new refresh token upon success.
 """
 
 from datetime import datetime, timezone
+from uuid import UUID
+
 from uuid6 import uuid7
-from src.shared.config import app_settings
+
 from src.authentication.core.domain import UserIdentity, UserRole
 from src.authentication.core.domain.exceptions import (
     InvalidCredentialsException,
@@ -22,10 +24,10 @@ from src.authentication.core.ports.email_sender import EmailSenderPort
 from src.authentication.core.ports.repository.project import ProjectRepositoryPort
 from src.authentication.core.ports.security.access_token import AccessTokenPort
 from src.authentication.core.ports.security.claims_provider import ClaimsProviderPort
+from src.authentication.core.utils import anonymize_email
+from src.shared.config import app_settings
 from src.shared.core.ports.logger import LoggerPort
 from src.shared.core.ports.uow import UoWPort
-from src.authentication.core.utils import anonymize_email
-from uuid import UUID
 
 
 class LoginLocalUserUseCase[SessionType]:
@@ -76,8 +78,9 @@ class LoginLocalUserUseCase[SessionType]:
 
         # Note: This is a recovery/self-healing mechanism.
         # The admin role IS correctly persisted to the DB at registration time.
-        # This in-memory mutation ensures the JWT reflects admin privileges
-        # even if the DB row was manually altered, acting as a fallback safety-net.
+        # If the DB row was manually altered, this block restores admin privileges
+        # in-memory AND persists the admin role back to the DB to keep them in sync.
+        # A warning log is emitted so the self-heal is visible in the audit trail.
         if (
             app_settings.ADMIN_EMAIL
             and email.strip().lower() == app_settings.ADMIN_EMAIL.strip().lower()
@@ -85,6 +88,10 @@ class LoginLocalUserUseCase[SessionType]:
             and user.role != UserRole.ADMIN
         ):
             user.role = UserRole.ADMIN
+            await self._user_repo.update_role(uow.session, user.id, UserRole.ADMIN)
+            await self._logger.warning(
+                f"Self-healed admin role for user {user.id} — DB row role was downgraded, now corrected"
+            )
 
         # Gatekeeper: Block users who haven't proved ownership of their email.
         if not user.is_verified:
@@ -123,6 +130,9 @@ class LoginLocalUserUseCase[SessionType]:
             await self._logger.info(f"User {user.id} account restored on local login")
 
         # New Login Detection Heuristic
+        # NOTE: This alert is advisory only. ip_address and user_agent are spoofable HTTP
+        # headers — a sophisticated attacker can clone them to suppress this notification.
+        # Treat it as a best-effort UX signal, not a security gate.
         is_first_login_post_verification = False
         if user.updated_at:
             updated_at = user.updated_at

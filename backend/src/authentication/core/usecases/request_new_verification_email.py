@@ -12,7 +12,6 @@ from uuid import UUID
 from src.authentication.core.ports import UserRepositoryPort
 from src.authentication.core.ports.email_sender import EmailSenderPort
 from src.authentication.core.utils import hash_otp
-
 from src.shared.config import verification_settings
 from src.shared.core.ports.cache import CachePort
 from src.shared.core.ports.logger import LoggerPort
@@ -41,20 +40,25 @@ class RequestNewVerificationEmailUseCase[SessionType]:
         scope = str(project_id) if project_id else "global"
         resend_key = f"otp_resends:{scope}:{email_hash}"
 
-        resends = await self._cache.incr(resend_key, ttl=3600)
-        if resends > 3:
-            await self._logger.warning(f"OTP resend rate limit exceeded for {email}")
-            return
-
+        # Check user existence and verification status FIRST.
+        # The rate-limit counter is only bumped once we confirm the user exists,
+        # so an attacker cannot exhaust a real user's resend quota by spamming
+        # requests for arbitrary email addresses they don't control.
         user = await self._user_repo.find_by_email(
             uow.session, email, project_id=project_id
         )
         if not user:
-            # User doesn't exist. Silently return to prevent email enumeration.
+            # Silently return to prevent email enumeration.
             return
 
         if user.is_verified:
-            # User is already verified. Silently return to prevent email enumeration.
+            # Silently return to prevent email enumeration.
+            return
+
+        # Increment the counter now that the user is verified as eligible.
+        resends = await self._cache.incr(resend_key, ttl=3600)
+        if resends > 3:
+            await self._logger.warning("OTP resend rate limit exceeded")
             return
 
         redis_key = (

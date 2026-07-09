@@ -11,6 +11,7 @@ cookies are set host-only on cerberus-api. No broad cookie domain is ever needed
 """
 
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from pydantic import BaseModel
@@ -22,7 +23,6 @@ from src.shared.config import rate_limit_settings
 from src.shared.core.ports.cache import CachePort
 from src.shared.infrastructure.sql.uow import SQLAlchemyUnitOfWork, get_uow
 from src.users.container import user_profile_repository
-from uuid import UUID
 
 
 class ExchangeRequest(BaseModel):

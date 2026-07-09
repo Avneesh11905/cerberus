@@ -8,6 +8,7 @@ from src.admin.schemas import SystemLogRes, TenantRes, TenantStatusUpdateReq
 from src.authentication.api.dependencies import require_role
 from src.authentication.container import get_container
 from src.authentication.core.domain import UserIdentity
+from src.authentication.core.domain.user import UserRole
 from src.shared.config import token_settings
 from src.shared.infrastructure.sql.tables import SystemLog, User
 from src.shared.infrastructure.sql.uow import SQLAlchemyUnitOfWork, get_uow
@@ -22,7 +23,7 @@ async def list_tenants(
 ):
     """List all tenants in the system."""
     async with uow:
-        result = await uow.session.execute(select(User).where(User.role == "tenant"))
+        result = await uow.session.execute(select(User).where(User.role == UserRole.TENANT))
         tenants = result.scalars().all()
     return tenants
 
@@ -37,7 +38,7 @@ async def update_tenant_status(
     """Enable or disable a tenant (preventing them from logging in if disabled)."""
     async with uow:
         result = await uow.session.execute(
-            select(User).where(User.id == tenant_id, User.role == "tenant")
+            select(User).where(User.id == tenant_id, User.role == UserRole.TENANT)
         )
         tenant = result.scalar_one_or_none()
 

@@ -11,14 +11,14 @@ from pathlib import Path
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.authentication.adapters.email_sender import AuthEmailService
+from src.authentication.adapters.repository.project_repository import (
+    SQLProjectRepositoryAdapter,
+)
 from src.authentication.adapters.repository.refresh_token_repository import (
     DBRefreshTokenRepositoryAdapter,
 )
 from src.authentication.adapters.repository.user_repository import (
     SQLUserRepositoryAdapter,
-)
-from src.authentication.adapters.repository.project_repository import (
-    SQLProjectRepositoryAdapter,
 )
 from src.authentication.adapters.security.access_token import JWTAccessTokenAdapter
 from src.authentication.adapters.security.claims_provider import (
@@ -30,8 +30,8 @@ from src.authentication.core.usecases import (
     ExecutePasswordResetUseCase,
     ListSessionsUseCase,
     LoginLocalUserUseCase,
-    LogoutUseCase,
     LogoutAllUseCase,
+    LogoutUseCase,
     OAuthCallbackUseCase,
     RefreshSessionUseCase,
     RegisterLocalUserUseCase,

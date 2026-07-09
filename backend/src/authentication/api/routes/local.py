@@ -4,20 +4,20 @@ Parses incoming JSON payloads, validates the data, and triggers the `RegisterLoc
 """
 
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from uuid import UUID
 
 from src.authentication.api.dependencies import (
     get_current_user,
-    verify_csrf,
     get_optional_project_id,
+    verify_csrf,
 )
 from src.authentication.api.schemas import (
     ChangePasswordRequest,
     LoginRequest,
-    MessageResponse,
     LoginResponse,
+    MessageResponse,
     RegisterRequest,
 )
 from src.authentication.api.usecase_dependencies import (

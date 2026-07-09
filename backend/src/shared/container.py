@@ -9,7 +9,7 @@ from src.shared.adapters.cache.redis_cache import RedisCacheAdapter
 from src.shared.adapters.email_client import ResendEmailClient
 from src.shared.adapters.encryption import FernetEncryptionAdapter
 from src.shared.adapters.task_runner.asyncio_task_runner import AsyncioTaskRunner
-from src.shared.config import database_settings, email_settings, app_settings
+from src.shared.config import app_settings, database_settings, email_settings
 
 
 class SharedContainer:

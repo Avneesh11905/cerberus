@@ -15,12 +15,11 @@ from src.shared.api.dependencies import limiter
 from src.shared.api.utils import (
     delete_refresh_token_cookie,
     extract_client_metadata,
-    set_refresh_token_cookie,
     generate_csrf_token,
+    set_refresh_token_cookie,
 )
 from src.shared.config import rate_limit_settings
 from src.shared.infrastructure.sql.uow import SQLAlchemyUnitOfWork, get_uow
-
 
 router = APIRouter()
 

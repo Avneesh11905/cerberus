@@ -5,12 +5,12 @@ If the token is valid in the ephemeral cache (Redis), it hashes the new password
 commits it to the database, and immediately invalidates the token to prevent reuse.
 """
 
-from src.shared.core.ports.uow import UoWPort
 from uuid import UUID
 
 from src.authentication.core.ports import RefreshTokenRepositoryPort, UserRepositoryPort
 from src.authentication.core.ports.security.password_hasher import PasswordHasherPort
 from src.shared.core.ports.cache import CachePort
+from src.shared.core.ports.uow import UoWPort
 
 
 class ExecutePasswordResetUseCase[SessionType]:

@@ -13,19 +13,19 @@ from itsdangerous.exc import BadSignature
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.shared.infrastructure.sql.connection import get_db
-from src.shared.infrastructure.sql.tables import Project
 from src.authentication.container import get_container
 from src.authentication.core.domain import UserIdentity
-from src.authentication.core.domain.user import UserRole
 from src.authentication.core.domain.exceptions import (
     CSRFValidationException,
     InvalidTokenException,
     NotAuthenticatedException,
 )
+from src.authentication.core.domain.user import UserRole
 from src.authentication.core.ports.security.access_token import AccessTokenPort
 from src.shared.config import app_settings
 from src.shared.core.ports.cache import CachePort
+from src.shared.infrastructure.sql.connection import get_db
+from src.shared.infrastructure.sql.tables import Project
 
 
 async def get_optional_project_id(

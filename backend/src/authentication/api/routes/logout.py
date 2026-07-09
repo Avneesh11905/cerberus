@@ -7,16 +7,15 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request, Response
 
-from src.authentication.api.schemas import MessageResponse
-
 from src.authentication.api.dependencies import (
     get_current_user,
-    verify_csrf,
     get_jwt_payload,
+    verify_csrf,
 )
+from src.authentication.api.schemas import MessageResponse
 from src.authentication.api.usecase_dependencies import (
-    get_logout_usecase,
     get_logout_all_usecase,
+    get_logout_usecase,
 )
 from src.authentication.core.domain import UserIdentity
 from src.authentication.core.usecases import LogoutUseCase

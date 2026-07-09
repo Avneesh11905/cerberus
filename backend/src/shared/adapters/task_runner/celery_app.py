@@ -1,4 +1,5 @@
 import warnings
+
 from celery import Celery  # type: ignore
 
 from src.shared.config import database_settings

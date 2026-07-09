@@ -5,7 +5,6 @@ with a 15-minute TTL, and dispatches an email to the user with a reset link.
 Fails silently if the email does not exist to prevent enumeration attacks.
 """
 
-from src.shared.core.ports.uow import UoWPort
 import secrets
 from uuid import UUID
 
@@ -13,6 +12,7 @@ from src.authentication.core.ports import UserRepositoryPort
 from src.authentication.core.ports.email_sender import EmailSenderPort
 from src.shared.config import verification_settings
 from src.shared.core.ports.cache import CachePort
+from src.shared.core.ports.uow import UoWPort
 
 
 class RequestPasswordResetUseCase[SessionType]:

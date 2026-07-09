@@ -17,20 +17,21 @@ Two initiation strategies are supported:
 
 import hashlib
 import secrets
-from fastapi import APIRouter, HTTPException, Request, Depends
-from src.authentication.api.schemas import OAuthPreflightResponse
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 from urllib.parse import urlparse
 from uuid import UUID
 
+from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.authentication.api.schemas import OAuthPreflightResponse
 from src.authentication.infrastructure.oauth import PROVIDERS
 from src.authentication.infrastructure.oauth.dynamic import get_dynamic_oauth_client
 from src.shared.api.dependencies import limiter
 from src.shared.config import rate_limit_settings
+from src.shared.container import shared_container
 from src.shared.infrastructure.sql.connection import get_db
 from src.shared.infrastructure.sql.tables import Project
-from src.shared.container import shared_container
 
 router = APIRouter()
 

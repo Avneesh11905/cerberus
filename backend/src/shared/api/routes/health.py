@@ -6,9 +6,8 @@ Checks connectivity to the PostgreSQL database and Redis cache to ensure the app
 from typing import Annotated
 
 import redis.asyncio as redis
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from pydantic import BaseModel
-from fastapi import Response
 from sqlalchemy import text
 
 from src.shared.config import database_settings

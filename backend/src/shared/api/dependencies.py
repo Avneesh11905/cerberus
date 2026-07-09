@@ -5,10 +5,10 @@ and common pagination or sorting extractors used across multiple domains.
 """
 
 import hashlib
-from typing import Annotated, Optional, Callable, Any
+from typing import Annotated, Any, Callable, Optional
 from uuid import UUID
 
-from fastapi import Request, Header, HTTPException, Depends
+from fastapi import Depends, Header, HTTPException, Request
 from slowapi import Limiter
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession

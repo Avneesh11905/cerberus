@@ -35,13 +35,10 @@ class ChangePasswordUseCase[SessionType]:
         current_password: str | None,
         new_password: str,
     ) -> None:
-        if current_password and current_password == new_password:
-            raise SamePasswordException()
-
         stored_hash = await self._user_repo.find_password_hash(uow.session, user_id)
 
         if stored_hash:
-            # User already has a local password, so they MUST provide the current one correctly
+            # User already has a local password — they MUST provide the current one correctly.
             if not current_password or not await self._hasher.verify_password(
                 current_password, stored_hash
             ):
@@ -49,6 +46,13 @@ class ChangePasswordUseCase[SessionType]:
                     f"Failed password change attempt for user {user_id}"
                 )
                 raise InvalidCredentialsException("Incorrect current password")
+
+            # Reject if the new password is the same as the existing one.
+            # Uses hash comparison instead of raw strings to correctly handle rehash scenarios.
+            if await self._hasher.verify_password(new_password, stored_hash):
+                raise SamePasswordException()
+        # If no stored_hash (OAuth user setting their first local password):
+        # skip both checks — there is no current password to verify or compare against.
 
         # Hash and update the new password
         new_hash = await self._hasher.hash_password(new_password)

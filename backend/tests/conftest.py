@@ -12,6 +12,7 @@ class MockUserRepository:
         self.users = {}  # id -> UserIdentity
         self.oauth_links = []  # tuple (user_id, provider, oauth_sub)
         self.passwords = {}  # user_id -> hash
+        self.role_updates = []  # list of (user_id, role) — for assertions in tests
 
     async def find_by_oauth(
         self, session, provider: str, oauth_sub: str, project_id: UUID | None = None
@@ -127,6 +128,23 @@ class MockUserRepository:
 
     async def cleanup_soft_deleted_users(self, session, days_old: int = 30) -> int:
         return 0
+
+    async def update_role(self, session, user_id: UUID, role) -> None:
+        """Persist a role change. Tracked in self.role_updates for test assertions."""
+        user = self.users.get(user_id)
+        if user:
+            # Replace the user identity with updated role (UserIdentity is immutable-ish)
+            updated = UserIdentity(
+                id=user.id,
+                email=user.email,
+                name=user.name,
+                picture=user.picture,
+                is_verified=user.is_verified,
+                project_id=user.project_id,
+                role=role,
+            )
+            self.users[user_id] = updated
+        self.role_updates.append((user_id, role))
 
 
 class MockEmailSender:

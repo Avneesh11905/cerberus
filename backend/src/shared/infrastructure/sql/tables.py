@@ -9,6 +9,7 @@ from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import (
+    JSON,
     Boolean,
     DateTime,
     ForeignKey,
@@ -18,15 +19,15 @@ from sqlalchemy import (
     Uuid,
     func,
     text,
-    JSON,
 )
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import Enum as SQLEnum
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import TypeDecorator
 from uuid6 import uuid7
 
 from src.authentication.core.domain.user import UserRole
+
 from .connection import Base
 
 

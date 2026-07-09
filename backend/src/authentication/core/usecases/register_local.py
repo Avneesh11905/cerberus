@@ -5,7 +5,6 @@ persisting the new user, and triggering the OTP email verification process.
 The user is created immediately but flagged as is_verified=False until OTP succeeds.
 """
 
-from src.shared.core.ports.uow import UoWPort
 import hashlib
 import secrets
 import time
@@ -14,10 +13,11 @@ from uuid import UUID
 from src.authentication.core.domain import EmailAlreadyRegisteredException, UserRole
 from src.authentication.core.ports import PasswordHasherPort, UserRepositoryPort
 from src.authentication.core.ports.email_sender import EmailSenderPort
-from src.authentication.core.utils import hash_otp, anonymize_email
-from src.shared.config import verification_settings, app_settings
+from src.authentication.core.utils import anonymize_email, hash_otp
+from src.shared.config import app_settings, verification_settings
 from src.shared.core.ports.cache import CachePort
 from src.shared.core.ports.logger import LoggerPort
+from src.shared.core.ports.uow import UoWPort
 
 
 class RegisterLocalUserUseCase[SessionType]:
@@ -101,7 +101,7 @@ class RegisterLocalUserUseCase[SessionType]:
             "pending_password_hash": hashed,
             "pending_name": name,
             "project_id": str(project_id) if project_id else None,
-            "role": role,
+            "role": role.value,  # serialize enum to string — json.dumps cannot handle enum objects
         }
 
         # 5. Save OTP to Redis for 15 minutes (resend window)

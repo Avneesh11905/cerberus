@@ -7,9 +7,10 @@ import logging
 from typing import Annotated
 from uuid import UUID
 
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from sqlalchemy import select
-from fastapi import APIRouter, Depends, HTTPException, Request, BackgroundTasks
 
+from src.authentication.api.dependencies import get_optional_project_id
 from src.authentication.api.schemas import (
     ForgotPasswordRequest,
     MessageResponse,
@@ -27,7 +28,6 @@ from src.shared.api.dependencies import limiter
 from src.shared.config import rate_limit_settings
 from src.shared.infrastructure.sql.tables import Project
 from src.shared.infrastructure.sql.uow import SQLAlchemyUnitOfWork, get_uow
-from src.authentication.api.dependencies import get_optional_project_id
 
 router = APIRouter(prefix="/password")
 

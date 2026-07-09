@@ -2,11 +2,11 @@
 Revokes a specific session (device logout).
 """
 
-from src.shared.core.ports.uow import UoWPort
 from uuid import UUID
 
 from src.authentication.core.domain.exceptions import SessionNotFoundException
 from src.authentication.core.ports import RefreshTokenRepositoryPort
+from src.shared.core.ports.uow import UoWPort
 
 
 class RevokeSessionUseCase[SessionType]:

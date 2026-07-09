@@ -6,23 +6,20 @@ It implements an "Account Linking" strategy:
 3. Fallback: Create a brand new user.
 """
 
-from src.shared.core.ports.uow import UoWPort
-from typing import TYPE_CHECKING
 from uuid import UUID
 
-from src.authentication.core.domain import UserIdentity, UserRole
-from src.authentication.core.domain.user import OAuthUserInfo
-from src.authentication.core.ports.security.access_token import AccessTokenPort
-from src.authentication.core.ports.security.claims_provider import ClaimsProviderPort
-from src.shared.config import app_settings
 from uuid6 import uuid7
 
-if TYPE_CHECKING:
-    pass
+from src.authentication.core.domain import UserIdentity, UserRole
 from src.authentication.core.domain.session import ClientMetadata
+from src.authentication.core.domain.user import OAuthUserInfo
 from src.authentication.core.ports import RefreshTokenRepositoryPort, UserRepositoryPort
 from src.authentication.core.ports.email_sender import EmailSenderPort
 from src.authentication.core.ports.repository.project import ProjectRepositoryPort
+from src.authentication.core.ports.security.access_token import AccessTokenPort
+from src.authentication.core.ports.security.claims_provider import ClaimsProviderPort
+from src.shared.config import app_settings
+from src.shared.core.ports.uow import UoWPort
 
 
 class OAuthCallbackUseCase[SessionType]:
@@ -56,6 +53,15 @@ class OAuthCallbackUseCase[SessionType]:
         user: UserIdentity,
         client_meta: ClientMetadata | None,
     ) -> None:
+        """
+        Send a login-from-new-device alert email if the IP+UA combination isn't
+        recognised from an existing active session.
+
+        NOTE: This is an advisory security alert only. Both ip_address and user_agent
+        are trivially spoofable HTTP headers — an attacker who clones these values from
+        a leaked session can suppress this notification. Do not rely on it as a security
+        gate; treat it as a best-effort user-facing UX signal only.
+        """
         if not client_meta:
             return
         active_sessions = await self._refresh_repo.get_active_sessions(session, user.id)

@@ -102,3 +102,9 @@ class UserRepositoryPort[SessionType](Protocol):
     ) -> int:
         """Permanently delete soft-deleted users older than the specified days. Returns number of deleted rows."""
         ...
+
+    async def update_role(
+        self, session: SessionType, user_id: UUID, role: UserRole
+    ) -> None:
+        """Persist a new role for a user. Used for admin self-heal recovery."""
+        ...

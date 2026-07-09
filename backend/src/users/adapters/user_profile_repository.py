@@ -9,12 +9,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from src.authentication.core.ports import RefreshTokenRepositoryPort
 from src.shared.infrastructure.sql.tables import User
 from src.users.core.domain import UserProfile
 from src.users.core.domain.exceptions import UserNotFoundException
-
-
-from src.authentication.core.ports import RefreshTokenRepositoryPort
 
 
 class SQLUserProfileRepository:

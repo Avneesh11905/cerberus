@@ -1,7 +1,7 @@
 from datetime import datetime
+from typing import Any, Literal
 from uuid import UUID
 
-from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
 

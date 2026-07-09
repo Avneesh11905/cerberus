@@ -1,9 +1,9 @@
-import secrets
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives import serialization
-
 import hashlib
+import secrets
 from uuid import UUID
+
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 
 
 def generate_api_key(project_id: UUID) -> str:

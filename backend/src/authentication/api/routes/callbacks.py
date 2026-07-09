@@ -22,10 +22,10 @@ from src.authentication.infrastructure.oauth.dynamic import get_dynamic_oauth_cl
 from src.shared.api.dependencies import limiter
 from src.shared.api.utils import build_auth_redirect_async, extract_client_metadata
 from src.shared.config import rate_limit_settings
+from src.shared.container import shared_container
 from src.shared.core.ports.cache import CachePort
 from src.shared.infrastructure.sql.tables import Project
 from src.shared.infrastructure.sql.uow import SQLAlchemyUnitOfWork, get_uow
-from src.shared.container import shared_container
 
 router = APIRouter()
 

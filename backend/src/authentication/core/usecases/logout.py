@@ -9,9 +9,9 @@ It performs two distinct actions:
 from datetime import datetime, timezone
 
 from src.authentication.core.ports import RefreshTokenRepositoryPort
+from src.shared.config import token_settings
 from src.shared.core.ports.cache import CachePort
 from src.shared.core.ports.uow import UoWPort
-from src.shared.config import token_settings
 
 
 class LogoutUseCase[SessionType]:

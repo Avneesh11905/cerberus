@@ -212,3 +212,12 @@ class SQLUserRepositoryAdapter(UserRepositoryPort[AsyncSession]):
         )
         result = await session.execute(stmt)
         return int(result.rowcount)  # type: ignore
+
+    async def update_role(
+        self, session: AsyncSession, user_id: UUID, role
+    ) -> None:
+        """Persist a role change for a user. Used for admin self-heal recovery."""
+        result = await session.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one_or_none()
+        if user:
+            user.role = role

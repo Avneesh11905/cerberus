@@ -103,6 +103,20 @@ origins = list(
     )
 )
 
+# Middleware is applied in REVERSE registration order by Starlette.
+# The LAST registered middleware is OUTERMOST (runs first on ingress, last on egress).
+# Desired ingress order: ProxyHeaders → CORS → GZip → Session
+# So we register innermost (Session) first and outermost (ProxyHeaders) last.
+
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=app_settings.SESSION_SECRET,
+    https_only=(app_settings.ENV != "development"),
+    same_site="none" if app_settings.ENV != "development" else "lax",
+)
+
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
 app.add_middleware(
     DynamicCORSMiddleware,
     fastapi_app=app,
@@ -119,15 +133,10 @@ app.add_middleware(
     ],
 )
 
+# ProxyHeadersMiddleware must be OUTERMOST so every downstream middleware
+# (CORS, Session, rate limiting) already sees the real client IP from
+# X-Forwarded-For by the time they run.
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
-app.add_middleware(GZipMiddleware, minimum_size=1000)
-
-app.add_middleware(
-    SessionMiddleware,
-    secret_key=app_settings.SESSION_SECRET,
-    https_only=(app_settings.ENV != "development"),
-    same_site="none" if app_settings.ENV != "development" else "lax",
-)
 
 app.include_router(auth_router)
 app.include_router(users_router)

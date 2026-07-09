@@ -6,8 +6,8 @@ import asyncio
 
 from src.authentication.container import get_container
 from src.shared.adapters.logger import AsyncSQLLogger
-from src.shared.infrastructure.sql.connection import AsyncSessionLocal
 from src.shared.config import app_settings
+from src.shared.infrastructure.sql.connection import AsyncSessionLocal
 
 logger = AsyncSQLLogger("BackgroundTasks")
 _token_cleanup_task: asyncio.Task | None = None
@@ -39,34 +39,41 @@ async def _periodic_token_cleanup():
 
 
 async def _periodic_user_cleanup():
-    """Background task: clean abandoned unverified users every 24h."""
+    """Background task: clean abandoned unverified users and soft-deleted accounts every 24h."""
     while True:
+        # Each step uses its own session+commit so a failure in step 2 cannot
+        # roll back the work already done in step 1.
         try:
             async with AsyncSessionLocal() as db:
                 count_users = await get_container().user_repo.cleanup_unverified_users(
                     db, hours_old=24
                 )
                 if count_users:
+                    await db.commit()
                     await logger.info(
                         f"Cleaned up {count_users} abandoned unverified user accounts"
                     )
+        except asyncio.CancelledError:
+            break
+        except Exception as e:
+            await logger.error(f"Unverified user cleanup failed: {e}")
 
+        try:
+            async with AsyncSessionLocal() as db:
                 count_soft_deleted = (
                     await get_container().user_repo.cleanup_soft_deleted_users(
                         db, days_old=app_settings.ACCOUNT_RETENTION_DAYS
                     )
                 )
                 if count_soft_deleted:
+                    await db.commit()
                     await logger.info(
                         f"Permanently purged {count_soft_deleted} soft-deleted user accounts"
                     )
-
-                if count_users or count_soft_deleted:
-                    await db.commit()
         except asyncio.CancelledError:
             break
         except Exception as e:
-            await logger.error(f"User cleanup task failed: {e}")
+            await logger.error(f"Soft-deleted user cleanup failed: {e}")
 
         try:
             await asyncio.sleep(86400)

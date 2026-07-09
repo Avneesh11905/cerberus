@@ -1,9 +1,11 @@
 from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.authentication.core.ports.repository.project import ProjectRepositoryPort
-from src.shared.infrastructure.sql.tables import Project
 from src.shared.container import shared_container
+from src.shared.infrastructure.sql.tables import Project
 
 
 class SQLProjectRepositoryAdapter(ProjectRepositoryPort[AsyncSession]):

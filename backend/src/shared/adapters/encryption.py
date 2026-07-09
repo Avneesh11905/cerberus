@@ -1,4 +1,5 @@
 from cryptography.fernet import Fernet
+
 from src.shared.core.ports.encryption import EncryptionPort
 
 
