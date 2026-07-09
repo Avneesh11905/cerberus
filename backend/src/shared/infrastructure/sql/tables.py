@@ -121,7 +121,7 @@ class User(Base):
     )
     project_id: Mapped[UUID | None] = mapped_column(
         Uuid,
-        ForeignKey("projects.id", ondelete="CASCADE", use_alter=True),
+        ForeignKey("projects.id", ondelete="CASCADE", use_alter=True, name="fk_user_project_id"),
         index=True,
         nullable=True,
     )
