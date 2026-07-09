@@ -37,4 +37,4 @@ USER appuser
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "alembic upgrade head && gunicorn src:app -w 3 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000"]
+CMD ["gunicorn", "src:app", "-w", "3", "-k", "uvicorn.workers.UvicornWorker", "-b", "0.0.0.0:8000"]

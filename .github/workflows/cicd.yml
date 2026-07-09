@@ -35,6 +35,7 @@ jobs:
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
+      alembic: ${{ steps.filter.outputs.alembic }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -50,6 +51,10 @@ jobs:
             frontend:
               - 'frontend/**'
               - '!frontend/**/*.md'
+            alembic:
+              - 'backend/alembic/versions/**'
+              - 'backend/alembic/env.py'
+              - 'backend/alembic.ini'
 
   # ── Backend CI ──────────────────────────────────────────────────────────────
   python-ci:
@@ -227,7 +232,7 @@ jobs:
 
   # ── Deploy ───────────────────────────────────────────────────────────────────
   deploy:
-    needs: [backend-build, frontend-build]
+    needs: [changes, backend-build, frontend-build]
     # Deploy only when on main AND at least one build succeeded (the other may be skipped)
     if: |
       always() &&
@@ -240,10 +245,29 @@ jobs:
     # no repo read access required at this stage.
     permissions: {}
     steps:
-      - name: Deploy to home server
+      - name: Pull latest images
+        working-directory: /home/avneesh/cerberus
+        run: docker compose pull
+
+      - name: Run Alembic migrations
+        # Only execute when alembic/versions or env.py changed in this push.
+        # --rm ensures the container is auto-deleted the moment migrations finish.
+        if: needs.changes.outputs.alembic == 'true' || github.event_name == 'workflow_dispatch'
         working-directory: /home/avneesh/cerberus
         run: |
-          docker compose pull
+          echo "Schema changes detected — running Alembic migrations..."
+          docker compose up -d cerb-postgres
+          # Wait until postgres healthcheck passes before migrating
+          until docker compose ps cerb-postgres | grep -q '(healthy)'; do
+            echo "Waiting for postgres..."
+            sleep 3
+          done
+          docker compose --profile migrate run --rm cerb-migrate
+          echo "Migrations complete — container auto-deleted."
+
+      - name: Start / update application stack
+        working-directory: /home/avneesh/cerberus
+        run: |
           docker compose up -d
           # Restart Nginx so it clears its cached IP address of the old cerb-fastapi container
           docker compose restart cerb-lb

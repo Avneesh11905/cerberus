@@ -9,12 +9,9 @@ services:
     image: postgres:18.4
     container_name: cerb-postgres
     restart: unless-stopped
+    shm_size: '256mb'
     env_file:
       - .env
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     command: [ "postgres", "-p", "52193" ]
     volumes:
       - ./postgres:/var/lib/postgresql
@@ -45,6 +42,26 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    networks:
+      - cerberus_network
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  cerb-migrate:
+    image: avneesh11905/cerberus-fastapi:latest
+    profiles:
+      - migrate
+    restart: "no"
+    command: ["alembic", "upgrade", "head"]
+    env_file:
+      - .env
+    depends_on:
+      cerb-postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend/keys:/app/keys:ro
     networks:
       - cerberus_network
     logging:
@@ -133,6 +150,7 @@ services:
         max-file: "3"
 
   cerb-celery-beat:
+    container_name: cerb-celery-beat
     image: avneesh11905/cerberus-fastapi:latest
     restart: unless-stopped
     command: celery -A src.celery_app beat --loglevel=info
