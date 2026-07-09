@@ -32,6 +32,7 @@ async def get_optional_project_id(
     request: Request,
     api_key: Annotated[str | None, Header(alias="X-Cerberus-API-Key")] = None,
     db: AsyncSession = Depends(get_db),
+    cache_adapter: CachePort = Depends(get_cache_adapter),
 ) -> UUID | None:
     if api_key:
         if not api_key.startswith("cerb_"):
@@ -41,17 +42,24 @@ async def get_optional_project_id(
             )
 
         key_hash = hashlib.sha256(api_key.encode()).hexdigest()
-        result = await db.execute(
-            select(Project).where(Project.api_key_hash == key_hash)
-        )
-        project = result.scalars().first()
+        cache_key = f"api_key_hash:{key_hash}"
+        cached_project_id = await cache_adapter.get_string(cache_key)
+        
+        if cached_project_id:
+            return UUID(cached_project_id)
 
-        if not project:
+        result = await db.execute(
+            select(Project.id).where(Project.api_key_hash == key_hash)
+        )
+        project_id = result.scalar_one_or_none()
+
+        if not project_id:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API Key"
             )
 
-        return project.id
+        await cache_adapter.set_string(cache_key, str(project_id), ttl=600)
+        return project_id
 
     # No API key means global Cerberus context. This is used by the Cerberus
     # dashboard for tenant/admin auth. Privileged admin APIs must still rely on
@@ -118,10 +126,13 @@ async def get_jwt_payload(
 
     jti = payload["jti"]
 
-    if await cache_adapter.get_string(f"blacklist:{jti}"):
+    keys_to_check = [f"blacklist:{jti}", f"disabled_user:{user.id}"]
+    results = await cache_adapter.mget_strings(keys_to_check)
+
+    if results[0]:
         raise InvalidTokenException("Access token revoked")
 
-    if await cache_adapter.get_string(f"disabled_user:{user.id}"):
+    if results[1]:
         raise InvalidTokenException("Account is disabled")
 
     # Attach the strongly typed UserIdentity so downstream dependencies can access it if needed

@@ -46,6 +46,13 @@ class RedisCacheAdapter:
         """Retrieve a string from Redis."""
         return cast(str | None, await self._client.get(key))
 
+    async def mget_strings(self, keys: list[str]) -> list[str | None]:
+        """Retrieve multiple strings from Redis in a single call."""
+        if not keys:
+            return []
+        values = await self._client.mget(keys)
+        return [cast(str | None, val) for val in values]
+
     async def incr(self, key: str, ttl: int | None = None) -> int:
         val = await self._client.incr(key)
         if ttl is not None:

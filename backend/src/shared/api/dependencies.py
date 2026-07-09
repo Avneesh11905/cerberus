@@ -13,6 +13,8 @@ from slowapi import Limiter
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.shared.core.ports.cache import CachePort
+
 from src.shared.config import app_settings, database_settings
 from src.shared.infrastructure.sql.connection import get_db
 from src.shared.infrastructure.sql.tables import Project
@@ -54,11 +56,17 @@ def hash_api_key(api_key: str) -> str:
     return hashlib.sha256(api_key.encode()).hexdigest()
 
 
+def get_cache_adapter() -> CachePort:
+    from src.shared.container import shared_container
+    return shared_container.cache_adapter
+
+
 async def get_project_id_from_api_key(
     x_cerberus_api_key: Annotated[
         str | None, Header(alias="X-Cerberus-API-Key")
     ] = None,
     db: AsyncSession = Depends(get_db),
+    cache_adapter: CachePort = Depends(get_cache_adapter),
 ) -> UUID | None:
     """
     Dependency that extracts the API key from headers, hashes it, and returns the project ID.
@@ -69,6 +77,12 @@ async def get_project_id_from_api_key(
         return None
 
     api_key_hash = hash_api_key(x_cerberus_api_key)
+    cache_key = f"api_key_hash:{api_key_hash}"
+    cached_project_id = await cache_adapter.get_string(cache_key)
+
+    if cached_project_id:
+        return UUID(cached_project_id)
+
     result = await db.execute(
         select(Project.id).where(Project.api_key_hash == api_key_hash)
     )
@@ -77,4 +91,5 @@ async def get_project_id_from_api_key(
     if not project_id:
         raise HTTPException(status_code=401, detail="Invalid API Key")
 
+    await cache_adapter.set_string(cache_key, str(project_id), ttl=600)
     return project_id

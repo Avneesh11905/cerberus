@@ -36,6 +36,10 @@ class CachePort(Protocol):
         """Retrieve a string value."""
         ...
 
+    async def mget_strings(self, keys: list[str]) -> list[str | None]:
+        """Retrieve multiple string values in a single network round-trip."""
+        ...
+
     async def incr(self, key: str, ttl: int | None = None) -> int:
         """Atomically increment a key and return the new value. If ttl is given, sets expiry on first creation only (NX)."""
         ...
