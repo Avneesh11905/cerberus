@@ -5,44 +5,33 @@ Module: Tasks
 import asyncio
 
 from src.authentication.container import get_container
+from src.celery_app import celery_app
 from src.shared.adapters.logger import AsyncSQLLogger
 from src.shared.config import app_settings
 from src.shared.infrastructure.sql.connection import AsyncSessionLocal
 
 logger = AsyncSQLLogger("BackgroundTasks")
-_token_cleanup_task: asyncio.Task | None = None
-_user_cleanup_task: asyncio.Task | None = None
 
-
-async def _periodic_token_cleanup():
-    """Background task: clean expired/used refresh tokens every 24h."""
-    while True:
+@celery_app.task(name="src.authentication.infrastructure.tasks.clean_expired_tokens")
+def clean_expired_tokens():
+    """Celery task: clean expired/used refresh tokens."""
+    async def _run():
         try:
             async with AsyncSessionLocal() as db:
-                count_tokens = await get_container().refresh_token_repo.cleanup_expired(
-                    db
-                )
+                count_tokens = await get_container().refresh_token_repo.cleanup_expired(db)
                 if count_tokens:
                     await db.commit()
-                    await logger.info(
-                        f"Cleaned up {count_tokens} expired/used refresh tokens"
-                    )
-        except asyncio.CancelledError:
-            break
+                    await logger.info(f"Cleaned up {count_tokens} expired/used refresh tokens")
         except Exception as e:
             await logger.error(f"Token cleanup task failed: {e}")
 
-        try:
-            await asyncio.sleep(86400)
-        except asyncio.CancelledError:
-            break
+    asyncio.run(_run())
 
 
-async def _periodic_user_cleanup():
-    """Background task: clean abandoned unverified users and soft-deleted accounts every 24h."""
-    while True:
-        # Each step uses its own session+commit so a failure in step 2 cannot
-        # roll back the work already done in step 1.
+@celery_app.task(name="src.authentication.infrastructure.tasks.clean_unverified_and_deleted_users")
+def clean_unverified_and_deleted_users():
+    """Celery task: clean abandoned unverified users and soft-deleted accounts."""
+    async def _run():
         try:
             async with AsyncSessionLocal() as db:
                 count_users = await get_container().user_repo.cleanup_unverified_users(
@@ -53,8 +42,6 @@ async def _periodic_user_cleanup():
                     await logger.info(
                         f"Cleaned up {count_users} abandoned unverified user accounts"
                     )
-        except asyncio.CancelledError:
-            break
         except Exception as e:
             await logger.error(f"Unverified user cleanup failed: {e}")
 
@@ -70,38 +57,7 @@ async def _periodic_user_cleanup():
                     await logger.info(
                         f"Permanently purged {count_soft_deleted} soft-deleted user accounts"
                     )
-        except asyncio.CancelledError:
-            break
         except Exception as e:
             await logger.error(f"Soft-deleted user cleanup failed: {e}")
 
-        try:
-            await asyncio.sleep(86400)
-        except asyncio.CancelledError:
-            break
-
-
-def start_token_cleanup_task():
-    global _token_cleanup_task
-    if _token_cleanup_task is None:
-        _token_cleanup_task = asyncio.create_task(_periodic_token_cleanup())
-
-
-def stop_token_cleanup_task():
-    global _token_cleanup_task
-    if _token_cleanup_task is not None:
-        _token_cleanup_task.cancel()
-        _token_cleanup_task = None
-
-
-def start_user_cleanup_task():
-    global _user_cleanup_task
-    if _user_cleanup_task is None:
-        _user_cleanup_task = asyncio.create_task(_periodic_user_cleanup())
-
-
-def stop_user_cleanup_task():
-    global _user_cleanup_task
-    if _user_cleanup_task is not None:
-        _user_cleanup_task.cancel()
-        _user_cleanup_task = None
+    asyncio.run(_run())

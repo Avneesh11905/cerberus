@@ -192,6 +192,7 @@ dependencies = [
     { name = "asyncpg" },
     { name = "authlib" },
     { name = "celery", extra = ["redis"] },
+    { name = "celery-batches" },
     { name = "cryptography" },
     { name = "email-validator" },
     { name = "fastapi" },
@@ -218,6 +219,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "python-dotenv" },
     { name = "types-authlib" },
 ]
 
@@ -228,6 +230,7 @@ requires-dist = [
     { name = "asyncpg", specifier = "==0.31.0" },
     { name = "authlib", specifier = "==1.7.2" },
     { name = "celery", extras = ["redis"], specifier = ">=5.3.1" },
+    { name = "celery-batches", specifier = ">=0.11" },
     { name = "cryptography", specifier = ">=41.0.0" },
     { name = "email-validator", specifier = "==2.3.0" },
     { name = "fastapi", specifier = "==0.136.3" },
@@ -253,7 +256,10 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "types-authlib", specifier = ">=1.6.11.20260518" }]
+dev = [
+    { name = "python-dotenv", specifier = ">=1.0.1" },
+    { name = "types-authlib", specifier = ">=1.6.11.20260518" },
+]
 
 [[package]]
 name = "billiard"
@@ -287,6 +293,18 @@ wheels = [
 [package.optional-dependencies]
 redis = [
     { name = "redis" },
+]
+
+[[package]]
+name = "celery-batches"
+version = "0.11"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "celery" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1c/3b/70d153e4a394ccab0d4cdb53876c46e62e607e944d20290c34f9887d73a1/celery_batches-0.11.tar.gz", hash = "sha256:a6a408b80d2dddb677b25113a3228a1a5ff00936eb34eedaa3932138a451a9b6", size = 8514, upload-time = "2026-01-16T21:14:18.815Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ed/ea/8cf611e1350abaafdcaba372b7ea40ace6fbaffe2d2ed89616b23ec4e649/celery_batches-0.11-py3-none-any.whl", hash = "sha256:3868f621a2805154bc0423f61a49d5fec5b91272c6756f293980b2689ab9da63", size = 8685, upload-time = "2026-01-16T21:14:17.555Z" },
 ]
 
 [[package]]

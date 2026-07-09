@@ -8,19 +8,21 @@ import asyncio
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import delete, select
+from celery_batches import Batches  # type: ignore
 
+from src.celery_app import celery_app
 from src.shared.adapters.logger import AsyncSQLLogger
 from src.shared.config import log_settings
 from src.shared.infrastructure.sql.connection import AsyncSessionLocal
 from src.shared.infrastructure.sql.tables import SystemLog
 
 logger = AsyncSQLLogger("LogCleanupTask")
-_cleanup_task: asyncio.Task | None = None
 
 
-async def _periodic_log_cleanup():
-    """Background task: clean old logs."""
-    while True:
+@celery_app.task(name="src.shared.infrastructure.tasks.clean_old_system_logs")
+def clean_old_system_logs():
+    """Celery task: clean old system logs."""
+    async def _run():
         try:
             async with AsyncSessionLocal() as db:
                 cutoff_date = datetime.now(timezone.utc) - timedelta(
@@ -46,34 +48,58 @@ async def _periodic_log_cleanup():
                     
                     deleted_batch = getattr(result, "rowcount", 0)
                     total_deleted += deleted_batch
-                    
-                    # Yield back to event loop to prevent blocking
-                    await asyncio.sleep(0.5)
 
                 if total_deleted > 0:
                     await logger.info(f"Cleaned up {total_deleted} old logs")
-        except asyncio.CancelledError:
-            break
         except Exception as e:
             await logger.error(f"Log cleanup failed: {e}")
 
-        # Sleep for 24 hours
+    asyncio.run(_run())
+
+
+@celery_app.task(
+    name="src.shared.infrastructure.tasks.insert_log_batch_task",
+    base=Batches,
+    flush_every=100,
+    flush_interval=1.0,
+    ignore_result=True
+)
+def insert_log_batch_task(requests):
+    """Celery batched task: process up to 100 log entries at once."""
+    async def _run():
+        entries = []
+        for req in requests:
+            if req.args and len(req.args) == 5:
+                level, source, message, filename, lineno = req.args
+                entries.append(
+                    SystemLog(
+                        level=level,
+                        source=source,
+                        message=message,
+                        file=filename,
+                        line=lineno,
+                    )
+                )
+            elif req.kwargs:
+                entries.append(
+                    SystemLog(
+                        level=req.kwargs.get("level"),
+                        source=req.kwargs.get("source"),
+                        message=req.kwargs.get("message"),
+                        file=req.kwargs.get("filename"),
+                        line=req.kwargs.get("lineno"),
+                    )
+                )
+
+        if not entries:
+            return
+
         try:
-            await asyncio.sleep(86400)
-        except asyncio.CancelledError:
-            break
+            async with AsyncSessionLocal() as db:
+                db.add_all(entries)
+                await db.commit()
+        except Exception as e:
+            import sys
+            sys.stderr.write(f"[LOG INSERT ERROR] {e}\n")
 
-
-def start_log_cleanup_task():
-    """Starts the periodic background task for log cleanup."""
-    global _cleanup_task
-    if _cleanup_task is None:
-        _cleanup_task = asyncio.create_task(_periodic_log_cleanup())
-
-
-def stop_log_cleanup_task():
-    """Stops the periodic background task for log cleanup."""
-    global _cleanup_task
-    if _cleanup_task is not None:
-        _cleanup_task.cancel()
-        _cleanup_task = None
+    asyncio.run(_run())

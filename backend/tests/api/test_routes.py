@@ -193,11 +193,6 @@ def test_client(mock_usecases):
             "src.authentication.api.routes.local.user_profile_repository",
             mock_profile_repo,
         ),
-        patch("src.__init__.start_log_worker_task", new_callable=AsyncMock),
-        patch("src.__init__.start_token_cleanup_task"),
-        patch("src.__init__.start_log_cleanup_task"),
-        patch("src.__init__.stop_token_cleanup_task"),
-        patch("src.__init__.stop_log_cleanup_task"),
     ):
         with TestClient(app) as client:
             yield client

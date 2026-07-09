@@ -77,7 +77,7 @@ docker compose up -d
 Both services include optimized multi-stage `Dockerfile`s for production.
 
 - Set `ENV=production` in your `.env` to enforce strict security policies.
-- Ensure the Celery worker (`celery_worker` in `docker-compose.yml`) is running for background email and cleanup tasks.
+- Ensure the Celery workers (`cerb-celery-worker`, `cerb-celery-logs-worker`) and the Celery Beat scheduler (`cerb-celery-beat`) are running for background tasks, log batching, and periodic cleanups.
 - Never commit `.env` or `docker-compose.yml` to version control.
 
 ---
