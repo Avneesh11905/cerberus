@@ -101,7 +101,7 @@ services:
   cerb-celery-worker:
     image: avneesh11905/cerberus-fastapi:latest
     restart: unless-stopped
-    command: celery -A src.shared.adapters.task_runner.celery_app worker --loglevel=info
+    command: celery -A src.celery_app worker --loglevel=info
     env_file:
       - .env
     depends_on:
@@ -115,10 +115,50 @@ services:
     networks:
       - cerberus_network
     healthcheck:
-      test: [ "CMD-SHELL", "celery -A src.shared.adapters.task_runner.celery_app inspect ping" ]
+      test: [ "CMD-SHELL", "celery -A src.celery_app inspect ping" ]
       interval: 5s
       timeout: 5s
       retries: 5
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  cerb-celery-beat:
+    image: avneesh11905/cerberus-fastapi:latest
+    restart: unless-stopped
+    command: celery -A src.celery_app beat --loglevel=info
+    env_file:
+      - .env
+    depends_on:
+      cerb-postgres:
+        condition: service_healthy
+      cerb-redis:
+        condition: service_healthy
+    volumes:
+      - ./backend/keys:/app/keys:ro
+    networks:
+      - cerberus_network
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  cerb-celery-logs-worker:
+    image: avneesh11905/cerberus-fastapi:latest
+    restart: unless-stopped
+    command: celery -A src.celery_app worker -Q logs --loglevel=info
+    env_file:
+      - .env
+    depends_on:
+      cerb-postgres:
+        condition: service_healthy
+      cerb-redis:
+        condition: service_healthy
+    volumes:
+      - ./backend/keys:/app/keys:ro
+    networks:
+      - cerberus_network
     logging:
       options:
         max-size: "10m"
