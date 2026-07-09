@@ -355,7 +355,10 @@ shared_container.task_runner.add_task("src.authentication.infrastructure.tasks.s
 ```
 
 **Worker Lifecycle:**
-In production (and `docker-compose.yml`), a dedicated `celery_worker` container runs to consume and execute these tasks in the background asynchronously.
+In production (and `docker-compose.yml`), there are three Celery containers:
+- `cerb-celery-worker`: Standard worker for processing emails and other background tasks.
+- `cerb-celery-logs-worker`: Specialized worker bound to the `logs` queue using `celery-batches` for high-throughput DB log insertion.
+- `cerb-celery-beat`: Celery Beat scheduler for recurring tasks (like purging expired tokens and old system logs).
 
 ---
 
@@ -365,7 +368,7 @@ Before deploying Cerberus to a live environment, you **must** verify the followi
 
 - [ ] **Set Environment to Production:** Ensure `ENV="production"` is set to enforce secure cookies and disable debug endpoints.
 - [ ] **Strictly Define CORS Origins:** Ensure `CORS_ORIGINS` is explicitly defined in your `.env`.
-- [ ] **Run the Celery Worker:** Ensure the background task worker is running alongside your FastAPI instance.
+- [ ] **Run the Celery Workers & Beat Scheduler:** Ensure the background task workers and beat scheduler are running alongside your FastAPI instance.
 - [ ] **Understand Cookie Boundaries (`SameSite`):** Because Cerberus uses `SameSite=None; Secure` cookies and the exchange code pattern, the frontend and backend can be on completely separate domains. No shared root domain or reverse proxy is required. Just ensure HTTPS is used on both ends.
 - [ ] **Cloudflare Tunnel & Proxy Configuration:** If deployed via `cloudflared` (especially through a Docker bridge), ensure `ProxyHeadersMiddleware` uses `trusted_hosts="*"` so `X-Forwarded-Proto` is read correctly for `https` redirects. Additionally, ensure `get_client_ip()` in `src/shared/api/dependencies.py` reads `CF-Connecting-IP` (set by Cloudflare) instead of `X-Forwarded-For` to prevent rate-limit bypass via IP spoofing.
 - [ ] **Switch projects to Production mode:** Ensure all projects are toggled to `environment=production` before go-live. Development mode disables rate limiting globally for that project's endpoints.

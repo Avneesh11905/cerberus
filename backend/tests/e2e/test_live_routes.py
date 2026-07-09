@@ -1,5 +1,8 @@
 # ruff: noqa: E402
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 TEST_DB_URL = os.environ.get("DB_ASYNC_URL", "postgresql+asyncpg://user:password@localhost:5432/cerberus")
 
