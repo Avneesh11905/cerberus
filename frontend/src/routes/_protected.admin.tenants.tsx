@@ -4,6 +4,7 @@ import { useAdmin } from '#/hooks/useAdmin'
 import { DataTable } from '#/components/DataTable'
 import { queryClient } from './__root'
 import type { User } from '#/lib/auth'
+import { UserRole } from '#/lib/auth'
 import { useAuth } from '#/lib/auth'
 import { Search } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
@@ -15,7 +16,7 @@ export const Route = createFileRoute('/_protected/admin/tenants')({
   beforeLoad: () => {
     const user = queryClient.getQueryData<User>(['me'])
     //  Same cold-cache fix as admin.logs — redirect when user is undefined too.
-    if (!user || user.role !== 'admin') {
+    if (!user || user.role !== UserRole.ADMIN) {
       throw redirect({ to: '/dashboard' })
     }
   },
@@ -27,7 +28,7 @@ function AdminTenants() {
   const [searchTerm, setSearchTerm] = useState('')
   const { tenants, isLoadingTenants, updateTenantStatus } = useAdmin()
 
-  if (user && user.role !== 'admin') {
+  if (user && user.role !== UserRole.ADMIN) {
     return <Navigate to="/dashboard" />
   }
 

@@ -1,6 +1,6 @@
 import { Link, useNavigate, useLocation } from '@tanstack/react-router'
 import { LogOut, Settings, LayoutDashboard, Shield } from 'lucide-react'
-import { useAuth } from '#/lib/auth'
+import { useAuth, UserRole } from '#/lib/auth'
 import { API_URL } from '#/lib/api'
 import {
   DropdownMenu,
@@ -55,7 +55,7 @@ export function UserNav() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        {user.role === 'admin' && (
+        {user.role === UserRole.ADMIN && (
           <>
             <DropdownMenuItem asChild>
               <Link

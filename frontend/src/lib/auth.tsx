@@ -3,10 +3,16 @@ import { createContext, useContext } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, setAccessToken, setCsrfToken } from './api'
 
+export enum UserRole {
+  USER = 'USER',
+  TENANT = 'TENANT',
+  ADMIN = 'ADMIN',
+}
+
 export interface User {
   id: string
   email: string
-  role: 'user' | 'tenant' | 'admin'
+  role: UserRole
   project_id: string | null
   name?: string
   picture?: string

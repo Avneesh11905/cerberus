@@ -26,7 +26,7 @@ import {
 } from 'lucide-react'
 import { SidebarUserNav } from '#/components/SidebarUserNav'
 import { useProjects } from '#/hooks/useProjects'
-import { useAuth } from '#/lib/auth'
+import { useAuth, UserRole } from '#/lib/auth'
 import { ThemeToggle } from '#/components/ThemeToggle'
 
 export function AppSidebar() {
@@ -294,7 +294,7 @@ export function AppSidebar() {
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-                {user?.role === 'admin' && (
+                {user?.role === UserRole.ADMIN && (
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild size="lg" isActive={isAdmin}>
                       <Link to="/admin/tenants">

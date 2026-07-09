@@ -5,6 +5,7 @@ import { DataTable } from '#/components/DataTable'
 import { queryClient } from './__root'
 import { useAuth } from '#/lib/auth'
 import type { User } from '#/lib/auth'
+import { UserRole } from '#/lib/auth'
 import type { ColumnDef } from '@tanstack/react-table'
 import {
   Tooltip,
@@ -27,7 +28,7 @@ export const Route = createFileRoute('/_protected/admin/logs')({
     const user = queryClient.getQueryData<User>(['me'])
     //  Must also redirect when user is undefined (cold cache) — previously a fresh
     // tab would skip this check entirely because `undefined && ...` evaluates to false.
-    if (!user || user.role !== 'admin') {
+    if (!user || user.role !== UserRole.ADMIN) {
       throw redirect({ to: '/dashboard' })
     }
   },
@@ -69,7 +70,7 @@ function AdminLogs() {
   } = useAdminLogs(page, pageSize, logLevel, '')
   const hasMore = (logs?.length ?? 0) >= pageSize
 
-  if (user && user.role !== 'admin') {
+  if (user && user.role !== UserRole.ADMIN) {
     return <Navigate to="/dashboard" />
   }
 
