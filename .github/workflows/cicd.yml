@@ -4,9 +4,19 @@ on:
   push:
     branches:
       - '**'
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.github/workflows/**'
   pull_request:
     branches:
       - main
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.github/workflows/**'
   workflow_dispatch:
 
 concurrency:
@@ -34,10 +44,10 @@ jobs:
           filters: |
             backend:
               - 'backend/**'
-              - '.github/workflows/**'
+              - '!backend/**/*.md'
             frontend:
               - 'frontend/**'
-              - '.github/workflows/**'
+              - '!frontend/**/*.md'
 
   python-ci:
     needs: changes
