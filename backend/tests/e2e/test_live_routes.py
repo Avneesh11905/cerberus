@@ -1,3 +1,4 @@
+# ruff: noqa: E402
 import os
 
 TEST_DB_URL = os.environ.get("DB_ASYNC_URL", "postgresql+asyncpg://user:password@localhost:5432/cerberus")
