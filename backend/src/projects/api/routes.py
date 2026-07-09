@@ -106,6 +106,20 @@ def _origin_from_url(url: str) -> str:
     return f"{parsed.scheme}://{parsed.netloc}".rstrip("/")
 
 
+async def _get_project_or_404(
+    uow: SQLAlchemyUnitOfWork, project_id: UUID, tenant_id: UUID
+) -> Project:
+    result = await uow.session.execute(
+        select(Project).where(
+            Project.id == project_id, Project.tenant_id == tenant_id
+        )
+    )
+    project = result.scalar_one_or_none()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return project
+
+
 @projects_router.post("/", response_model=ProjectCreateRes)
 async def create_project(
     req: ProjectCreateReq,
@@ -182,14 +196,7 @@ async def delete_project(
 ):
     """Delete a project and cascade delete all its end-users."""
     async with uow:
-        result = await uow.session.execute(
-            select(Project).where(
-                Project.id == project_id, Project.tenant_id == user.id
-            )
-        )
-        project = result.scalar_one_or_none()
-        if not project:
-            raise HTTPException(status_code=404, detail="Project not found")
+        project = await _get_project_or_404(uow, project_id, user.id)
 
         await uow.session.delete(project)
     return
@@ -204,14 +211,7 @@ async def update_project_oauth(
 ):
     """Update OAuth configuration (client_id, client_secret) for a project."""
     async with uow:
-        result = await uow.session.execute(
-            select(Project).where(
-                Project.id == project_id, Project.tenant_id == user.id
-            )
-        )
-        project = result.scalar_one_or_none()
-        if not project:
-            raise HTTPException(status_code=404, detail="Project not found")
+        project = await _get_project_or_404(uow, project_id, user.id)
 
         incoming_config = {
             provider: provider_config.model_dump()
@@ -254,14 +254,7 @@ async def update_project_origins(
 ):
     """Update CORS allowed origins for a project."""
     async with uow:
-        result = await uow.session.execute(
-            select(Project).where(
-                Project.id == project_id, Project.tenant_id == user.id
-            )
-        )
-        project = result.scalar_one_or_none()
-        if not project:
-            raise HTTPException(status_code=404, detail="Project not found")
+        project = await _get_project_or_404(uow, project_id, user.id)
 
         cleaned_origins = [
             _normalize_origin(origin, project.environment)
@@ -284,14 +277,7 @@ async def update_project_environment(
 ):
     """Update environment mode for a project."""
     async with uow:
-        result = await uow.session.execute(
-            select(Project).where(
-                Project.id == project_id, Project.tenant_id == user.id
-            )
-        )
-        project = result.scalar_one_or_none()
-        if not project:
-            raise HTTPException(status_code=404, detail="Project not found")
+        project = await _get_project_or_404(uow, project_id, user.id)
 
         project.environment = req.environment
         await uow.session.flush()
@@ -308,14 +294,7 @@ async def update_project_frontend_url(
 ):
     """Update frontend URL for a project."""
     async with uow:
-        result = await uow.session.execute(
-            select(Project).where(
-                Project.id == project_id, Project.tenant_id == user.id
-            )
-        )
-        project = result.scalar_one_or_none()
-        if not project:
-            raise HTTPException(status_code=404, detail="Project not found")
+        project = await _get_project_or_404(uow, project_id, user.id)
 
         if req.frontend_url:
             frontend_url = _validate_frontend_url(req.frontend_url, project.environment)
@@ -345,14 +324,7 @@ async def update_project_name(
 ):
     """Update name for a project."""
     async with uow:
-        result = await uow.session.execute(
-            select(Project).where(
-                Project.id == project_id, Project.tenant_id == user.id
-            )
-        )
-        project = result.scalar_one_or_none()
-        if not project:
-            raise HTTPException(status_code=404, detail="Project not found")
+        project = await _get_project_or_404(uow, project_id, user.id)
 
         project.name = req.name
         await uow.session.flush()
@@ -371,14 +343,7 @@ async def get_project_secrets(
     Note: The plaintext API key cannot be retrieved again, only the hash is stored.
     """
     async with uow:
-        result = await uow.session.execute(
-            select(Project).where(
-                Project.id == project_id, Project.tenant_id == user.id
-            )
-        )
-        project = result.scalar_one_or_none()
-        if not project:
-            raise HTTPException(status_code=404, detail="Project not found")
+        project = await _get_project_or_404(uow, project_id, user.id)
 
     return ProjectSecretsRes(
         api_key_hash=project.api_key_hash,
@@ -396,14 +361,7 @@ async def rotate_project_api_key(
 ):
     """Rotates the API key, invalidating the old one immediately."""
     async with uow:
-        result = await uow.session.execute(
-            select(Project).where(
-                Project.id == project_id, Project.tenant_id == user.id
-            )
-        )
-        project = result.scalar_one_or_none()
-        if not project:
-            raise HTTPException(status_code=404, detail="Project not found")
+        project = await _get_project_or_404(uow, project_id, user.id)
 
         api_key = generate_api_key(project.id)
         hashed_api_key = hash_api_key(api_key)
@@ -428,14 +386,7 @@ async def rotate_project_jwt_secret(
     Note: Rotation immediately invalidates all active access tokens for the project.
     """
     async with uow:
-        result = await uow.session.execute(
-            select(Project).where(
-                Project.id == project_id, Project.tenant_id == user.id
-            )
-        )
-        project = result.scalar_one_or_none()
-        if not project:
-            raise HTTPException(status_code=404, detail="Project not found")
+        project = await _get_project_or_404(uow, project_id, user.id)
 
         private_pem, public_pem = await generate_rsa_keypair()
 

@@ -9,7 +9,6 @@ To swap the email provider (e.g. Resend -> SendGrid), replace the SharedEmailCli
 implementation in the container — this file never changes.
 """
 
-import asyncio
 import datetime
 from pathlib import Path
 
@@ -19,7 +18,6 @@ from src.authentication.core.ports.email_sender import EmailSenderPort  # noqa: 
 from src.shared.core.ports.email_client import SharedEmailClientPort
 from src.shared.core.ports.logger import LoggerPort
 from src.shared.core.ports.task_runner import TaskRunnerPort
-from src.authentication.infrastructure.tasks import dispatch_email_task
 
 
 class AuthEmailService:
@@ -58,6 +56,7 @@ class AuthEmailService:
     async def _render_and_dispatch(
         self, to_email: str, subject: str, template_name: str, context: dict
     ) -> None:
+        from src.authentication.infrastructure.tasks import dispatch_email_task
         try:
             template = self._jinja_env.get_template(template_name)
             html_content = template.render(**context)

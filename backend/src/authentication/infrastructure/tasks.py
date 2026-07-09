@@ -8,6 +8,7 @@ from src.authentication.container import get_container
 from src.celery_app import celery_app
 from src.shared.adapters.logger import AsyncSQLLogger
 from src.shared.config import app_settings
+from src.shared.container import shared_container
 from src.shared.infrastructure.sql.connection import AsyncSessionLocal
 
 logger = AsyncSQLLogger("BackgroundTasks")
@@ -60,19 +61,16 @@ def clean_unverified_and_deleted_users():
         except Exception as e:
             await logger.error(f"Soft-deleted user cleanup failed: {e}")
 
-    asyncio.run(_run())
-
-
-from src.shared.container import shared_container
-
 @celery_app.task(name="src.authentication.infrastructure.tasks.dispatch_email_task")
 def dispatch_email_task(to_email: str, subject: str, html_content: str):
     """Celery task: Dispatch an email."""
-    async def _run():
-        try:
-            await shared_container.email_client.send_email(to_email, subject, html_content)
+    try:
+        shared_container.email_client.send_email(to_email, subject, html_content)
+        async def _log():
             await logger.info(f"Email '{subject}' sent to {to_email} via Celery")
-        except Exception as e:
-            await logger.error(f"Failed to send email '{subject}' to {to_email} via Celery: {e}")
-
-    asyncio.run(_run())
+        asyncio.run(_log())
+    except Exception as e:
+        error_msg = f"Failed to send email '{subject}' to {to_email} via Celery: {e}"
+        async def _log():
+            await logger.error(error_msg)
+        asyncio.run(_log())

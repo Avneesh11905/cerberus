@@ -18,6 +18,7 @@ from src.authentication.core.ports.email_sender import EmailSenderPort
 from src.authentication.core.ports.repository.project import ProjectRepositoryPort
 from src.authentication.core.ports.security.access_token import AccessTokenPort
 from src.authentication.core.ports.security.claims_provider import ClaimsProviderPort
+from src.authentication.core.utils import format_device_info
 from src.shared.config import app_settings
 from src.shared.core.ports.uow import UoWPort
 
@@ -75,10 +76,12 @@ class OAuthCallbackUseCase[SessionType]:
                 break
 
         if is_new_device:
+            import asyncio
+            device_info = await asyncio.to_thread(format_device_info, client_meta.user_agent)
             await self._email_sender.send_login_detected_email(
                 to_email=user.email,
                 ip_address=client_meta.ip_address or "Unknown IP",
-                device_info=client_meta.user_agent or "Unknown Device",
+                device_info=device_info,
             )
 
     async def execute(
