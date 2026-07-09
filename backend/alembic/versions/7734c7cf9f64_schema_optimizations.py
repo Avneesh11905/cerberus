@@ -25,12 +25,16 @@ def upgrade() -> None:
     userrole.create(op.get_bind(), checkfirst=True)
 
     op.create_index('idx_allowed_origins_gin', 'projects', ['allowed_origins'], unique=False, postgresql_using='gin')
+    
+    op.alter_column('users', 'role', server_default=None)
+    
     op.alter_column('users', 'role',
                existing_type=sa.VARCHAR(),
                type_=userrole,
                existing_nullable=False,
-               postgresql_using='role::userrole',
-               existing_server_default=sa.text("'USER'::character varying"))
+               postgresql_using='role::userrole')
+               
+    op.alter_column('users', 'role', server_default=sa.text("'USER'::userrole"))
     op.create_index('idx_active_users', 'users', ['is_active'], unique=False, postgresql_where=sa.text('deleted_at IS NULL AND is_active = true'))
     # ### end Alembic commands ###
 
