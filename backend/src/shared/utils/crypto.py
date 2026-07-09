@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import secrets
 from uuid import UUID
@@ -21,7 +22,7 @@ def verify_api_key(api_key: str, hashed_key: str) -> bool:
     return hash_api_key(api_key) == hashed_key
 
 
-def generate_rsa_keypair() -> tuple[str, str]:
+def _generate_rsa_keypair_sync() -> tuple[str, str]:
     """
     Generates a 2048-bit RSA keypair.
     Returns (private_key_pem, public_key_pem)
@@ -44,3 +45,12 @@ def generate_rsa_keypair() -> tuple[str, str]:
     ).decode("utf-8")
 
     return private_pem, public_pem
+
+
+async def generate_rsa_keypair() -> tuple[str, str]:
+    """
+    Generates a 2048-bit RSA keypair asynchronously using a threadpool.
+    Returns (private_key_pem, public_key_pem)
+    """
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, _generate_rsa_keypair_sync)

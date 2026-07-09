@@ -8,7 +8,7 @@ from redis.asyncio import Redis
 from src.shared.adapters.cache.redis_cache import RedisCacheAdapter
 from src.shared.adapters.email_client import ResendEmailClient
 from src.shared.adapters.encryption import FernetEncryptionAdapter
-from src.shared.adapters.task_runner.asyncio_task_runner import AsyncioTaskRunner
+from src.shared.adapters.task_runner.celery_task_runner import CeleryTaskRunner
 from src.shared.config import app_settings, database_settings, email_settings
 
 
@@ -17,7 +17,7 @@ class SharedContainer:
         # =====================================================================
         # 1. TASK RUNNER
         # =====================================================================
-        self.task_runner = AsyncioTaskRunner()
+        self.task_runner = CeleryTaskRunner()
 
         # =====================================================================
         # 2. CACHE ADAPTER

@@ -116,7 +116,7 @@ async def create_project(
     project_id = uuid7()
     api_key = generate_api_key(project_id)
     hashed_api_key = hash_api_key(api_key)
-    private_pem, public_pem = generate_rsa_keypair()
+    private_pem, public_pem = await generate_rsa_keypair()
 
     project = Project(
         id=project_id,
@@ -437,7 +437,7 @@ async def rotate_project_jwt_secret(
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
 
-        private_pem, public_pem = generate_rsa_keypair()
+        private_pem, public_pem = await generate_rsa_keypair()
 
         project.private_key = shared_container.encryption_adapter.encrypt(private_pem)
         project.public_key = public_pem

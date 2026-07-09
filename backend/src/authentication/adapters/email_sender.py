@@ -19,6 +19,7 @@ from src.authentication.core.ports.email_sender import EmailSenderPort  # noqa: 
 from src.shared.core.ports.email_client import SharedEmailClientPort
 from src.shared.core.ports.logger import LoggerPort
 from src.shared.core.ports.task_runner import TaskRunnerPort
+from src.authentication.infrastructure.tasks import dispatch_email_task
 
 
 class AuthEmailService:
@@ -54,20 +55,21 @@ class AuthEmailService:
         )
         self._jinja_env.globals["now"] = datetime.datetime.now
 
-    async def _render_and_send(
+    async def _render_and_dispatch(
         self, to_email: str, subject: str, template_name: str, context: dict
     ) -> None:
         try:
             template = self._jinja_env.get_template(template_name)
             html_content = template.render(**context)
-            loop = asyncio.get_running_loop()
-            await loop.run_in_executor(
-                None, self._client.send_email, to_email, subject, html_content
+            self._task_runner.add_task(
+                dispatch_email_task,
+                to_email=to_email,
+                subject=subject,
+                html_content=html_content,
             )
-            await self._logger.info(f"Email '{subject}' sent to {to_email}")
         except Exception as e:
             await self._logger.error(
-                f"Failed to send email '{subject}' to {to_email}: {e}"
+                f"Failed to dispatch email '{subject}' to {to_email}: {e}"
             )
 
     async def send_welcome_email(self, to_email: str, name: str | None) -> None:
@@ -78,8 +80,7 @@ class AuthEmailService:
             "login_url": f"{self._frontend_url}/",
             "theme": self._template_name,
         }
-        self._task_runner.add_task(
-            self._render_and_send,
+        await self._render_and_dispatch(
             to_email=to_email,
             subject=f"Welcome to {self._proj_name}!",
             template_name="onboarding/welcome.html",
@@ -92,8 +93,7 @@ class AuthEmailService:
             "proj_name": self._proj_name,
             "theme": self._template_name,
         }
-        self._task_runner.add_task(
-            self._render_and_send,
+        await self._render_and_dispatch(
             to_email=to_email,
             subject=f"Password Reset - {self._proj_name}",
             template_name="security/password_reset.html",
@@ -106,8 +106,7 @@ class AuthEmailService:
             "proj_name": self._proj_name,
             "theme": self._template_name,
         }
-        self._task_runner.add_task(
-            self._render_and_send,
+        await self._render_and_dispatch(
             to_email=to_email,
             subject=f"Verify your Email - {self._proj_name}",
             template_name="security/otp_verification.html",
@@ -124,8 +123,7 @@ class AuthEmailService:
             "theme": self._template_name,
             "forgot_password_url": f"{self._frontend_url}/forgot-password",
         }
-        self._task_runner.add_task(
-            self._render_and_send,
+        await self._render_and_dispatch(
             to_email=to_email,
             subject=f"Security Alert: Your {self._proj_name} account was restored",
             template_name="security/account_restored.html",
@@ -145,8 +143,7 @@ class AuthEmailService:
             "ip_address": ip_address,
             "device_info": device_info,
         }
-        self._task_runner.add_task(
-            self._render_and_send,
+        await self._render_and_dispatch(
             to_email=to_email,
             subject=f"New Login Detected - {self._proj_name}",
             template_name="security/login_detected.html",

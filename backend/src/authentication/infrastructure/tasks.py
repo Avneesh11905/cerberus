@@ -61,3 +61,18 @@ def clean_unverified_and_deleted_users():
             await logger.error(f"Soft-deleted user cleanup failed: {e}")
 
     asyncio.run(_run())
+
+
+from src.shared.container import shared_container
+
+@celery_app.task(name="src.authentication.infrastructure.tasks.dispatch_email_task")
+def dispatch_email_task(to_email: str, subject: str, html_content: str):
+    """Celery task: Dispatch an email."""
+    async def _run():
+        try:
+            await shared_container.email_client.send_email(to_email, subject, html_content)
+            await logger.info(f"Email '{subject}' sent to {to_email} via Celery")
+        except Exception as e:
+            await logger.error(f"Failed to send email '{subject}' to {to_email} via Celery: {e}")
+
+    asyncio.run(_run())

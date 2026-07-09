@@ -5,9 +5,9 @@
 docker-compose.yml
 
 # Docker Volumes
-postgres/
-redis/
-keys/
+/postgres/
+/redis/
+/keys/
 
 # Python
 __pycache__/
