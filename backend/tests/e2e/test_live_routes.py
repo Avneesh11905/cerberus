@@ -1,8 +1,10 @@
 import os
 
+TEST_DB_URL = os.environ.get("DB_ASYNC_URL", "postgresql+asyncpg://user:password@localhost:5432/cerberus")
+
 # Override environment variables before any app modules are imported
-os.environ["CERBERUS_E2E_DB_URL"] = "sqlite+aiosqlite:///./test_live_e2e.db"
-os.environ["DB_ASYNC_URL"] = "sqlite+aiosqlite:///./test_live_e2e.db"
+os.environ["CERBERUS_E2E_DB_URL"] = TEST_DB_URL
+os.environ["DB_ASYNC_URL"] = TEST_DB_URL
 
 import uuid
 import asyncio
@@ -19,7 +21,7 @@ from tests.conftest import MockCache
 from src import app
 
 # --- Configuration ---
-TEST_DB_URL = "sqlite+aiosqlite:///./test_live_e2e.db"
+# TEST_DB_URL is already defined at the top of the file
 
 test_engine = create_async_engine(TEST_DB_URL)
 TestSessionLocal = async_sessionmaker(
