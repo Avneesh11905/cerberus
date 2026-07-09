@@ -8,7 +8,6 @@ on:
       - '**.md'
       - 'LICENSE'
       - '.gitignore'
-      - '.github/workflows/**'
   pull_request:
     branches:
       - main
@@ -16,7 +15,6 @@ on:
       - '**.md'
       - 'LICENSE'
       - '.gitignore'
-      - '.github/workflows/**'
   workflow_dispatch:
 
 concurrency:
@@ -31,6 +29,7 @@ env:
   FRONTEND_IMAGE_NAME: avneesh11905/cerberus-vite
 
 jobs:
+  # ── Path filter ─────────────────────────────────────────────────────────────
   changes:
     runs-on: ubuntu-latest
     outputs:
@@ -39,7 +38,8 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          fetch-depth: 0
+          # fetch-depth: 2 is sufficient for dorny/paths-filter to diff HEAD~1
+          fetch-depth: 2
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -51,6 +51,7 @@ jobs:
               - 'frontend/**'
               - '!frontend/**/*.md'
 
+  # ── Backend CI ──────────────────────────────────────────────────────────────
   python-ci:
     needs: changes
     if: needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch'
@@ -90,16 +91,25 @@ jobs:
         with:
           python-version: '3.14'
           enable-cache: true
-          
-      - name: Install backend dependencies and run tests
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Set up environment
         run: |
-          uv sync --dev
           cp ../.env.example .env
           uv run scripts/generate_keys.py
-          uv run ruff check .
-          uv run mypy . --check-untyped-defs
-          uv run pytest
 
+      - name: Lint (ruff)
+        run: uv run ruff check .
+
+      - name: Type-check (mypy)
+        run: uv run mypy . --check-untyped-defs
+
+      - name: Run tests (pytest)
+        run: uv run pytest
+
+  # ── Frontend CI ─────────────────────────────────────────────────────────────
   node-ci:
     needs: changes
     if: needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch'
@@ -118,21 +128,30 @@ jobs:
           cache: 'npm'
           cache-dependency-path: './frontend/package-lock.json'
 
-      - name: Install frontend dependencies and run tests
-        run: |
-          npm ci
-          npm run lint
-          npm run typecheck
-          npm run check
-          npm run test
+      - name: Install dependencies
+        run: npm ci
 
+      - name: Lint (eslint)
+        run: npm run lint
+
+      - name: Type-check (tsc)
+        run: npm run typecheck
+
+      - name: Format check (prettier)
+        run: npm run check
+
+      - name: Run tests (vitest)
+        run: npm run test
+
+  # ── Backend Docker build & push ──────────────────────────────────────────────
   backend-build:
     needs: [changes, python-ci]
-    if: (needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+    # Run on main if backend changed AND CI passed (or was skipped via workflow_dispatch)
+    if: |
+      (needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch') &&
+      github.ref == 'refs/heads/main' &&
+      (needs.python-ci.result == 'success' || needs.python-ci.result == 'skipped')
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./backend
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -140,7 +159,7 @@ jobs:
       - name: Read backend version
         id: version
         run: |
-          VERSION=$(grep '^BACKEND_VERSION=' ../version.env | cut -d '=' -f2)
+          VERSION=$(grep '^BACKEND_VERSION=' version.env | cut -d '=' -f2)
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
@@ -164,13 +183,15 @@ jobs:
           cache-from: type=registry,ref=${{ env.BACKEND_IMAGE_NAME }}:buildcache
           cache-to: type=registry,ref=${{ env.BACKEND_IMAGE_NAME }}:buildcache,mode=max
 
+  # ── Frontend Docker build & push ─────────────────────────────────────────────
   frontend-build:
     needs: [changes, node-ci]
-    if: (needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+    # Run on main if frontend changed AND CI passed (or was skipped via workflow_dispatch)
+    if: |
+      (needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch') &&
+      github.ref == 'refs/heads/main' &&
+      (needs.node-ci.result == 'success' || needs.node-ci.result == 'skipped')
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./frontend
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -178,7 +199,7 @@ jobs:
       - name: Read frontend version
         id: version
         run: |
-          VERSION=$(grep '^FRONTEND_VERSION=' ../version.env | cut -d '=' -f2)
+          VERSION=$(grep '^FRONTEND_VERSION=' version.env | cut -d '=' -f2)
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
@@ -204,8 +225,10 @@ jobs:
           cache-from: type=registry,ref=${{ env.FRONTEND_IMAGE_NAME }}:buildcache
           cache-to: type=registry,ref=${{ env.FRONTEND_IMAGE_NAME }}:buildcache,mode=max
 
+  # ── Deploy ───────────────────────────────────────────────────────────────────
   deploy:
     needs: [backend-build, frontend-build]
+    # Deploy only when on main AND at least one build succeeded (the other may be skipped)
     if: |
       always() &&
       github.ref == 'refs/heads/main' &&
@@ -213,6 +236,9 @@ jobs:
       (needs.frontend-build.result == 'success' || needs.frontend-build.result == 'skipped') &&
       (needs.backend-build.result == 'success' || needs.frontend-build.result == 'success')
     runs-on: [self-hosted, home-server]
+    # Deploy job only needs to run docker commands on the self-hosted runner;
+    # no repo read access required at this stage.
+    permissions: {}
     steps:
       - name: Deploy to home server
         working-directory: /home/avneesh/cerberus
@@ -226,13 +252,12 @@ jobs:
         working-directory: /home/avneesh/cerberus
         run: |
           echo "Waiting for services to stabilize..."
-          sleep 10
           docker compose ps
-          
+
           echo "Checking Frontend..."
-          curl -sS -f http://localhost:3001 > /dev/null
-          
+          curl -sS --fail --retry 12 --retry-delay 5 --retry-connrefused http://localhost:3001
+
           echo "Checking Backend (Health)..."
-          curl -sS -f http://localhost:8001/health > /dev/null
-          
+          curl -sS --fail --retry 12 --retry-delay 5 --retry-connrefused http://localhost:8001/health
+
           echo "All services are up and healthy!"
