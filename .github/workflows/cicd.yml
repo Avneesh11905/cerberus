@@ -39,8 +39,8 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          # fetch-depth: 2 is sufficient for dorny/paths-filter to diff HEAD~1
-          fetch-depth: 2
+          # fetch-depth: 0 ensures dorny/paths-filter can diff the entire commit history accurately
+          fetch-depth: 0
       - uses: dorny/paths-filter@v3
         id: filter
         with:
