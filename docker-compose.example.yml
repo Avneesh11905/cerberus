@@ -61,7 +61,7 @@ services:
       - ./nginx/lb.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       cerb-vite:
-        condition: service_started
+        condition: service_healthy
       cerb-fastapi:
         condition: service_healthy
     networks:
@@ -90,7 +90,7 @@ services:
       - cerberus_network
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
-      interval: 15s
+      interval: 5s
       timeout: 5s
       retries: 5
     logging:
@@ -114,6 +114,11 @@ services:
       - ./backend/keys:/app/keys:ro
     networks:
       - cerberus_network
+    healthcheck:
+      test: [ "CMD-SHELL", "celery -A src.shared.adapters.task_runner.celery_app inspect ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     logging:
       options:
         max-size: "10m"
@@ -131,6 +136,11 @@ services:
       - cerberus_network
     env_file:
       - .env
+    healthcheck:
+      test: [ "CMD-SHELL", "pidof nginx || exit 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     logging:
       options:
         max-size: "10m"
