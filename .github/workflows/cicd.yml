@@ -38,6 +38,8 @@ jobs:
       frontend: ${{ steps.filter.outputs.frontend }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -51,7 +53,7 @@ jobs:
 
   python-ci:
     needs: changes
-    if: ${{ needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch' }}
+    if: needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     services:
       redis:
@@ -100,7 +102,7 @@ jobs:
 
   node-ci:
     needs: changes
-    if: ${{ needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch' }}
+    if: needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -112,7 +114,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
           cache: 'npm'
           cache-dependency-path: './frontend/package-lock.json'
 
@@ -126,7 +128,7 @@ jobs:
 
   backend-build:
     needs: [changes, python-ci]
-    if: ${{ (needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' }}
+    if: (needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -164,7 +166,7 @@ jobs:
 
   frontend-build:
     needs: [changes, node-ci]
-    if: ${{ (needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' }}
+    if: (needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     defaults:
       run:

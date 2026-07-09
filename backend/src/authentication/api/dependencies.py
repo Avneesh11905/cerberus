@@ -27,6 +27,9 @@ from src.shared.core.ports.cache import CachePort
 from src.shared.infrastructure.sql.connection import get_db
 from src.shared.infrastructure.sql.tables import Project
 
+def get_cache_adapter() -> CachePort:
+    return get_container().cache_adapter
+
 
 async def get_optional_project_id(
     request: Request,
@@ -101,10 +104,6 @@ async def verify_csrf(request: Request):
 
 def get_access_token_adapter() -> AccessTokenPort:
     return get_container().access_token_adapter
-
-
-def get_cache_adapter() -> CachePort:
-    return get_container().cache_adapter
 
 
 async def get_jwt_payload(
