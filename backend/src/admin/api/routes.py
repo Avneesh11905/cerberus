@@ -19,7 +19,7 @@ admin_router = APIRouter(prefix="/admin", tags=["Admin"])
 @admin_router.get("/tenants", response_model=list[TenantRes])
 async def list_tenants(
     uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
-    admin: Annotated[UserIdentity, Depends(require_role("admin"))],
+    admin: Annotated[UserIdentity, Depends(require_role("ADMIN"))],
 ):
     """List all tenants in the system."""
     async with uow:
@@ -33,7 +33,7 @@ async def update_tenant_status(
     tenant_id: UUID,
     req: TenantStatusUpdateReq,
     uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
-    admin: Annotated[UserIdentity, Depends(require_role("admin"))],
+    admin: Annotated[UserIdentity, Depends(require_role("ADMIN"))],
 ):
     """Enable or disable a tenant (preventing them from logging in if disabled)."""
     async with uow:
@@ -69,7 +69,7 @@ async def update_tenant_status(
 @admin_router.get("/logs", response_model=list[SystemLogRes])
 async def list_system_logs(
     uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
-    admin: Annotated[UserIdentity, Depends(require_role("admin"))],
+    admin: Annotated[UserIdentity, Depends(require_role("ADMIN"))],
     limit: int = Query(50, le=200, description="Max records per page"),
     offset: int = Query(0, ge=0, description="Number of records to skip (cursor)"),
     level: str | None = None,

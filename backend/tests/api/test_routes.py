@@ -391,7 +391,7 @@ def test_authorization_dependencies(test_client):
 
     # Add a dummy protected route to the test app
     @test_client.app.get(
-        "/test/admin-only", dependencies=[Depends(require_role("admin"))]
+        "/test/admin-only", dependencies=[Depends(require_role("ADMIN"))]
     )
     def admin_only():
         return {"msg": "ok"}
@@ -407,7 +407,7 @@ def test_authorization_dependencies(test_client):
 
     # 1. Test role missing
     test_client.app.dependency_overrides[get_jwt_payload] = lambda: {
-        "roles": ["user"],
+        "roles": ["USER"],
         "sub": "123",
     }
     resp = test_client.get(
@@ -417,7 +417,7 @@ def test_authorization_dependencies(test_client):
 
     # 2. Test role present
     test_client.app.dependency_overrides[get_jwt_payload] = lambda: {
-        "roles": ["user", "admin"],
+        "roles": ["USER", "ADMIN"],
         "sub": "123",
     }
     resp = test_client.get(

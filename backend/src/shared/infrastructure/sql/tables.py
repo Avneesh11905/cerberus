@@ -112,8 +112,8 @@ class User(Base):
 
     # Tenancy & Role Control
     role: Mapped[UserRole] = mapped_column(
-        SQLEnum(UserRole, native_enum=True, values_callable=lambda obj: [e.value for e in obj]),
-        server_default=text("'user'"),
+        SQLEnum(UserRole, native_enum=True),
+        server_default=text("'USER'"),
         nullable=False,
     )
     is_active: Mapped[bool] = mapped_column(

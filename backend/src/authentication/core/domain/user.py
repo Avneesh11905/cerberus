@@ -10,9 +10,9 @@ from pydantic import AnyHttpUrl, BaseModel, EmailStr
 
 
 class UserRole(str, Enum):
-    ADMIN = "admin"
-    TENANT = "tenant"
-    USER = "user"
+    ADMIN = "ADMIN"
+    TENANT = "TENANT"
+    USER = "USER"
 
 
 class UserIdentity(BaseModel):

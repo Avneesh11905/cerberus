@@ -110,7 +110,7 @@ def _origin_from_url(url: str) -> str:
 async def create_project(
     req: ProjectCreateReq,
     uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
-    user: Annotated[UserIdentity, Depends(require_role("tenant"))],
+    user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
 ):
     """Create a new project. Returns the API key and RSA keys plaintext exactly ONCE."""
     project_id = uuid7()
@@ -144,7 +144,7 @@ async def create_project(
 
 @projects_router.get("/oauth-providers", response_model=list[OAuthProviderRes])
 async def list_oauth_providers(
-    user: Annotated[UserIdentity, Depends(require_role("tenant"))],
+    user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
 ):
     """Return registered OAuth providers and required config fields."""
     return [
@@ -163,7 +163,7 @@ async def list_oauth_providers(
 @projects_router.get("/", response_model=list[ProjectReadRes])
 async def list_projects(
     uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
-    user: Annotated[UserIdentity, Depends(require_role("tenant"))],
+    user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
 ):
     """List all projects for the current tenant."""
     async with uow:
@@ -178,7 +178,7 @@ async def list_projects(
 async def delete_project(
     project_id: UUID,
     uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
-    user: Annotated[UserIdentity, Depends(require_role("tenant"))],
+    user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
 ):
     """Delete a project and cascade delete all its end-users."""
     async with uow:
@@ -200,7 +200,7 @@ async def update_project_oauth(
     project_id: UUID,
     req: ProjectOauthUpdateReq,
     uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
-    user: Annotated[UserIdentity, Depends(require_role("tenant"))],
+    user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
 ):
     """Update OAuth configuration (client_id, client_secret) for a project."""
     async with uow:
@@ -250,7 +250,7 @@ async def update_project_origins(
     project_id: UUID,
     req: ProjectOriginsUpdateReq,
     uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
-    user: Annotated[UserIdentity, Depends(require_role("tenant"))],
+    user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
 ):
     """Update CORS allowed origins for a project."""
     async with uow:
@@ -280,7 +280,7 @@ async def update_project_environment(
     project_id: UUID,
     req: ProjectEnvUpdateReq,
     uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
-    user: Annotated[UserIdentity, Depends(require_role("tenant"))],
+    user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
 ):
     """Update environment mode for a project."""
     async with uow:
@@ -304,7 +304,7 @@ async def update_project_frontend_url(
     project_id: UUID,
     req: ProjectFrontendUrlUpdateReq,
     uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
-    user: Annotated[UserIdentity, Depends(require_role("tenant"))],
+    user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
 ):
     """Update frontend URL for a project."""
     async with uow:
@@ -341,7 +341,7 @@ async def update_project_name(
     project_id: UUID,
     req: ProjectNameUpdateReq,
     uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
-    user: Annotated[UserIdentity, Depends(require_role("tenant"))],
+    user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
 ):
     """Update name for a project."""
     async with uow:
@@ -364,7 +364,7 @@ async def update_project_name(
 async def get_project_secrets(
     project_id: UUID,
     uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
-    user: Annotated[UserIdentity, Depends(require_role("tenant"))],
+    user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
 ):
     """
     Returns the hashed API key and RSA keys for backup.
@@ -392,7 +392,7 @@ async def get_project_secrets(
 async def rotate_project_api_key(
     project_id: UUID,
     uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
-    user: Annotated[UserIdentity, Depends(require_role("tenant"))],
+    user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
 ):
     """Rotates the API key, invalidating the old one immediately."""
     async with uow:
@@ -421,7 +421,7 @@ async def rotate_project_api_key(
 async def rotate_project_jwt_secret(
     project_id: UUID,
     uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
-    user: Annotated[UserIdentity, Depends(require_role("tenant"))],
+    user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
 ):
     """
     Rotates the RSA keys, invalidating the old ones immediately.
