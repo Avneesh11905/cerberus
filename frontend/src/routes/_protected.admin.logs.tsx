@@ -3,7 +3,8 @@ import { useState } from 'react'
 import { useAdminLogs } from '#/hooks/useAdmin'
 import { DataTable } from '#/components/DataTable'
 import { queryClient } from './__root'
-import { useAuth, UserRole, type User } from '#/lib/auth'
+import { useAuth, UserRole  } from '#/lib/auth'
+import type {User} from '#/lib/auth';
 import type { ColumnDef } from '@tanstack/react-table'
 import {
   Tooltip,
