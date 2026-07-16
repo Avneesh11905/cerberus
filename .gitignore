@@ -1,8 +1,6 @@
 # Secrets and Environment Variables
 .env
 .env.*
-!.env.example
-docker-compose.yml
 
 # Docker Volumes
 /postgres/

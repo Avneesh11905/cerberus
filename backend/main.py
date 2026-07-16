@@ -1,5 +1,8 @@
 import uvicorn
-from src.shared.config import app_settings
+from dotenv import load_dotenv
+
+load_dotenv(".env.local")
+from src.core.config import core_settings  # noqa: E402
 
 
 def main():
@@ -7,7 +10,8 @@ def main():
         "src:app",
         host="0.0.0.0",
         port=8000,
-        reload=(app_settings.ENV == "development"),
+        reload=(core_settings.ENV == "development"),
+        env_file=".env.local",
     )
 
 

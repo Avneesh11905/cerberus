@@ -1,0 +1,198 @@
+name: cerberus
+networks:
+  Cerberus-Network:
+    driver: bridge
+  Observer-Network:
+    external: true
+
+x-backend-env-file: &backend-env-file
+  - .env.backend
+x-frontend-env-file: &frontend-env-file
+  - .env.frontend
+x-database-env-file: &database-env-file
+  - .env
+
+x-backend-image-reusable-for-celery-and-backend: &backend-image avneesh11905/cerberus-fastapi:latest
+
+x-frontend-image: &frontend-image avneesh11905/cerberus-vite:latest
+
+x-nginx-conf-file-to-volume: &nginx-volume
+  - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+
+x-nginx-port-mapping: &nginx-ports
+  - "80:80"
+
+x-database-networks-included-observers-like-adminer-and-insights: &database-networks
+  - Cerberus-Network
+  - Observer-Network
+
+x-common-networks: &common-networks
+  - Cerberus-Network
+
+x-celery-healthcheck-config: &celery-healthcheck-config
+  interval: 10s
+  timeout: 5s
+  retries: 3
+  start_period: 30s
+
+x-database-healthcheck-config: &database-healthcheck-config
+  interval: 5s
+  timeout: 5s
+  retries: 5
+
+x-backend-and-celery-dependencies: &backend-and-celery-deps
+  cerb-postgres:
+    condition: service_healthy
+  cerb-redis:
+    condition: service_healthy
+
+x-restart-policy: &restart-policy unless-stopped
+x-logging-config: &logging-config
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  cerb-postgres:
+    image: postgres:18.4
+    container_name: cerb-postgres
+    restart: *restart-policy
+    shm_size: '256mb'
+    env_file: *database-env-file
+    command: [ "postgres", "-p", "${POSTGRES_PORT:-5432}" ]
+    volumes:
+      - ./postgres:/var/lib/postgresql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -p ${POSTGRES_PORT:-5432}  -d ${POSTGRES_DB:-postgres} -U ${POSTGRES_USER:-postgres}" ]
+      start_period: 30s
+      <<: *database-healthcheck-config
+    networks: *database-networks
+    logging: *logging-config
+
+  cerb-redis:
+    image: redis:8.8.0
+    container_name: cerb-redis
+    restart: *restart-policy
+    env_file: *database-env-file
+    volumes:
+      - ./redis/data:/data
+      - ./redis/redis.acl:/mnt/users.acl:ro
+    command: [ "redis-server", "--port", "${REDIS_PORT:-6379}", "--aclfile", "/mnt/users.acl" ]
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli -p ${REDIS_PORT:-6379} ping | grep -E '(PONG|NOAUTH)'" ]
+      start_period: 10s
+      <<: *database-healthcheck-config
+    networks: *database-networks
+    logging: *logging-config
+
+  cerb-nginx:
+    image: nginx:stable-alpine
+    container_name: cerb-nginx
+    restart: *restart-policy
+    ports: *nginx-ports
+    volumes: *nginx-volume
+    depends_on:
+      cerb-vite:
+        condition: service_healthy
+      cerb-fastapi:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://127.0.0.1:80 > /dev/null 2>&1 || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks: *common-networks
+    logging: *logging-config
+    
+  cerb-migrate:
+    image: *backend-image
+    profiles:
+      - migrate
+    restart: "no"
+    command: ["alembic", "upgrade", "head"]
+    env_file: *backend-env-file
+    depends_on:
+      cerb-postgres:
+        condition: service_healthy
+    volumes:
+      - ./keys:/app/keys:ro
+    networks: *common-networks
+    logging: *logging-config
+
+  cerb-fastapi:
+    image: *backend-image
+    restart:  *restart-policy
+    env_file: *backend-env-file
+    depends_on: *backend-and-celery-deps
+    volumes:
+      - ./backend/keys:/app/keys:ro
+    expose:
+      - "8000"
+    networks: *common-networks
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging: *logging-config
+
+  cerb-celery-worker:
+    image: *backend-image
+    restart: *restart-policy
+    command: celery -A src.core.celery_app worker -Q celery --loglevel=info
+    env_file: *backend-env-file
+    depends_on: *backend-and-celery-deps
+    volumes:
+      - ./backend/keys:/app/keys:ro
+    networks: *common-networks
+    healthcheck:
+      test: [ "CMD-SHELL", "pgrep -f 'celery.*worker' > /dev/null || exit 1" ]
+      <<: *celery-healthcheck-config
+    logging: *logging-config
+
+  cerb-celery-analytics-worker:
+    image: *backend-image
+    restart: *restart-policy
+    command: celery -A src.core.celery_app worker -Q analytics --loglevel=info
+    env_file: *backend-env-file
+    depends_on: *backend-and-celery-deps
+    volumes:
+      - ./backend/keys:/app/keys:ro
+    networks: *common-networks
+    healthcheck:
+      test: [ "CMD-SHELL", "pgrep -f 'celery.*worker' > /dev/null || exit 1" ]
+      <<: *celery-healthcheck-config
+    logging: *logging-config
+
+  cerb-celery-beat:
+    image: *backend-image
+    container_name: cerb-celery-beat
+    restart: *restart-policy
+    command: celery -A src.core.celery_app beat --loglevel=info --schedule=/tmp/celerybeat-schedule --pidfile=
+    env_file: *backend-env-file
+    depends_on: *backend-and-celery-deps
+    volumes:
+      - ./backend/keys:/app/keys:ro
+    networks: *common-networks
+    healthcheck:
+      test: [ "CMD-SHELL", "pgrep -f 'celery.*beat' > /dev/null || exit 1" ]
+      <<: *celery-healthcheck-config
+    logging: *logging-config
+
+  cerb-vite:
+    image: *frontend-image
+    restart: *restart-policy
+    expose:
+      - "3000"
+    networks: *common-networks
+    env_file: *frontend-env-file
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://127.0.0.1:3000 > /dev/null 2>&1 || exit 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging: *logging-config

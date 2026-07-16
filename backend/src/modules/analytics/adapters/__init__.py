@@ -1,0 +1,1 @@
+from .repository import SQLAnalyticsRepository as SQLAnalyticsRepository

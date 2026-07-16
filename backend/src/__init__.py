@@ -1,33 +1,32 @@
+# src root
 import sys
-from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from fastapi.middleware.gzip import GZipMiddleware
-from src.shared.api.middleware import DynamicCORSMiddleware
+from fastapi.responses import FileResponse
 from starlette.middleware.sessions import SessionMiddleware
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
-from src.authentication.api.routes import auth_router
-
-from src.projects.infrastructure.tasks import (
+from src.api.v1_0.router import api_router
+from src.core.config import (
+    core_settings,
+    rate_limit_settings,
+    security_settings,
+)
+from src.core.container import app_container
+from src.core.exceptions import register_exception_handlers
+from src.modules.projects.infrastructure.tasks import (
     start_project_config_sync_task,
     stop_project_config_sync_task,
 )
 from src.shared.adapters.logger import (
     AsyncSQLLogger,
 )
-from src.shared.api.dependencies import limiter
-from src.shared.api.routes.debug_email import router as debug_email_router
-from src.shared.api.routes.health import router as health_router
-from src.shared.config import (
-    app_settings,
+from src.shared.api.middlewares.cors import DynamicCORSMiddleware
+from src.shared.api.middlewares.rate_limit_and_analytics import (
+    RateLimitAndAnalyticsMiddleware,
 )
-from src.shared.core.exceptions import register_exception_handlers
-
-from src.users.api.routes import users_router
-from src.projects.api.routes import projects_router
-from src.admin.api.routes import admin_router
+from src.shared.api.routes.debug_email import router as debug_email_router
 
 logger = AsyncSQLLogger(__name__)
 
@@ -37,7 +36,7 @@ async def lifespan(app: FastAPI):
     is_testing = "pytest" in sys.modules
     if not is_testing:
         # Starts the project config sync background task
-        start_project_config_sync_task(app) 
+        start_project_config_sync_task(app)
     yield
     # Gracefully shut down all background tasks before the app exits
     stop_project_config_sync_task()
@@ -57,15 +56,14 @@ openapi_tags = [
 app = FastAPI(
     title="Cerberus",
     description="The Guardian of Avneesh's Underworld",
-    version="0.1.0",
-    docs_url="/docs" if app_settings.ENV == "development" else None,
-    redoc_url="/redoc" if app_settings.ENV == "development" else None,
+    version=core_settings.VERSION,
+    docs_url="/docs" if core_settings.ENV == "development" else None,
+    redoc_url="/redoc" if core_settings.ENV == "development" else None,
     openapi_tags=openapi_tags,
-    swagger_favicon_url="/favicon.ico",
+    # swagger_favicon_url="/favicon.ico",
     lifespan=lifespan,
 )
 
-app.state.limiter = limiter
 register_exception_handlers(app)
 
 # In dev mode, we automatically whitelist common local frontend ports to save developers headaches
@@ -79,8 +77,8 @@ dev_origins = [
 ]
 origins = list(
     set(
-        app_settings.cors_origins_list
-        + (dev_origins if app_settings.ENV == "development" else [])
+        core_settings.cors_origins_list
+        + (dev_origins if core_settings.ENV == "development" else [])
     )
 )
 
@@ -91,12 +89,10 @@ origins = list(
 
 app.add_middleware(
     SessionMiddleware,
-    secret_key=app_settings.SESSION_SECRET,
-    https_only=(app_settings.ENV != "development"),
-    same_site="none" if app_settings.ENV != "development" else "lax",
+    secret_key=security_settings.SESSION_SECRET,
+    https_only=(core_settings.ENV != "development"),
+    same_site="none" if core_settings.ENV != "development" else "lax",
 )
-
-app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 app.add_middleware(
     DynamicCORSMiddleware,
@@ -117,19 +113,24 @@ app.add_middleware(
 # ProxyHeadersMiddleware must be OUTERMOST so every downstream middleware
 # (CORS, Session, rate limiting) already sees the real client IP from
 # X-Forwarded-For by the time they run.
+app.add_middleware(
+    RateLimitAndAnalyticsMiddleware,
+    core_settings=core_settings,
+    rate_limit_settings=rate_limit_settings,
+    rate_limiter=app_container.rate_limiter,
+    analytics=app_container.analytics_adapter,
+    default_rate=rate_limit_settings.DEFAULT,
+    auth_rate=rate_limit_settings.AUTH,
+)
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 
-app.include_router(auth_router)
-app.include_router(users_router)
-app.include_router(health_router)
-app.include_router(projects_router)
-app.include_router(admin_router)
+app.include_router(api_router)
 
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
-    return FileResponse("src/static/favicon.webp", media_type="image/webp")
+    return FileResponse("src/shared/static/favicon.webp", media_type="image/webp")
 
 
-if app_settings.ENV == "development":
+if core_settings.ENV == "development":
     app.include_router(debug_email_router)

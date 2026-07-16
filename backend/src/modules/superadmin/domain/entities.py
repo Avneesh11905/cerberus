@@ -4,7 +4,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
-from src.modules.auth.domain.user import UserRole
+from src.shared.domain.enums import LogLevel, UserRole
+
 
 class TenantEntity(BaseModel):
     id: UUID
@@ -19,7 +20,7 @@ class TenantEntity(BaseModel):
 
 class SystemLogEntity(BaseModel):
     id: UUID
-    level: str
+    level: LogLevel
     source: str
     message: str
     file: Optional[str]
@@ -27,3 +28,26 @@ class SystemLogEntity(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class PlatformAdoptionMetrics(BaseModel):
+    total_tenants: int
+    api_requests: int
+    registrations: int
+    login_successes: int
+    login_failures: int
+    active_users: int
+
+
+class EndUserUsageMetrics(BaseModel):
+    total_projects: int
+    api_requests: int
+    registrations: int
+    login_successes: int
+    login_failures: int
+    active_users: int
+
+
+class SystemAnalyticsEntity(BaseModel):
+    platform_adoption: PlatformAdoptionMetrics
+    end_user_usage: EndUserUsageMetrics

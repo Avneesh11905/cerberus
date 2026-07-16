@@ -10,8 +10,8 @@ from fastapi import APIRouter, Depends, Response
 from pydantic import BaseModel
 from sqlalchemy import text
 
-from src.shared.config import database_settings
-from src.shared.infrastructure.sql.uow import SQLAlchemyUnitOfWork, get_uow
+from src.core.config import database_settings
+from src.shared.adapters.uow import SQLAlchemyUnitOfWork, get_uow
 
 router = APIRouter()
 

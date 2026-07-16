@@ -11,13 +11,13 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import HTMLResponse
 from jinja2 import Environment, FileSystemLoader
 
-from src.shared.config import app_settings, email_settings, url_settings
+from src.core.config import core_settings, email_settings, url_settings
 
 router = APIRouter(prefix="/dev")
 
 
 def dev_enabled():
-    if app_settings.ENV != "development":
+    if core_settings.ENV != "development":
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Dev routes disabled"
         )

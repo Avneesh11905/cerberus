@@ -1,0 +1,15 @@
+# 🔑 Authentication Domain
+
+The `authentication` domain handles identity verification, session management, and OAuth integrations. It is the gatekeeper of the Cerberus platform.
+
+## 🏗️ Architecture
+- **API (`api/`)**: FastAPI routes for local login, registration, OAuth callbacks, token refresh, and logout. Includes CSRF protection middleware.
+- **Core (`core/`)**: Houses the Use Cases for issuing JWTs, handling password resets, managing session families, and verifying OTPs.
+- **Adapters (`adapters/`)**: Implements password hashing (Argon2), JWT signing (RS256), database repositories (`SQLUserRepositoryAdapter`), and Redis caching for session blacklists.
+
+## 🔄 Core Workflows
+1. **Local Registration**: Generates an OTP, sends an email via Celery, and waits for verification before creating a password hash. Features enumeration protection by fabricating OTP responses.
+2. **Session Issuance**: Returns a short-lived `access_token` in the JSON response and a long-lived `refresh_token` in an HttpOnly cookie.
+3. **Session Rotation**: The `/refresh` endpoint issues a new `access_token` and rotates the `refresh_token` to prevent token theft.
+4. **Rate Limiting & Security**: Implements a 3-outcome pattern (allow/challenge/deny) with Turnstile for anti-bot protection and progressive rate limiting across IP, email, and API Key dimensions.
+5. **Analytics**: Emits domain events (e.g., `LOGIN_SUCCESS`, `OTP_SENT`) via `AnalyticsEventPort` for billing and tracking.

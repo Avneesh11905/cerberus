@@ -7,21 +7,22 @@ Wraps `asyncio.create_task` or a message broker client to ensure "fire-and-forge
 import asyncio
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import delete, select
 from celery_batches import Batches  # type: ignore
+from sqlalchemy import delete, select
 
-from src.celery_app import celery_app
+from src.core.celery_app import celery_app
+from src.core.config import log_settings
+from src.core.database import AsyncSessionLocal
+from src.core.models import SystemLog
 from src.shared.adapters.logger import AsyncSQLLogger
-from src.shared.config import log_settings
-from src.shared.infrastructure.sql.connection import AsyncSessionLocal
-from src.shared.infrastructure.sql.tables import SystemLog
 
 logger = AsyncSQLLogger("LogCleanupTask")
 
 
-@celery_app.task(name="src.shared.infrastructure.tasks.clean_old_system_logs")
+@celery_app.task(name="clean_old_system_logs")
 def clean_old_system_logs():
     """Celery task: clean old system logs."""
+
     async def _run():
         try:
             async with AsyncSessionLocal() as db:
@@ -37,15 +38,15 @@ def clean_old_system_logs():
                         .limit(5000)
                     )
                     ids_to_delete = ids_to_delete_result.scalars().all()
-                    
+
                     if not ids_to_delete:
                         break
-                        
+
                     result = await db.execute(
                         delete(SystemLog).where(SystemLog.id.in_(ids_to_delete))
                     )
                     await db.commit()
-                    
+
                     deleted_batch = getattr(result, "rowcount", 0)
                     total_deleted += deleted_batch
 
@@ -58,14 +59,15 @@ def clean_old_system_logs():
 
 
 @celery_app.task(
-    name="src.shared.infrastructure.tasks.insert_log_batch_task",
+    name="insert_log_batch_task",
     base=Batches,
     flush_every=100,
     flush_interval=1.0,
-    ignore_result=True
+    ignore_result=True,
 )
 def insert_log_batch_task(requests):
     """Celery batched task: process up to 100 log entries at once."""
+
     async def _run():
         entries = []
         for req in requests:
@@ -100,6 +102,7 @@ def insert_log_batch_task(requests):
                 await db.commit()
         except Exception as e:
             import sys
+
             sys.stderr.write(f"[LOG INSERT ERROR] {e}\n")
 
     asyncio.run(_run())

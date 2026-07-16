@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+!.env.test
 .venv
 venv/
 env/
@@ -34,3 +35,5 @@ keys/
 .idea/
 .DS_Store
 Thumbs.db
+
+/scripts/redis/

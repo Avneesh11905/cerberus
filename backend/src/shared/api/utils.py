@@ -10,20 +10,34 @@ from fastapi import Request
 from fastapi.responses import RedirectResponse, Response
 from itsdangerous import URLSafeSerializer
 
-from src.authentication.core.domain.session import ClientMetadata
-from src.shared.config import (
-    app_settings,
+from src.core.config import (
     cookie_settings,
+    security_settings,
     token_settings,
     url_settings,
 )
+from src.modules.auth.domain.session import ClientMetadata
 
 
 def extract_client_metadata(request: Request) -> ClientMetadata:
     """Extracts IP address and User-Agent from the incoming request."""
     ip = request.client.host if request.client else None
     ua = request.headers.get("user-agent")
-    return ClientMetadata(ip_address=ip, user_agent=ua)
+
+    safe_headers = [
+        "accept-language",
+        "referer",
+        "host",
+        "cf-ipcountry",
+        "sec-ch-ua",
+        "sec-ch-ua-mobile",
+        "sec-ch-ua-platform",
+        "origin",
+        "x-forwarded-for",
+    ]
+    extra = {k: v for k, v in request.headers.items() if k.lower() in safe_headers}
+
+    return ClientMetadata(ip_address=ip, user_agent=ua, extra_headers=extra)
 
 
 def set_refresh_token_cookie(response: Response, refresh_token: str) -> None:
@@ -87,7 +101,7 @@ def delete_refresh_token_cookie(response: Response) -> None:
 
 def generate_csrf_token(refresh_token: str) -> str:
     """Generate a CSRF token bound to the current refresh token."""
-    csrf_signer = URLSafeSerializer(app_settings.SESSION_SECRET, salt="csrf-token")
+    csrf_signer = URLSafeSerializer(security_settings.SESSION_SECRET, salt="csrf-token")
     refresh_token_hash = hashlib.sha256(refresh_token.encode()).hexdigest()
     return csrf_signer.dumps(refresh_token_hash)
 

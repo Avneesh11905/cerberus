@@ -25,9 +25,9 @@ keys/
 
 # Database Migrations 
 # NOTE: Only ignore these if you DO NOT run migrations from within the Docker container!
-# alembic/
-# alembic.ini
-# alembic.ini.bak
+<!-- alembic/ -->
+<!-- alembic.ini -->
+alembic.ini.bak
 
 # IDEs and OS
 .vscode/

@@ -1,14 +1,26 @@
 import asyncio
 from logging.config import fileConfig
 
+from dotenv import load_dotenv
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
+# Load the env variables BEFORE importing any Pydantic settings globally
+load_dotenv(".env.local")
+
 # Import settings and metadata
-from src.shared.config import database_settings
-from src.shared.infrastructure.sql.tables import Base
+import src.core.models  # noqa: F401, E402
+import src.modules.analytics.infrastructure.models  # noqa: F401, E402
+import src.modules.auth.infrastructure.models  # noqa: F401, E402
+import src.modules.projects.infrastructure.models  # noqa: F401, E402
+import src.modules.superadmin.infrastructure.models  # noqa: F401, E402
+
+# Import all models to ensure Alembic registers them for migrations
+import src.modules.users.infrastructure.models  # noqa: F401, E402
+from src.core.config import database_settings  # noqa: E402
+from src.core.database import Base  # noqa: E402
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -26,7 +38,7 @@ target_metadata = Base.metadata
 # We use the ASYNC URL because we are going to use async_engine_from_config
 
 # Escape the '%' symbol specifically for Alembic's configparser
-alembic_url = database_settings.DB_ASYNC_URL.replace("%", "%%")
+alembic_url = database_settings.PGSQL_URL.replace("%", "%%")
 config.set_main_option("sqlalchemy.url", alembic_url)
 
 
