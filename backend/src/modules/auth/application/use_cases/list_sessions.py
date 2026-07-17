@@ -5,8 +5,8 @@ Lists all active sessions for a user.
 from uuid import UUID
 
 from src.modules.auth.application.ports import RefreshTokenRepositoryPort
-from src.modules.auth.domain.session import ActiveSession
-from src.shared.application.ports.uow import UoWPort
+from src.modules.auth.domain.entities import ActiveSession
+from src.shared.application.ports import UoWPort
 
 
 class ListSessionsUseCase[SessionType]:

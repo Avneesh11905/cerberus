@@ -12,14 +12,12 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid6 import uuid7
 
-from src.modules.auth.application.ports import CachePort
-from src.modules.auth.application.ports.repository.refresh_token import (
-    RefreshTokenRepositoryPort,
-)
-from src.modules.auth.domain import UserIdentity
-from src.modules.auth.domain.session import ActiveSession, ClientMetadata
-from src.modules.auth.infrastructure.models import RefreshToken
+from src.shared.application.ports import CachePort
+from src.shared.domain.entities import ClientMetadata
 from src.modules.users.infrastructure.models import User
+from src.modules.auth.application.ports import RefreshTokenRepositoryPort
+from src.modules.auth.domain.entities import UserIdentity, ActiveSession
+from src.modules.auth.infrastructure.models import RefreshToken
 
 from .refresh_token_utils import cache_key, hash_token
 

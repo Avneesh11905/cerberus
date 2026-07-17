@@ -6,7 +6,7 @@ This module defines the interface (Port) for short-lived access tokens.
 
 from typing import Protocol
 
-from src.modules.auth.domain import UserIdentity
+from src.modules.auth.domain.entities import UserIdentity
 
 
 class AccessTokenPort(Protocol):

@@ -1,12 +1,10 @@
-from typing import Generic, Protocol, Sequence, TypeVar
 from uuid import UUID
+from typing import Protocol, Sequence
 
-from src.modules.projects.domain.project import ProjectEntity
-
-SessionType = TypeVar("SessionType", contravariant=True)
+from src.modules.projects.domain.entities import ProjectEntity
 
 
-class ProjectQueryRepositoryPort(Protocol, Generic[SessionType]):
+class ProjectQueryRepositoryPort[SessionType](Protocol):
     async def get_by_id(
         self, session: SessionType, project_id: UUID
     ) -> ProjectEntity | None: ...

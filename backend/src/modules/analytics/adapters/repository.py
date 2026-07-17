@@ -11,7 +11,7 @@ from src.modules.analytics.infrastructure.models import (
 )
 
 
-class SQLAnalyticsRepository:
+class SQLAnalyticsRepositoryAdapter:
     def __init__(self, session_factory):
         self.session_factory = session_factory
 

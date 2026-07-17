@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.core.database import AsyncSessionLocal
 
 
-class SQLAlchemyUnitOfWork:
+class SQLAlchemyUoWAdapter:
     """
     A Unit of Work pattern implementation for SQLAlchemy AsyncSession.
     It encapsulates the database session and manages the transaction boundary.
@@ -43,8 +43,3 @@ class SQLAlchemyUnitOfWork:
         finally:
             await self._session.__aexit__(exc_type, exc_val, traceback)
             self._session = None
-
-
-async def get_uow():
-    """FastAPI dependency to inject the Unit of Work."""
-    yield SQLAlchemyUnitOfWork()

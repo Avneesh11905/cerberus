@@ -10,7 +10,7 @@ from uuid import UUID
 import jwt
 from uuid6 import uuid7
 
-from src.modules.auth.domain import UserIdentity
+from src.modules.auth.domain.entities import UserIdentity
 
 
 class JWTAccessTokenAdapter:
@@ -36,6 +36,7 @@ class JWTAccessTokenAdapter:
             "sub": str(user.id),
             "email": str(user.email),
             "project_id": str(user.project_id) if user.project_id else None,
+            "role": user.role.value if hasattr(user.role, "value") else str(user.role),
             "is_verified": user.is_verified,
             "exp": expires,
             "iat": now,
@@ -57,7 +58,7 @@ class JWTAccessTokenAdapter:
             user = UserIdentity(
                 id=UUID(payload["sub"]),  # str -> UUID at JWT boundary
                 email=payload["email"],
-                role=payload.get("role", "user"),
+                role=payload.get("role", "USER"),
                 project_id=UUID(payload["project_id"])
                 if payload.get("project_id")
                 else None,

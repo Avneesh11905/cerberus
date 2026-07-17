@@ -4,14 +4,19 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 
 from src.modules.auth.api.dependencies import require_role
-from src.modules.auth.domain import UserIdentity
-from src.modules.projects.api.dependencies import ProjectUserManagementUseCaseDep
+from src.modules.auth.domain.entities import UserIdentity
+from src.modules.projects.api.dependencies import (
+    ListProjectUsersUseCaseDep,
+    UpdateUserRoleUseCaseDep,
+    ToggleUserStatusUseCaseDep,
+    ToggleTenantUserStatusUseCaseDep,
+)
 from src.modules.projects.api.schemas import (
     PaginatedProjectUsersRes,
     ProjectUserRoleUpdateReq,
     ProjectUserStatusUpdateReq,
 )
-from src.shared.adapters.uow import SQLAlchemyUnitOfWork, get_uow
+from src.shared.api.dependencies import UnitOfWorkDeps
 from src.shared.domain.enums import UserRole
 
 router = APIRouter()
@@ -20,8 +25,8 @@ router = APIRouter()
 @router.get("/{project_id}/users", response_model=PaginatedProjectUsersRes)
 async def list_project_users(
     project_id: UUID,
-    uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
-    usecase: ProjectUserManagementUseCaseDep,
+    uow: UnitOfWorkDeps,
+    usecase: ListProjectUsersUseCaseDep,
     user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
     page: int = 1,
     size: int = 50,
@@ -30,7 +35,7 @@ async def list_project_users(
     """List paginated users for a specific project."""
     skip = (page - 1) * size
     async with uow:
-        users, total = await usecase.list_project_users(
+        users, total = await usecase.execute(
             uow.session, project_id, user.id, skip=skip, limit=size, search=search
         )
     return PaginatedProjectUsersRes(
@@ -43,13 +48,13 @@ async def update_project_user_role(
     project_id: UUID,
     user_id: UUID,
     req: ProjectUserRoleUpdateReq,
-    uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
-    usecase: ProjectUserManagementUseCaseDep,
+    uow: UnitOfWorkDeps,
+    usecase: UpdateUserRoleUseCaseDep,
     user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
 ):
     """Update the role of an end-user within a project."""
     async with uow:
-        updated_user = await usecase.update_user_role(
+        updated_user = await usecase.execute(
             uow.session, project_id, user.id, user_id, UserRole(req.role)
         )
     return {
@@ -64,13 +69,13 @@ async def update_project_user_status(
     project_id: UUID,
     user_id: UUID,
     req: ProjectUserStatusUpdateReq,
-    uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
-    usecase: ProjectUserManagementUseCaseDep,
+    uow: UnitOfWorkDeps,
+    usecase: ToggleUserStatusUseCaseDep,
     user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
 ):
     """Toggles is_active for a specific user in a project."""
     async with uow:
-        updated_user = await usecase.toggle_user_status(
+        updated_user = await usecase.execute(
             uow.session, project_id, user.id, user_id, req.is_active
         )
     return {
@@ -84,13 +89,13 @@ async def update_project_user_status(
 async def update_tenant_user_status(
     email: str,
     req: ProjectUserStatusUpdateReq,
-    uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
-    usecase: ProjectUserManagementUseCaseDep,
+    uow: UnitOfWorkDeps,
+    usecase: ToggleTenantUserStatusUseCaseDep,
     user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
 ):
     """Toggles is_active for a user across all projects owned by the Tenant."""
     async with uow:
-        updated_users = await usecase.toggle_tenant_user_status(
+        updated_users = await usecase.execute(
             uow.session, user.id, email, req.is_active
         )
     return {

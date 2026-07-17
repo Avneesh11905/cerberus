@@ -4,8 +4,8 @@ Instantiates cross-cutting infrastructure adapters exactly once.
 """
 
 from pathlib import Path
-
 from redis.asyncio import Redis
+import os
 
 from src.core.config import (
     core_settings,
@@ -16,39 +16,44 @@ from src.core.config import (
     turnstile_settings,
     url_settings,
 )
+
 from src.core.database import AsyncSessionLocal
-from src.modules.analytics.adapters import SQLAnalyticsRepository
+from src.modules.analytics.adapters import SQLAnalyticsRepositoryAdapter
+from src.modules.users.adapters import SQLUserProfileRepositoryAdapter
 from src.modules.auth.adapters import (
-    Argon2PasswordHasher,
-    AuthEmailService,
+    Argon2PasswordHasherAdapter,
+    AuthEmailServiceAdapter,
     DBRefreshTokenRepositoryAdapter,
     JWTAccessTokenAdapter,
+    RoleClaimsProviderAdapter,
+    SQLUserQueryRepositoryAdapter,
+    SQLUserCommandRepositoryAdapter,
+    SQLUserMaintenanceRepositoryAdapter,
 )
-from src.modules.auth.adapters.repository.user_repository import (
-    SQLUserRepositoryAdapter,
-)
-from src.modules.auth.adapters.security.claims_provider import RoleClaimsProviderAdapter
 from src.modules.projects.adapters import (
     SQLProjectCommandRepositoryAdapter,
     SQLProjectQueryRepositoryAdapter,
-    SQLProjectUserRepository,
+    SQLProjectUserRepositoryAdapter,
 )
 from src.modules.superadmin.adapters import (
     SQLSystemAnalyticsRepositoryAdapter,
     SQLSystemLogRepositoryAdapter,
     SQLTenantRepositoryAdapter,
 )
-from src.modules.users.adapters import SQLUserProfileRepository
-from src.shared.adapters.analytics import CeleryAnalyticsAdapter
-from src.shared.adapters.api_key import ApiKeyAdapter
-from src.shared.adapters.cache import RedisCacheAdapter
-from src.shared.adapters.email_client import ResendEmailClient
-from src.shared.adapters.encryption import FernetEncryptionAdapter
-from src.shared.adapters.logger import AsyncSQLLogger
-from src.shared.adapters.rate_limiter import RedisRateLimiter
-from src.shared.adapters.rsa_key import RsaKeyAdapter
-from src.shared.adapters.task_runner import CeleryTaskRunner
-from src.shared.adapters.turnstile import CloudflareTurnstileAdapter
+from src.shared.application.ports import SharedEmailClientPort
+from src.shared.adapters import (
+    CeleryAnalyticsAdapter,
+    ApiKeyAdapter,
+    RedisCacheAdapter,
+    ResendEmailClientAdapter,
+    FernetEncryptionAdapter,
+    AsyncSQLLogger,
+    RedisRateLimiterAdapter,
+    RsaKeyAdapter,
+    CeleryTaskRunnerAdapter,
+    CloudflareTurnstileAdapter,
+    SMTPEmailClientAdapter,
+)
 
 
 class AppContainer:
@@ -56,7 +61,7 @@ class AppContainer:
         # =====================================================================
         # 1. TASK RUNNER
         # =====================================================================
-        self.task_runner = CeleryTaskRunner()
+        self.task_runner = CeleryTaskRunnerAdapter()
 
         # =====================================================================
         # 2. CACHE ADAPTER
@@ -69,11 +74,20 @@ class AppContainer:
         # =====================================================================
         # 3. EMAIL CLIENT
         # =====================================================================
-        self.email_client = ResendEmailClient(
-            api_key=email_settings.API_KEY,
-            from_email=email_settings.FROM,
-            reply_to=email_settings.REPLY_TO,
-        )
+        self.email_client: SharedEmailClientPort
+        if core_settings.ENV == "test":
+            self.email_client = SMTPEmailClientAdapter(
+                smtp_host=os.environ.get("SMTP_HOST", "localhost"),
+                smtp_port=int(os.environ.get("SMTP_PORT", 1025)),
+                from_email=email_settings.FROM,
+                reply_to=email_settings.REPLY_TO,
+            )
+        else:
+            self.email_client = ResendEmailClientAdapter(
+                api_key=email_settings.API_KEY,
+                from_email=email_settings.FROM,
+                reply_to=email_settings.REPLY_TO,
+            )
 
         # =====================================================================
         # 4. ENCRYPTION ADAPTER
@@ -92,7 +106,7 @@ class AppContainer:
         # 6. ANALYTICS & RATE LIMITING
         # =====================================================================
         self.analytics_adapter = CeleryAnalyticsAdapter()
-        self.rate_limiter = RedisRateLimiter(cache=self.cache_adapter)
+        self.rate_limiter = RedisRateLimiterAdapter(cache=self.cache_adapter)
         self.turnstile_adapter = CloudflareTurnstileAdapter(
             settings=turnstile_settings,
             is_development=core_settings.ENV == "development",
@@ -115,7 +129,7 @@ class AppContainer:
             cache=self.cache_adapter,
         )
 
-        self.auth_email_sender = AuthEmailService(
+        self.auth_email_sender = AuthEmailServiceAdapter(
             email_client=self.email_client,
             from_email=email_settings.FROM,
             templates_dir=Path(__file__).parent.parent
@@ -129,11 +143,13 @@ class AppContainer:
             task_runner=self.task_runner,
         )
 
-        self.user_repo = SQLUserRepositoryAdapter()
-        self.password_hasher = Argon2PasswordHasher()
+        self.user_query_repo = SQLUserQueryRepositoryAdapter()
+        self.user_command_repo = SQLUserCommandRepositoryAdapter()
+        self.user_maintenance_repo = SQLUserMaintenanceRepositoryAdapter()
+        self.password_hasher = Argon2PasswordHasherAdapter()
 
         self.claims_provider = RoleClaimsProviderAdapter(
-            cache=self.cache_adapter, user_repo=self.user_repo
+            cache=self.cache_adapter, user_query_repo=self.user_query_repo
         )
 
         # Projects CQRS
@@ -143,7 +159,7 @@ class AppContainer:
         self.project_command_repo = SQLProjectCommandRepositoryAdapter(
             encryption_adapter=self.encryption_adapter
         )
-        self.project_user_repo = SQLProjectUserRepository()
+        self.project_user_repo = SQLProjectUserRepositoryAdapter()
 
         # Superadmin
         self.superadmin_tenant_repo = SQLTenantRepositoryAdapter()
@@ -151,12 +167,14 @@ class AppContainer:
         self.superadmin_analytics_repo = SQLSystemAnalyticsRepositoryAdapter()
 
         # Users
-        self.user_profile_repo = SQLUserProfileRepository(
+        self.user_profile_repo = SQLUserProfileRepositoryAdapter(
             refresh_repo=self.refresh_token_repo
         )
 
         # Analytics
-        self.analytics_repo = SQLAnalyticsRepository(session_factory=AsyncSessionLocal)
+        self.analytics_repo = SQLAnalyticsRepositoryAdapter(
+            session_factory=AsyncSessionLocal
+        )
 
 
 app_container = AppContainer()

@@ -16,7 +16,7 @@ from src.core.config import (
     token_settings,
     url_settings,
 )
-from src.modules.auth.domain.session import ClientMetadata
+from src.shared.domain.entities import ClientMetadata
 
 
 def extract_client_metadata(request: Request) -> ClientMetadata:

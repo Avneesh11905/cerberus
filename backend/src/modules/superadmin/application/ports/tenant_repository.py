@@ -1,12 +1,10 @@
-from typing import Generic, Protocol, Sequence, TypeVar
+from typing import Protocol, Sequence
 from uuid import UUID
 
 from src.modules.superadmin.domain.entities import TenantEntity
 
-SessionType = TypeVar("SessionType", contravariant=True)
 
-
-class TenantRepositoryPort(Protocol, Generic[SessionType]):
+class TenantRepositoryPort[SessionType](Protocol):
     async def get_by_id(
         self, session: SessionType, tenant_id: UUID
     ) -> TenantEntity | None: ...

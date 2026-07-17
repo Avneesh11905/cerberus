@@ -3,14 +3,17 @@ from uuid import UUID
 from src.modules.auth.application.ports import (
     PasswordHasherPort,
     RefreshTokenRepositoryPort,
-    UserRepositoryPort,
+    UserQueryRepositoryPort,
+    UserCommandRepositoryPort,
 )
 from src.modules.auth.domain.exceptions import (
     InvalidCredentialsException,
     SamePasswordException,
 )
-from src.shared.application.ports.logger import LoggerPort
-from src.shared.application.ports.uow import UoWPort
+from src.shared.application.ports import (
+    LoggerPort,
+    UoWPort,
+)
 
 
 class ChangePasswordUseCase[SessionType]:
@@ -18,12 +21,14 @@ class ChangePasswordUseCase[SessionType]:
 
     def __init__(
         self,
-        user_repo: UserRepositoryPort[SessionType],
+        user_query_repo: UserQueryRepositoryPort[SessionType],
+        user_command_repo: UserCommandRepositoryPort[SessionType],
         hasher: PasswordHasherPort,
         logger: LoggerPort,
         refresh_repo: RefreshTokenRepositoryPort[SessionType],
     ):
-        self._user_repo = user_repo
+        self._user_query_repo = user_query_repo
+        self._user_command_repo = user_command_repo
         self._hasher = hasher
         self._logger = logger
         self._refresh_repo = refresh_repo
@@ -35,7 +40,9 @@ class ChangePasswordUseCase[SessionType]:
         current_password: str | None,
         new_password: str,
     ) -> None:
-        stored_hash = await self._user_repo.find_password_hash(uow.session, user_id)
+        stored_hash = await self._user_query_repo.find_password_hash(
+            uow.session, user_id
+        )
 
         if stored_hash:
             # User already has a local password — they MUST provide the current one correctly.
@@ -56,7 +63,7 @@ class ChangePasswordUseCase[SessionType]:
 
         # Hash and update the new password
         new_hash = await self._hasher.hash_password(new_password)
-        await self._user_repo.update_password(uow.session, user_id, new_hash)
+        await self._user_command_repo.update_password(uow.session, user_id, new_hash)
 
         # Revoke all sessions
         await self._refresh_repo.revoke_all_for_user(uow.session, user_id)

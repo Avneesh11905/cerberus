@@ -9,7 +9,7 @@ import asyncio
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-from src.shared.application.ports.rsa_key import RsaKeyPort
+from src.shared.application.ports import RsaKeyPort
 
 
 class RsaKeyAdapter(RsaKeyPort):

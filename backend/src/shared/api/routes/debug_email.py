@@ -61,6 +61,7 @@ async def preview_email(
     safe_path = os.path.normpath(template_path)
     if safe_path.startswith("..") or os.path.isabs(safe_path):
         raise HTTPException(status_code=400, detail="Invalid template path")
+    safe_path = safe_path.replace("\\", "/")
 
     env = Environment(loader=FileSystemLoader(tmpl_root))
     env.globals["now"] = datetime.datetime.now

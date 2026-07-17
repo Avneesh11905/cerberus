@@ -17,9 +17,9 @@ from src.modules.auth.application.use_cases import (
     ListSessionsUseCase,
     RevokeSessionUseCase,
 )
-from src.modules.auth.domain import UserIdentity
+from src.modules.auth.domain.entities import UserIdentity
 from src.modules.auth.domain.exceptions import SessionNotFoundException
-from src.shared.adapters.uow import SQLAlchemyUnitOfWork, get_uow
+from src.shared.api.dependencies import UnitOfWorkDeps
 
 router = APIRouter()
 
@@ -28,7 +28,7 @@ router = APIRouter()
 async def list_sessions(
     request: Request,
     user: Annotated[UserIdentity, Depends(get_current_user)],
-    uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
+    uow: UnitOfWorkDeps,
     usecase: Annotated[ListSessionsUseCase, Depends(get_list_sessions_usecase)],
 ):
     """
@@ -56,7 +56,7 @@ async def revoke_session(
     family_id: UUID,
     request: Request,
     user: Annotated[UserIdentity, Depends(get_current_user)],
-    uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
+    uow: UnitOfWorkDeps,
     usecase: Annotated[RevokeSessionUseCase, Depends(get_revoke_session_usecase)],
 ):
     """

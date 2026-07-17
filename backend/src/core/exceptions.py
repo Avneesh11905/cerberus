@@ -46,7 +46,7 @@ from src.modules.superadmin.domain.exceptions import (
 
 # Users
 from src.modules.users.domain.exceptions import UserBaseException, UserNotFoundException
-from src.shared.adapters.logger import AsyncSQLLogger
+from src.shared.adapters import AsyncSQLLogger
 
 logger = AsyncSQLLogger("ExceptionHandlers")
 

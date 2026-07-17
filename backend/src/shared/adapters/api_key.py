@@ -7,7 +7,7 @@ import hashlib
 import secrets
 from uuid import UUID
 
-from src.shared.application.ports.api_key import ApiKeyPort
+from src.shared.application.ports import ApiKeyPort
 
 
 class ApiKeyAdapter(ApiKeyPort):

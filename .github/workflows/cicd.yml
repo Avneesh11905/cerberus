@@ -82,8 +82,8 @@ jobs:
     env:
       CACHE_URL: redis://localhost:6379/0
       CELERY_BROKER_URL: redis://localhost:6379/1
-      CELERY_RESULT_BACKEND: redis://localhost:6379/2
-      DB_ASYNC_URL: postgresql+asyncpg://user:password@localhost:5432/cerberus
+      CELERY_RESULT_URL: redis://localhost:6379/2
+      PGSQL_URL: postgresql://user:password@localhost:5432/cerberus
     defaults:
       run:
         working-directory: ./backend
@@ -111,7 +111,12 @@ jobs:
       - name: Type-check (mypy)
         run: uv run mypy . --check-untyped-defs
 
+      - name: Run Migrations (alembic)
+        run: uv run alembic upgrade head
+
       - name: Run tests (pytest)
+        env:
+          CERBERUS_ENVIRONMENT: test
         run: uv run pytest
 
   # ── Frontend CI ─────────────────────────────────────────────────────────────
@@ -226,7 +231,7 @@ jobs:
             ${{ env.FRONTEND_IMAGE_NAME }}:latest
             ${{ env.FRONTEND_IMAGE_NAME }}:${{ steps.version.outputs.VERSION }}
           build-args: |
-            VITE_API_URL=https://cerberus-api.aymahajan.in
+            VITE_API_URL=/api
           cache-from: type=registry,ref=${{ env.FRONTEND_IMAGE_NAME }}:buildcache
           cache-to: type=registry,ref=${{ env.FRONTEND_IMAGE_NAME }}:buildcache,mode=max
 
@@ -246,14 +251,14 @@ jobs:
     permissions: {}
     steps:
       - name: Pull latest images
-        working-directory: /home/avneesh/cerberus
+        working-directory: /home/avneesh/cerberus/v1.0
         run: docker compose pull
 
       - name: Run Alembic migrations
         # Only execute when alembic/versions or env.py changed in this push.
         # --rm ensures the container is auto-deleted the moment migrations finish.
         if: needs.changes.outputs.alembic == 'true' || github.event_name == 'workflow_dispatch'
-        working-directory: /home/avneesh/cerberus
+        working-directory: /home/avneesh/cerberus/v1.0
         run: |
           echo "Schema changes detected — running Alembic migrations..."
           docker compose up -d cerb-postgres
@@ -266,14 +271,14 @@ jobs:
           echo "Migrations complete — container auto-deleted."
 
       - name: Start / update application stack
-        working-directory: /home/avneesh/cerberus
+        working-directory: /home/avneesh/cerberus/v1.0
         run: |
           docker compose up -d
           # Restart Nginx so it clears its cached IP address of the old cerb-fastapi container
           docker compose restart cerb-lb
 
       - name: Health Check
-        working-directory: /home/avneesh/cerberus
+        working-directory: /home/avneesh/cerberus/v1.0
         run: |
           echo "Waiting for services to stabilize..."
           docker compose ps

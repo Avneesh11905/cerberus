@@ -6,8 +6,7 @@ from starlette.responses import JSONResponse
 
 from src.core.config.app import CoreSettings
 from src.core.config.auth import RateLimitSettings
-from src.shared.application.ports.analytics import AnalyticsEventPort
-from src.shared.application.ports.rate_limiter import RateLimiterPort
+from src.shared.application.ports import AnalyticsEventPort, RateLimiterPort
 
 
 def parse_rate(rate_str: str) -> tuple[int, int]:

@@ -14,7 +14,7 @@ from src.core.celery_app import celery_app
 from src.core.config import log_settings
 from src.core.database import AsyncSessionLocal
 from src.core.models import SystemLog
-from src.shared.adapters.logger import AsyncSQLLogger
+from src.shared.adapters import AsyncSQLLogger
 
 logger = AsyncSQLLogger("LogCleanupTask")
 

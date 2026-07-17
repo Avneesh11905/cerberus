@@ -10,8 +10,10 @@ from datetime import datetime, timezone
 
 from src.core.config import token_settings
 from src.modules.auth.application.ports import RefreshTokenRepositoryPort
-from src.shared.application.ports.cache import CachePort
-from src.shared.application.ports.uow import UoWPort
+from src.shared.application.ports import (
+    CachePort,
+    UoWPort,
+)
 
 
 class LogoutUseCase[SessionType]:

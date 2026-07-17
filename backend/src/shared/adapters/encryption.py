@@ -1,6 +1,6 @@
 from cryptography.fernet import Fernet
 
-from src.shared.application.ports.encryption import EncryptionPort
+from src.shared.application.ports import EncryptionPort
 
 
 class FernetEncryptionAdapter(EncryptionPort):

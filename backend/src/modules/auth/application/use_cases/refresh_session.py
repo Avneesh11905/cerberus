@@ -5,14 +5,14 @@ expired or been revoked. On success, it implements Refresh Token Rotation by
 invalidating the old token and issuing a brand new (Access Token, Refresh Token) pair.
 """
 
-from src.modules.auth.application.ports import RefreshTokenRepositoryPort
-from src.modules.auth.application.ports.repository.project import ProjectRepositoryPort
-from src.modules.auth.application.ports.security.access_token import AccessTokenPort
-from src.modules.auth.application.ports.security.claims_provider import (
+from src.modules.auth.application.ports import (
+    RefreshTokenRepositoryPort,
+    ProjectRepositoryPort,
+    AccessTokenPort,
     ClaimsProviderPort,
 )
-from src.modules.auth.domain.session import ClientMetadata
-from src.shared.application.ports.uow import UoWPort
+from src.shared.domain.entities import ClientMetadata
+from src.shared.application.ports import UoWPort
 
 
 class RefreshSessionUseCase[SessionType]:

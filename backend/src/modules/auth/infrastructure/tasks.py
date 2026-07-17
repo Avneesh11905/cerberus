@@ -8,7 +8,7 @@ from src.core.celery_app import celery_app
 from src.core.config import account_settings
 from src.core.container import app_container
 from src.core.database import AsyncSessionLocal
-from src.shared.adapters.logger import AsyncSQLLogger
+from src.shared.adapters import AsyncSQLLogger
 
 logger = AsyncSQLLogger("BackgroundTasks")
 
@@ -39,8 +39,10 @@ def clean_expired_tokens():
 async def run_clean_unverified_and_deleted_users():
     try:
         async with AsyncSessionLocal() as db:
-            count_users = await app_container.user_repo.cleanup_unverified_users(
-                db, hours_old=24
+            count_users = (
+                await app_container.user_maintenance_repo.cleanup_unverified_users(
+                    db, hours_old=24
+                )
             )
             if count_users:
                 await db.commit()
@@ -53,7 +55,7 @@ async def run_clean_unverified_and_deleted_users():
     try:
         async with AsyncSessionLocal() as db:
             count_soft_deleted = (
-                await app_container.user_repo.cleanup_soft_deleted_users(
+                await app_container.user_maintenance_repo.cleanup_soft_deleted_users(
                     db, days_old=account_settings.RETENTION_DAYS
                 )
             )

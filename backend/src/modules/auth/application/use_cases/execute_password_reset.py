@@ -10,17 +10,17 @@ from uuid import UUID
 from src.core.exceptions import TurnstileVerificationFailed
 from src.modules.auth.application.ports import (
     RefreshTokenRepositoryPort,
-    UserRepositoryPort,
-)
-from src.modules.auth.application.ports.security.password_hasher import (
+    UserCommandRepositoryPort,
     PasswordHasherPort,
 )
-from src.shared.api.utils import ClientMetadata
-from src.shared.application.ports.analytics import AnalyticsEventPort
-from src.shared.application.ports.cache import CachePort
-from src.shared.application.ports.rate_limiter import RateLimiterPort
-from src.shared.application.ports.turnstile import TurnstilePort
-from src.shared.application.ports.uow import UoWPort
+from src.shared.domain.entities import ClientMetadata
+from src.shared.application.ports import (
+    AnalyticsEventPort,
+    CachePort,
+    RateLimiterPort,
+    TurnstilePort,
+    UoWPort,
+)
 
 
 class ExecutePasswordResetUseCase[SessionType]:
@@ -28,7 +28,7 @@ class ExecutePasswordResetUseCase[SessionType]:
 
     def __init__(
         self,
-        user_repo: UserRepositoryPort,
+        user_command_repo: UserCommandRepositoryPort[SessionType],
         cache: CachePort,
         hasher: PasswordHasherPort,
         refresh_repo: RefreshTokenRepositoryPort,
@@ -36,7 +36,7 @@ class ExecutePasswordResetUseCase[SessionType]:
         turnstile: TurnstilePort,
         analytics: AnalyticsEventPort,
     ):
-        self.user_repo = user_repo
+        self.user_command_repo = user_command_repo
         self.cache = cache
         self.hasher = hasher
         self.refresh_repo = refresh_repo
@@ -76,7 +76,9 @@ class ExecutePasswordResetUseCase[SessionType]:
 
         hashed_password = await self.hasher.hash_password(new_password)
         user_id_uuid = UUID(user_id)
-        await self.user_repo.update_password(uow.session, user_id_uuid, hashed_password)
+        await self.user_command_repo.update_password(
+            uow.session, user_id_uuid, hashed_password
+        )
 
         # Invalidate all active sessions for the user
         await self.refresh_repo.revoke_all_for_user(uow.session, user_id_uuid)

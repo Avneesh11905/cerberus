@@ -19,11 +19,9 @@ from src.modules.projects.infrastructure.tasks import (
     start_project_config_sync_task,
     stop_project_config_sync_task,
 )
-from src.shared.adapters.logger import (
-    AsyncSQLLogger,
-)
-from src.shared.api.middlewares.cors import DynamicCORSMiddleware
-from src.shared.api.middlewares.rate_limit_and_analytics import (
+from src.shared.adapters import AsyncSQLLogger
+from src.shared.api.middlewares import (
+    DynamicCORSMiddleware,
     RateLimitAndAnalyticsMiddleware,
 )
 from src.shared.api.routes.debug_email import router as debug_email_router

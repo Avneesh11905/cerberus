@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.core.config import security_settings
 from src.core.container import app_container
 from src.core.database import get_db
-from src.modules.auth.application.ports.security.access_token import AccessTokenPort
+from src.modules.auth.application.ports import AccessTokenPort
 from src.modules.auth.application.use_cases import (
     ExecutePasswordResetUseCase,
     ListSessionsUseCase,
@@ -30,22 +30,21 @@ from src.modules.auth.application.use_cases import (
     RequestPasswordResetUseCase,
     RevokeSessionUseCase,
     VerifyEmailUseCase,
-)
-from src.modules.auth.application.use_cases.change_password import ChangePasswordUseCase
-from src.modules.auth.application.use_cases.tenant_oauth_callback import (
+    ChangePasswordUseCase,
     TenantOAuthCallbackUseCase,
 )
-from src.modules.auth.domain import UserIdentity
+from src.modules.auth.domain.entities import UserIdentity
 from src.modules.auth.domain.exceptions import (
     CSRFValidationException,
     InvalidTokenException,
     NotAuthenticatedException,
 )
-from src.modules.projects.application.ports.project_query_repository import (
+from src.modules.projects.application.ports import (
     ProjectQueryRepositoryPort,
 )
-from src.shared.application.ports.cache import CachePort
+from src.shared.application.ports import CachePort
 from src.shared.domain.enums import UserRole
+from src.shared.adapters import AsyncSQLLogger
 
 # =====================================================================
 # 1. INFRASTRUCTURE ADAPTERS (Module-level Singletons)
@@ -235,10 +234,10 @@ between Hexagonal Architecture and the FastAPI ecosystem.
 
 
 def get_register_local_usecase() -> RegisterLocalUserUseCase:
-    from src.shared.adapters.logger import AsyncSQLLogger
 
     return RegisterLocalUserUseCase(
-        user_repo=app_container.user_repo,
+        user_query_repo=app_container.user_query_repo,
+        user_command_repo=app_container.user_command_repo,
         hasher=app_container.password_hasher,
         logger=AsyncSQLLogger("RegisterLocalUseCase"),
         email_sender=app_container.auth_email_sender,
@@ -250,10 +249,10 @@ def get_register_local_usecase() -> RegisterLocalUserUseCase:
 
 
 def get_login_local_usecase() -> LoginLocalUserUseCase:
-    from src.shared.adapters.logger import AsyncSQLLogger
 
     return LoginLocalUserUseCase(
-        user_repo=app_container.user_repo,
+        user_query_repo=app_container.user_query_repo,
+        user_command_repo=app_container.user_command_repo,
         refresh_repo=app_container.refresh_token_repo,
         hasher=app_container.password_hasher,
         logger=AsyncSQLLogger("LoginLocalUseCase"),
@@ -268,10 +267,10 @@ def get_login_local_usecase() -> LoginLocalUserUseCase:
 
 
 def get_change_password_usecase() -> ChangePasswordUseCase:
-    from src.shared.adapters.logger import AsyncSQLLogger
 
     return ChangePasswordUseCase(
-        user_repo=app_container.user_repo,
+        user_query_repo=app_container.user_query_repo,
+        user_command_repo=app_container.user_command_repo,
         hasher=app_container.password_hasher,
         logger=AsyncSQLLogger("ChangePasswordUseCase"),
         refresh_repo=app_container.refresh_token_repo,
@@ -280,7 +279,8 @@ def get_change_password_usecase() -> ChangePasswordUseCase:
 
 def get_oauth_callback_usecase() -> OAuthCallbackUseCase:
     return OAuthCallbackUseCase(
-        user_repo=app_container.user_repo,
+        user_query_repo=app_container.user_query_repo,
+        user_command_repo=app_container.user_command_repo,
         refresh_repo=app_container.refresh_token_repo,
         email_sender=app_container.auth_email_sender,
         access_token=app_container.access_token_adapter,
@@ -291,7 +291,8 @@ def get_oauth_callback_usecase() -> OAuthCallbackUseCase:
 
 def get_tenant_oauth_callback_usecase():
     return TenantOAuthCallbackUseCase(
-        user_repo=app_container.user_repo,
+        user_query_repo=app_container.user_query_repo,
+        user_command_repo=app_container.user_command_repo,
         refresh_repo=app_container.refresh_token_repo,
         email_sender=app_container.auth_email_sender,
         access_token=app_container.access_token_adapter,
@@ -300,10 +301,9 @@ def get_tenant_oauth_callback_usecase():
 
 
 def get_request_new_verification_email_usecase() -> RequestNewVerificationEmailUseCase:
-    from src.shared.adapters.logger import AsyncSQLLogger
 
     return RequestNewVerificationEmailUseCase(
-        user_repo=app_container.user_repo,
+        user_query_repo=app_container.user_query_repo,
         logger=AsyncSQLLogger("RequestNewVerificationEmailUseCase"),
         email_sender=app_container.auth_email_sender,
         cache=app_container.cache_adapter,
@@ -313,10 +313,10 @@ def get_request_new_verification_email_usecase() -> RequestNewVerificationEmailU
 
 
 def get_verify_email_usecase() -> VerifyEmailUseCase:
-    from src.shared.adapters.logger import AsyncSQLLogger
 
     return VerifyEmailUseCase(
-        user_repo=app_container.user_repo,
+        user_query_repo=app_container.user_query_repo,
+        user_command_repo=app_container.user_command_repo,
         cache=app_container.cache_adapter,
         logger=AsyncSQLLogger("VerifyEmailUseCase"),
         email_sender=app_container.auth_email_sender,
@@ -331,7 +331,7 @@ def get_request_password_reset_usecase() -> RequestPasswordResetUseCase:
     from src.core.config import url_settings
 
     return RequestPasswordResetUseCase(
-        user_repo=app_container.user_repo,
+        user_query_repo=app_container.user_query_repo,
         email_sender=app_container.auth_email_sender,
         cache=app_container.cache_adapter,
         frontend_url=url_settings.FRONTEND_URL,
@@ -342,7 +342,7 @@ def get_request_password_reset_usecase() -> RequestPasswordResetUseCase:
 
 def get_execute_password_reset_usecase() -> ExecutePasswordResetUseCase:
     return ExecutePasswordResetUseCase(
-        user_repo=app_container.user_repo,
+        user_command_repo=app_container.user_command_repo,
         hasher=app_container.password_hasher,
         cache=app_container.cache_adapter,
         refresh_repo=app_container.refresh_token_repo,

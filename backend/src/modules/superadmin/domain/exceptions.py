@@ -10,4 +10,5 @@ class TenantNotFoundException(SuperadminBaseException):
 
 class AbsoluteSuperadminImmutableException(SuperadminBaseException):
     """The absolute superadmin role is immutable and cannot be modified."""
+
     pass

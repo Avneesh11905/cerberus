@@ -11,6 +11,8 @@ from .request_new_verification_email import RequestNewVerificationEmailUseCase
 from .request_password_reset import RequestPasswordResetUseCase
 from .revoke_session import RevokeSessionUseCase
 from .verify_email import VerifyEmailUseCase
+from .tenant_oauth_callback import TenantOAuthCallbackUseCase
+
 
 __all__ = [
     "RegisterLocalUserUseCase",
@@ -26,4 +28,5 @@ __all__ = [
     "ListSessionsUseCase",
     "RevokeSessionUseCase",
     "ChangePasswordUseCase",
+    "TenantOAuthCallbackUseCase",
 ]

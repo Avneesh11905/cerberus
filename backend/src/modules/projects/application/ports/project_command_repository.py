@@ -1,12 +1,10 @@
-from typing import Generic, Protocol, TypeVar
+from typing import Protocol
 from uuid import UUID
 
-from src.modules.projects.domain.project import ProjectEntity
-
-SessionType = TypeVar("SessionType", contravariant=True)
+from src.modules.projects.domain.entities import ProjectEntity
 
 
-class ProjectCommandRepositoryPort(Protocol, Generic[SessionType]):
+class ProjectCommandRepositoryPort[SessionType](Protocol):
     async def save(
         self, session: SessionType, project: ProjectEntity
     ) -> ProjectEntity: ...

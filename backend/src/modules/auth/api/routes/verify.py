@@ -23,8 +23,7 @@ from src.modules.auth.application.use_cases import (
     RequestNewVerificationEmailUseCase,
     VerifyEmailUseCase,
 )
-from src.shared.adapters.uow import SQLAlchemyUnitOfWork, get_uow
-from src.shared.api.dependencies import get_is_challenged
+from src.shared.api.dependencies import get_is_challenged, UnitOfWorkDeps
 from src.shared.api.utils import extract_client_metadata, set_refresh_token_cookie
 
 router = APIRouter()
@@ -35,7 +34,7 @@ async def verify_email(
     request: Request,
     response: Response,
     req: VerifyEmailRequest,
-    uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
+    uow: UnitOfWorkDeps,
     usecase: Annotated[VerifyEmailUseCase, Depends(get_verify_email_usecase)],
     project_id: Annotated[UUID | None, Depends(get_optional_project_id)],
     is_challenged: bool = Depends(get_is_challenged),
@@ -69,7 +68,7 @@ async def verify_email(
 async def resend_verification(
     request: Request,
     req: RequestNewVerificationEmail,
-    uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
+    uow: UnitOfWorkDeps,
     usecase: Annotated[
         RequestNewVerificationEmailUseCase,
         Depends(get_request_new_verification_email_usecase),

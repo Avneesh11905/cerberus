@@ -8,7 +8,7 @@ import asyncio
 from passlib.context import CryptContext  # type: ignore
 
 
-class Argon2PasswordHasher:
+class Argon2PasswordHasherAdapter:
     def __init__(self):
         import sys
 

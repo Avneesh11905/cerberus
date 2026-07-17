@@ -1,12 +1,10 @@
-from typing import Generic, Protocol, Sequence, TypeVar
+from typing import Protocol, Sequence
 
 from src.modules.superadmin.domain.entities import SystemLogEntity
 from src.shared.domain.enums import LogLevel
 
-SessionType = TypeVar("SessionType", contravariant=True)
 
-
-class SystemLogRepositoryPort(Protocol, Generic[SessionType]):
+class SystemLogRepositoryPort[SessionType](Protocol):
     async def get_recent_logs(
         self,
         session: SessionType,

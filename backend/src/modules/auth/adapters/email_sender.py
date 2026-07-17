@@ -14,15 +14,15 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from src.modules.auth.application.ports.email_sender import (
-    EmailSenderPort,  # noqa: F401
+from src.modules.auth.application.ports import EmailSenderPort
+from src.shared.application.ports import (
+    SharedEmailClientPort,
+    LoggerPort,
+    TaskRunnerPort,
 )
-from src.shared.application.ports.email_client import SharedEmailClientPort
-from src.shared.application.ports.logger import LoggerPort
-from src.shared.application.ports.task_runner import TaskRunnerPort
 
 
-class AuthEmailService:
+class AuthEmailServiceAdapter(EmailSenderPort):
     """
     Implements EmailSenderPort for authentication emails.
     Composes domain-specific emails (Welcome, OTP, Password Reset) using Jinja2 templates

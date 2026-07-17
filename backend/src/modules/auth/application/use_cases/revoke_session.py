@@ -6,7 +6,7 @@ from uuid import UUID
 
 from src.modules.auth.application.ports import RefreshTokenRepositoryPort
 from src.modules.auth.domain.exceptions import SessionNotFoundException
-from src.shared.application.ports.uow import UoWPort
+from src.shared.application.ports import UoWPort
 
 
 class RevokeSessionUseCase[SessionType]:

@@ -5,36 +5,38 @@ from authlib.integrations.base_client.errors import OAuthError
 from fastapi import Depends, HTTPException, Request
 from sqlalchemy import select
 from src.core.container import app_container
-from src.modules.auth.adapters.oauth import PARSERS
-from src.modules.auth.adapters.oauth.dynamic import get_dynamic_oauth_client
+from src.modules.auth.infrastructure.oauth import PARSERS, PROVIDERS
+from src.modules.auth.infrastructure.oauth.dynamic import get_dynamic_oauth_client
 from src.modules.auth.api.dependencies import (
     get_cache_adapter,
     get_oauth_callback_usecase,
+    get_tenant_oauth_callback_usecase,
 )
-from src.modules.auth.application.use_cases.oauth_callback import OAuthCallbackUseCase
+from src.modules.auth.api.schemas import OAuthPreflightResponse
+from src.modules.auth.application.use_cases import (
+    OAuthCallbackUseCase,
+    TenantOAuthCallbackUseCase,
+)
 from src.modules.auth.domain.exceptions import (
     InvalidProviderException,
 )
 from src.modules.projects.infrastructure.models import Project
-from src.shared.adapters.uow import SQLAlchemyUnitOfWork, get_uow
-from src.shared.api.utils import build_auth_redirect_async, extract_client_metadata
-from src.shared.application.ports.cache import CachePort
+from src.shared.api.dependencies import UnitOfWorkDeps
+from src.shared.api.utils import (
+    build_auth_redirect_async,
+    extract_client_metadata,
+    generate_csrf_token,
+    set_refresh_token_cookie,
+)
+from src.shared.application.ports import CachePort
 from src.shared.domain.enums import UserRole
 import secrets
 from urllib.parse import urlparse
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.core.database import get_db
-from src.modules.auth.api.schemas import OAuthPreflightResponse
-from src.modules.auth.adapters.oauth import PROVIDERS
-from src.modules.auth.api.dependencies import (
-    get_tenant_oauth_callback_usecase,
-)
-from src.modules.auth.application.use_cases.tenant_oauth_callback import (
-    TenantOAuthCallbackUseCase,
-)
+
 from fastapi import Response, status
 from pydantic import BaseModel
-from src.shared.api.utils import generate_csrf_token, set_refresh_token_cookie
 
 router = APIRouter()
 
@@ -47,11 +49,11 @@ Note: For Cerberus Dashboard (tenant) callbacks, see tenant_oauth.py.
 """
 
 
-@router.get("/callback/{provider}", include_in_schema=False)
+@router.get("/callback/{provider}")
 async def oauth_callback(
     provider: str,
     request: Request,
-    uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
+    uow: UnitOfWorkDeps,
     usecase: Annotated[OAuthCallbackUseCase, Depends(get_oauth_callback_usecase)],
     cache: Annotated[CachePort, Depends(get_cache_adapter)],
 ):
@@ -358,10 +360,7 @@ Routes:
 """
 
 
-router = APIRouter(prefix="/tenant")
-
-
-@router.get("/login/{provider}")
+@router.get("/tenant/login/{provider}")
 async def tenant_login(provider: str, request: Request):
     """
     Redirect the browser to the OAuth provider for Cerberus Dashboard login.
@@ -383,11 +382,11 @@ async def tenant_login(provider: str, request: Request):
     )
 
 
-@router.get("/callback/{provider}", include_in_schema=False)
+@router.get("/tenant/callback/{provider}")
 async def tenant_oauth_callback(
     provider: str,
     request: Request,
-    uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
+    uow: UnitOfWorkDeps,
     usecase: Annotated[
         TenantOAuthCallbackUseCase, Depends(get_tenant_oauth_callback_usecase)
     ],
@@ -485,7 +484,7 @@ async def exchange(
     response: Response,
     body: ExchangeRequest,
     cache: Annotated[CachePort, Depends(get_cache_adapter)],
-    uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
+    uow: UnitOfWorkDeps,
 ):
     """
     Redeem a one-time exchange code for session cookies.
@@ -516,12 +515,7 @@ async def exchange(
 
     profile = None
     if user_id_str:
-        from src.modules.auth.adapters import DBRefreshTokenRepositoryAdapter
-        from src.modules.users.adapters import SQLUserProfileRepository
-
-        user_repo = SQLUserProfileRepository(
-            refresh_repo=DBRefreshTokenRepositoryAdapter(lifetime_days=30)
-        )
+        user_repo = app_container.user_profile_repo
         async with uow:
             profile = await user_repo.get_profile(uow.session, UUID(user_id_str))
 

@@ -12,22 +12,25 @@ from src.core.config import verification_settings
 from src.core.exceptions import RateLimitExceededException, TurnstileVerificationFailed
 from src.modules.auth.application.ports import (
     RefreshTokenRepositoryPort,
-    UserRepositoryPort,
+    UserQueryRepositoryPort,
+    UserCommandRepositoryPort,
+    EmailSenderPort,
 )
-from src.modules.auth.application.ports.email_sender import EmailSenderPort
 from src.modules.auth.application.utils import anonymize_email, verify_otp_hash
-from src.modules.auth.domain import UserIdentity
+from src.modules.auth.domain.entities import UserIdentity
 from src.modules.auth.domain.exceptions import (
     InvalidCredentialsException,
     InvalidTokenException,
 )
-from src.modules.auth.domain.session import ClientMetadata
-from src.shared.application.ports.analytics import AnalyticsEventPort
-from src.shared.application.ports.cache import CachePort
-from src.shared.application.ports.logger import LoggerPort
-from src.shared.application.ports.rate_limiter import RateLimiterPort
-from src.shared.application.ports.turnstile import TurnstilePort
-from src.shared.application.ports.uow import UoWPort
+from src.shared.domain.entities import ClientMetadata
+from src.shared.application.ports import (
+    AnalyticsEventPort,
+    CachePort,
+    LoggerPort,
+    RateLimiterPort,
+    TurnstilePort,
+    UoWPort,
+)
 
 
 class VerifyEmailUseCase[SessionType]:
@@ -35,7 +38,8 @@ class VerifyEmailUseCase[SessionType]:
 
     def __init__(
         self,
-        user_repo: UserRepositoryPort,
+        user_query_repo: UserQueryRepositoryPort,
+        user_command_repo: UserCommandRepositoryPort,
         cache: CachePort,
         logger: LoggerPort,
         email_sender: EmailSenderPort,
@@ -44,7 +48,8 @@ class VerifyEmailUseCase[SessionType]:
         turnstile: TurnstilePort,
         analytics: AnalyticsEventPort,
     ):
-        self._user_repo = user_repo
+        self._user_query_repo = user_query_repo
+        self._user_command_repo = user_command_repo
         self._cache = cache
         self._logger = logger
         self._email_sender = email_sender
@@ -85,7 +90,7 @@ class VerifyEmailUseCase[SessionType]:
                 raise TurnstileVerificationFailed("CAPTCHA verification failed")
 
         # 1. Check if user is in DB
-        user = await self._user_repo.find_by_email(
+        user = await self._user_query_repo.find_by_email(
             uow.session, email, project_id=project_id
         )
         if not user:
@@ -176,13 +181,13 @@ class VerifyEmailUseCase[SessionType]:
             raise InvalidTokenException()
 
         # 6. Success! Mark the user as verified in PostgreSQL
-        await self._user_repo.verify_user_email(
+        await self._user_command_repo.verify_user_email(
             uow.session, user.id, name=payload.get("pending_name")
         )
 
         pending_password_hash = payload.get("pending_password_hash")
         if pending_password_hash:
-            await self._user_repo.update_password(
+            await self._user_command_repo.update_password(
                 uow.session, user.id, pending_password_hash
             )
 

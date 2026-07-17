@@ -1,5 +1,4 @@
 from datetime import date
-from typing import List
 
 from pydantic import BaseModel, ConfigDict
 
@@ -16,4 +15,4 @@ class MetricResponse(BaseModel):
 
 
 class QueryAnalyticsResponse(BaseModel):
-    metrics: List[MetricResponse]
+    metrics: list[MetricResponse]

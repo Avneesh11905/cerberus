@@ -4,8 +4,14 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 
 from src.modules.auth.api.dependencies import require_role
-from src.modules.auth.domain import UserIdentity
-from src.modules.projects.api.dependencies import ProjectManagementUseCaseDep
+from src.modules.auth.domain.entities import UserIdentity
+from src.modules.projects.api.dependencies import (
+    UpdateOauthUseCaseDep,
+    UpdateOriginsUseCaseDep,
+    UpdateEnvironmentUseCaseDep,
+    UpdateFrontendUrlUseCaseDep,
+    UpdateNameUseCaseDep,
+)
 from src.modules.projects.api.schemas import (
     ProjectEnvUpdateReq,
     ProjectFrontendUrlUpdateReq,
@@ -15,7 +21,7 @@ from src.modules.projects.api.schemas import (
     ProjectReadRes,
     ProjectRes,
 )
-from src.shared.adapters.uow import SQLAlchemyUnitOfWork, get_uow
+from src.shared.api.dependencies import UnitOfWorkDeps
 
 router = APIRouter()
 
@@ -24,14 +30,14 @@ router = APIRouter()
 async def update_project_oauth(
     project_id: UUID,
     req: ProjectOauthUpdateReq,
-    uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
-    usecase: ProjectManagementUseCaseDep,
+    uow: UnitOfWorkDeps,
+    usecase: UpdateOauthUseCaseDep,
     user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
 ):
     """Update OAuth configuration (client_id, client_secret) for a project."""
     async with uow:
         incoming_config = req.model_dump()["oauth_config"]
-        project = await usecase.update_oauth(
+        project = await usecase.execute(
             uow.session, project_id, user.id, incoming_config
         )
     return ProjectReadRes.model_validate(project)
@@ -41,13 +47,13 @@ async def update_project_oauth(
 async def update_project_origins(
     project_id: UUID,
     req: ProjectOriginsUpdateReq,
-    uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
-    usecase: ProjectManagementUseCaseDep,
+    uow: UnitOfWorkDeps,
+    usecase: UpdateOriginsUseCaseDep,
     user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
 ):
     """Update CORS allowed origins for a project."""
     async with uow:
-        project = await usecase.update_origins(
+        project = await usecase.execute(
             uow.session, project_id, user.id, req.allowed_origins
         )
     return ProjectReadRes.model_validate(project)
@@ -57,13 +63,13 @@ async def update_project_origins(
 async def update_project_environment(
     project_id: UUID,
     req: ProjectEnvUpdateReq,
-    uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
-    usecase: ProjectManagementUseCaseDep,
+    uow: UnitOfWorkDeps,
+    usecase: UpdateEnvironmentUseCaseDep,
     user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
 ):
     """Update environment mode for a project."""
     async with uow:
-        project = await usecase.update_environment(
+        project = await usecase.execute(
             uow.session, project_id, user.id, req.environment
         )
     return ProjectRes.model_validate(project)
@@ -73,13 +79,13 @@ async def update_project_environment(
 async def update_project_frontend_url(
     project_id: UUID,
     req: ProjectFrontendUrlUpdateReq,
-    uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
-    usecase: ProjectManagementUseCaseDep,
+    uow: UnitOfWorkDeps,
+    usecase: UpdateFrontendUrlUseCaseDep,
     user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
 ):
     """Update frontend URL for a project."""
     async with uow:
-        project = await usecase.update_frontend_url(
+        project = await usecase.execute(
             uow.session, project_id, user.id, req.frontend_url
         )
     return ProjectRes.model_validate(project)
@@ -89,11 +95,11 @@ async def update_project_frontend_url(
 async def update_project_name(
     project_id: UUID,
     req: ProjectNameUpdateReq,
-    uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
-    usecase: ProjectManagementUseCaseDep,
+    uow: UnitOfWorkDeps,
+    usecase: UpdateNameUseCaseDep,
     user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
 ):
     """Update name for a project."""
     async with uow:
-        project = await usecase.update_name(uow.session, project_id, user.id, req.name)
+        project = await usecase.execute(uow.session, project_id, user.id, req.name)
     return ProjectRes.model_validate(project)

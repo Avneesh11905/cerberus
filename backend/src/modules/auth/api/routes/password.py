@@ -28,10 +28,9 @@ from src.modules.auth.application.use_cases import (
     ExecutePasswordResetUseCase,
     RequestPasswordResetUseCase,
 )
-from src.modules.auth.domain import UserIdentity
+from src.modules.auth.domain.entities import UserIdentity
 from src.modules.projects.infrastructure.models import Project
-from src.shared.adapters.uow import SQLAlchemyUnitOfWork, get_uow
-from src.shared.api.dependencies import get_is_challenged
+from src.shared.api.dependencies import get_is_challenged, UnitOfWorkDeps
 from src.shared.api.utils import extract_client_metadata
 
 router = APIRouter(prefix="/password")
@@ -42,7 +41,7 @@ async def forgot_password(
     request: Request,
     body: ForgotPasswordRequest,
     background_tasks: BackgroundTasks,
-    uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
+    uow: UnitOfWorkDeps,
     usecase: Annotated[
         RequestPasswordResetUseCase, Depends(get_request_password_reset_usecase)
     ],
@@ -92,7 +91,7 @@ async def forgot_password(
 async def reset_password(
     request: Request,
     body: ResetPasswordRequest,
-    uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
+    uow: UnitOfWorkDeps,
     usecase: Annotated[
         ExecutePasswordResetUseCase, Depends(get_execute_password_reset_usecase)
     ],
@@ -130,7 +129,7 @@ async def change_password(
     request: Request,
     req: ChangePasswordRequest,
     current_user: Annotated[UserIdentity, Depends(get_current_user)],
-    uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
+    uow: UnitOfWorkDeps,
     usecase: Annotated[ChangePasswordUseCase, Depends(get_change_password_usecase)],
 ):
     """

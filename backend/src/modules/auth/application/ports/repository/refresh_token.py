@@ -7,8 +7,8 @@ This module defines the interface for reading and writing long-lived refresh tok
 from typing import Protocol
 from uuid import UUID
 
-from src.modules.auth.domain import UserIdentity
-from src.modules.auth.domain.session import ActiveSession, ClientMetadata
+from src.modules.auth.domain.entities import UserIdentity, ActiveSession
+from src.shared.domain.entities import ClientMetadata
 
 
 class RefreshTokenRepositoryPort[SessionType](Protocol):

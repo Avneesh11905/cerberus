@@ -11,15 +11,16 @@ from uuid import UUID
 
 from src.core.config import verification_settings
 from src.core.exceptions import TurnstileVerificationFailed
-from src.modules.auth.application.ports import UserRepositoryPort
-from src.modules.auth.application.ports.email_sender import EmailSenderPort
+from src.modules.auth.application.ports import UserQueryRepositoryPort, EmailSenderPort
 from src.modules.auth.application.utils import hash_otp
-from src.shared.api.utils import ClientMetadata
-from src.shared.application.ports.cache import CachePort
-from src.shared.application.ports.logger import LoggerPort
-from src.shared.application.ports.rate_limiter import RateLimiterPort
-from src.shared.application.ports.turnstile import TurnstilePort
-from src.shared.application.ports.uow import UoWPort
+from src.shared.domain.entities import ClientMetadata
+from src.shared.application.ports import (
+    CachePort,
+    LoggerPort,
+    RateLimiterPort,
+    TurnstilePort,
+    UoWPort,
+)
 
 
 class RequestNewVerificationEmailUseCase[SessionType]:
@@ -27,14 +28,14 @@ class RequestNewVerificationEmailUseCase[SessionType]:
 
     def __init__(
         self,
-        user_repo: UserRepositoryPort[SessionType],
+        user_query_repo: UserQueryRepositoryPort[SessionType],
         logger: LoggerPort,
         email_sender: EmailSenderPort,
         cache: CachePort,
         rate_limiter: RateLimiterPort,
         turnstile: TurnstilePort,
     ):
-        self._user_repo = user_repo
+        self._user_query_repo = user_query_repo
         self._logger = logger
         self._email_sender = email_sender
         self._cache = cache
@@ -75,7 +76,7 @@ class RequestNewVerificationEmailUseCase[SessionType]:
         # The rate-limit counter is only bumped once we confirm the user exists,
         # so an attacker cannot exhaust a real user's resend quota by spamming
         # requests for arbitrary email addresses they don't control.
-        user = await self._user_repo.find_by_email(
+        user = await self._user_query_repo.find_by_email(
             uow.session, email, project_id=project_id
         )
         if not user:

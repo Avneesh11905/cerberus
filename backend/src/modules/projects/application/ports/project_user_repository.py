@@ -6,7 +6,7 @@ Allows project owners (tenants) to manage the users of their projects.
 from typing import Any, Protocol, Sequence
 from uuid import UUID
 
-from src.modules.users.domain import UserProfile
+from src.modules.users.domain.entities import UserProfile
 from src.shared.domain.enums import UserRole
 
 

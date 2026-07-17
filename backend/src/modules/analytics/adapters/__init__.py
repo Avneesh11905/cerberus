@@ -1,1 +1,3 @@
-from .repository import SQLAnalyticsRepository as SQLAnalyticsRepository
+from .repository import SQLAnalyticsRepositoryAdapter
+
+__all__ = ["SQLAnalyticsRepositoryAdapter"]

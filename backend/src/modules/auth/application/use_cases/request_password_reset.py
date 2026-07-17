@@ -10,13 +10,14 @@ from uuid import UUID
 
 from src.core.config import verification_settings
 from src.core.exceptions import TurnstileVerificationFailed
-from src.modules.auth.application.ports import UserRepositoryPort
-from src.modules.auth.application.ports.email_sender import EmailSenderPort
-from src.shared.api.utils import ClientMetadata
-from src.shared.application.ports.cache import CachePort
-from src.shared.application.ports.rate_limiter import RateLimiterPort
-from src.shared.application.ports.turnstile import TurnstilePort
-from src.shared.application.ports.uow import UoWPort
+from src.shared.domain.entities import ClientMetadata
+from src.shared.application.ports import (
+    CachePort,
+    RateLimiterPort,
+    TurnstilePort,
+    UoWPort,
+)
+from src.modules.auth.application.ports import UserQueryRepositoryPort, EmailSenderPort
 
 
 class RequestPasswordResetUseCase[SessionType]:
@@ -24,14 +25,14 @@ class RequestPasswordResetUseCase[SessionType]:
 
     def __init__(
         self,
-        user_repo: UserRepositoryPort,
+        user_query_repo: UserQueryRepositoryPort,
         cache: CachePort,
         email_sender: EmailSenderPort,
         frontend_url: str,
         rate_limiter: RateLimiterPort,
         turnstile: TurnstilePort,
     ):
-        self.user_repo = user_repo
+        self.user_query_repo = user_query_repo
         self.cache = cache
         self.email_sender = email_sender
         self.frontend_url = frontend_url
@@ -64,7 +65,7 @@ class RequestPasswordResetUseCase[SessionType]:
                 await self.rate_limiter.record_failure(limit_key)
                 raise TurnstileVerificationFailed("CAPTCHA verification failed")
 
-        user = await self.user_repo.find_by_email(
+        user = await self.user_query_repo.find_by_email(
             uow.session, email, project_id=project_id
         )
         if not user or not user.is_verified:

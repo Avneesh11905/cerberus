@@ -13,8 +13,7 @@ from src.modules.auth.api.schemas import (
 from src.modules.auth.application.use_cases import (
     RegisterLocalUserUseCase,
 )
-from src.shared.adapters.uow import SQLAlchemyUnitOfWork, get_uow
-from src.shared.api.dependencies import get_is_challenged
+from src.shared.api.dependencies import get_is_challenged, UnitOfWorkDeps
 from src.shared.api.utils import (
     extract_client_metadata,
 )
@@ -38,7 +37,7 @@ router = APIRouter()
 async def register_user(
     request: Request,
     req: RegisterRequest,
-    uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
+    uow: UnitOfWorkDeps,
     usecase: Annotated[RegisterLocalUserUseCase, Depends(get_register_local_usecase)],
     project_id: Annotated[UUID, Depends(get_required_project_id)],
     is_challenged: bool = Depends(get_is_challenged),
@@ -74,7 +73,7 @@ async def register_user(
 async def register_tenant(
     request: Request,
     req: RegisterRequest,
-    uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)],
+    uow: UnitOfWorkDeps,
     usecase: Annotated[RegisterLocalUserUseCase, Depends(get_register_local_usecase)],
     is_challenged: bool = Depends(get_is_challenged),
 ):

@@ -3,15 +3,13 @@ Exposes liveness and readiness probes for orchestrators (like Kubernetes or Dock
 Checks connectivity to the PostgreSQL database and Redis cache to ensure the application is healthy.
 """
 
-from typing import Annotated
-
 import redis.asyncio as redis
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Response
 from pydantic import BaseModel
 from sqlalchemy import text
 
 from src.core.config import database_settings
-from src.shared.adapters.uow import SQLAlchemyUnitOfWork, get_uow
+from src.shared.api.dependencies import UnitOfWorkDeps
 
 router = APIRouter()
 
@@ -27,9 +25,7 @@ class HealthResponse(BaseModel):
 
 
 @router.get("/health", response_model=HealthResponse)
-async def health_check(
-    response: Response, uow: Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)]
-):
+async def health_check(response: Response, uow: UnitOfWorkDeps):
     # Check DB
     try:
         async with uow:

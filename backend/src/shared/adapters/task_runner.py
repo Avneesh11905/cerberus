@@ -1,9 +1,9 @@
 from typing import Callable
 
-from src.shared.application.ports.task_runner import TaskRunnerPort
+from src.shared.application.ports import TaskRunnerPort
 
 
-class CeleryTaskRunner(TaskRunnerPort):
+class CeleryTaskRunnerAdapter(TaskRunnerPort):
     """
     Implements TaskRunnerPort by offloading tasks to Celery.
     Note: The 'task' passed here must be a registered Celery task (e.g. decorated with @celery_app.task)

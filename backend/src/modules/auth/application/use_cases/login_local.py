@@ -11,29 +11,30 @@ from uuid6 import uuid7
 
 from src.core.config import core_settings
 from src.core.exceptions import TurnstileVerificationFailed
+from src.modules.auth.application.utils import anonymize_email, format_device_info
 from src.modules.auth.application.ports import (
     PasswordHasherPort,
     RefreshTokenRepositoryPort,
-    UserRepositoryPort,
-)
-from src.modules.auth.application.ports.email_sender import EmailSenderPort
-from src.modules.auth.application.ports.repository.project import ProjectRepositoryPort
-from src.modules.auth.application.ports.security.access_token import AccessTokenPort
-from src.modules.auth.application.ports.security.claims_provider import (
+    UserQueryRepositoryPort,
+    UserCommandRepositoryPort,
+    EmailSenderPort,
+    ProjectRepositoryPort,
+    AccessTokenPort,
     ClaimsProviderPort,
 )
-from src.modules.auth.application.utils import anonymize_email, format_device_info
-from src.modules.auth.domain import UserIdentity
+from src.modules.auth.domain.entities import UserIdentity
 from src.modules.auth.domain.exceptions import (
     InvalidCredentialsException,
     UnverifiedEmailException,
 )
-from src.modules.auth.domain.session import ClientMetadata
-from src.shared.application.ports.analytics import AnalyticsEventPort
-from src.shared.application.ports.logger import LoggerPort
-from src.shared.application.ports.rate_limiter import RateLimiterPort
-from src.shared.application.ports.turnstile import TurnstilePort
-from src.shared.application.ports.uow import UoWPort
+from src.shared.application.ports import (
+    AnalyticsEventPort,
+    LoggerPort,
+    RateLimiterPort,
+    TurnstilePort,
+    UoWPort,
+)
+from src.shared.domain.entities import ClientMetadata
 from src.shared.domain.enums import UserRole
 
 
@@ -42,7 +43,8 @@ class LoginLocalUserUseCase[SessionType]:
 
     def __init__(
         self,
-        user_repo: UserRepositoryPort[SessionType],
+        user_query_repo: UserQueryRepositoryPort[SessionType],
+        user_command_repo: UserCommandRepositoryPort[SessionType],
         refresh_repo: RefreshTokenRepositoryPort[SessionType],
         hasher: PasswordHasherPort,
         logger: LoggerPort,
@@ -54,7 +56,8 @@ class LoginLocalUserUseCase[SessionType]:
         turnstile: TurnstilePort,
         analytics: AnalyticsEventPort,
     ):
-        self._user_repo = user_repo
+        self._user_query_repo = user_query_repo
+        self._user_command_repo = user_command_repo
         self._refresh_repo = refresh_repo
         self._hasher = hasher
         self._logger = logger
@@ -97,7 +100,7 @@ class LoginLocalUserUseCase[SessionType]:
                 await self._rate_limiter.record_failure(limit_key)
                 raise TurnstileVerificationFailed("CAPTCHA verification failed")
 
-        user = await self._user_repo.find_by_email(
+        user = await self._user_query_repo.find_by_email(
             uow.session, email, project_id=project_id
         )
         if not user:
@@ -127,7 +130,9 @@ class LoginLocalUserUseCase[SessionType]:
             and user.role != UserRole.SUPERADMIN
         ):
             user.role = UserRole.SUPERADMIN
-            await self._user_repo.update_role(uow.session, user.id, UserRole.SUPERADMIN)
+            await self._user_command_repo.update_role(
+                uow.session, user.id, UserRole.SUPERADMIN
+            )
             await self._logger.info(
                 f"Self-healed admin role for user {user.id} - DB row role was downgraded, now corrected"
             )
@@ -152,7 +157,9 @@ class LoginLocalUserUseCase[SessionType]:
             )
             raise UnverifiedEmailException()
 
-        stored_hash = await self._user_repo.find_password_hash(uow.session, user.id)
+        stored_hash = await self._user_query_repo.find_password_hash(
+            uow.session, user.id
+        )
 
         # Security check: If a user registered via OAuth, they won't have a local password.
         # We must prevent them from logging in locally to avoid bypassing the OAuth provider.
@@ -193,7 +200,7 @@ class LoginLocalUserUseCase[SessionType]:
 
         # Restore user if soft deleted
         if getattr(user, "deleted_at", None) is not None:
-            await self._user_repo.undelete_user(uow.session, user.id)
+            await self._user_command_repo.undelete_user(uow.session, user.id)
             user.deleted_at = None
             await self._email_sender.send_account_restored_email(user.email, user.name)
             await self._logger.info(f"User {user.id} account restored on local login")

@@ -10,12 +10,12 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.modules.users.domain import UserProfile
+from src.modules.users.domain.entities import UserProfile
 from src.modules.users.infrastructure.models import User
 from src.shared.domain.enums import UserRole
 
 
-class SQLProjectUserRepository:
+class SQLProjectUserRepositoryAdapter:
     """Implements ProjectUserRepositoryPort using SQLAlchemy."""
 
     def _to_profile(self, user: User) -> UserProfile:

@@ -37,3 +37,4 @@ keys/
 Thumbs.db
 
 /scripts/redis/
+/coverage.json

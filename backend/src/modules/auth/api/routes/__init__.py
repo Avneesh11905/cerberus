@@ -7,7 +7,7 @@ from src.modules.auth.api.routes.register import router as register_router
 from src.modules.auth.api.routes.sessions import router as sessions_router
 from src.modules.auth.api.routes.verify import router as verify_router
 
-router = APIRouter()
+router = APIRouter(prefix="/auth", tags=["Auth"])
 router.include_router(login_router)
 router.include_router(oauth_router)
 router.include_router(register_router)

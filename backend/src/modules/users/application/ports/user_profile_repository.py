@@ -6,7 +6,7 @@ Abstracts away the underlying database implementation so that business logic can
 from typing import Any, Protocol
 from uuid import UUID
 
-from src.modules.users.domain import UserProfile
+from src.modules.users.domain.entities import UserProfile
 
 
 class UserProfileRepositoryPort(Protocol):

@@ -8,7 +8,7 @@ from typing import cast
 
 from pydantic import AnyHttpUrl
 
-from src.modules.auth.domain import UserIdentity
+from src.modules.auth.domain.entities import UserIdentity
 from src.modules.superadmin.infrastructure.models import Tenant
 from src.modules.users.infrastructure.models import User
 

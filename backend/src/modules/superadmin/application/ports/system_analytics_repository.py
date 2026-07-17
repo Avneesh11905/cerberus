@@ -1,11 +1,9 @@
-from typing import Generic, Protocol, TypeVar
+from typing import Protocol
 
 from src.modules.superadmin.domain.entities import SystemAnalyticsEntity
 
-SessionType = TypeVar("SessionType", contravariant=True)
 
-
-class SystemAnalyticsRepositoryPort(Protocol, Generic[SessionType]):
+class SystemAnalyticsRepositoryPort[SessionType](Protocol):
     async def get_global_analytics(
         self, session: SessionType
     ) -> "SystemAnalyticsEntity": ...

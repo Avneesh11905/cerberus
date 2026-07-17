@@ -1,9 +1,9 @@
 import time
 
-from src.shared.application.ports.cache import CachePort
+from src.shared.application.ports import CachePort
 
 
-class RedisRateLimiter:
+class RedisRateLimiterAdapter:
     """
     Custom Redis rate limiter.
     Implements RateLimiterPort for Use Case callbacks.
@@ -27,49 +27,22 @@ class RedisRateLimiter:
         self, bucket_key: str, limit: int, window: int
     ) -> tuple[bool, int, int]:
         """
-        Token bucket algorithm.
+        Simple Fixed Window algorithm using atomic incr.
         Returns (is_allowed, remaining, reset_time)
-        We can simulate Token Bucket using a simple fixed window or sliding window,
-        or just an incrementing counter with TTL for simplicity, if continuous refill isn't strictly needed for all.
-        For continuous refill (leak rate), we can use a more advanced token bucket in Redis.
-        Let's implement a simple fixed window counter for now, as it's typically sufficient unless
-        token bucket is strictly required. Wait, the plan explicitly says "Token Bucket algorithm".
-
-        Token Bucket using Redis:
-        We store a dict: {"tokens": int, "last_refill": float}
         """
         now = time.time()
-        # refill rate: tokens per second
-        rate = limit / window
+        # Round the timestamp to the nearest window boundary to create buckets
+        current_window_start = int(now // window) * window
+        key = f"{bucket_key}:{current_window_start}"
 
-        data = await self.cache.get_dict(bucket_key)
-        if not data:
-            data = {"tokens": limit, "last_refill": now}
+        count = await self.cache.incr(key, ttl=window)
 
-        tokens = float(data["tokens"])
-        last_refill = float(data["last_refill"])
+        reset_time = current_window_start + window
+        remaining = max(0, limit - count)
 
-        # Refill
-        elapsed = now - last_refill
-        new_tokens = min(limit, tokens + (elapsed * rate))
+        is_allowed = count <= limit
 
-        if new_tokens >= 1:
-            # Allow
-            new_tokens -= 1
-            await self.cache.set_dict(
-                bucket_key, {"tokens": new_tokens, "last_refill": now}, ttl=window
-            )
-            return True, int(new_tokens), int(now + (1.0 / rate))
-        else:
-            # Deny
-            # When will 1 token be available?
-            wait_time = (1.0 - new_tokens) / rate
-            reset_time = int(now + wait_time)
-            # Update last_refill so we don't lose the fractional tokens
-            await self.cache.set_dict(
-                bucket_key, {"tokens": new_tokens, "last_refill": now}, ttl=window
-            )
-            return False, 0, reset_time
+        return is_allowed, remaining, reset_time
 
     async def is_captcha_cleared(self, key: str) -> bool:
         val = await self.cache.get_string(f"captcha_cleared:{key}")

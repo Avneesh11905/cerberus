@@ -4,12 +4,10 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.projects.application.ports.project_query_repository import (
-    ProjectQueryRepositoryPort,
-)
-from src.modules.projects.domain.project import ProjectEntity
+from src.modules.projects.application.ports import ProjectQueryRepositoryPort
+from src.modules.projects.domain.entities import ProjectEntity
 from src.modules.projects.infrastructure.models import Project as ProjectModel
-from src.shared.application.ports.encryption import EncryptionPort
+from src.shared.application.ports import EncryptionPort
 
 
 class SQLProjectQueryRepositoryAdapter(ProjectQueryRepositoryPort[AsyncSession]):

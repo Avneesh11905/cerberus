@@ -10,19 +10,25 @@ import secrets
 import time
 from uuid import UUID
 
+from src.shared.domain.entities import ClientMetadata
+from src.shared.domain.enums import UserRole
 from src.core.config import core_settings, verification_settings
 from src.core.exceptions import TurnstileVerificationFailed
-from src.modules.auth.application.ports import PasswordHasherPort, UserRepositoryPort
-from src.modules.auth.application.ports.email_sender import EmailSenderPort
+from src.modules.auth.application.ports import (
+    PasswordHasherPort,
+    UserQueryRepositoryPort,
+    UserCommandRepositoryPort,
+    EmailSenderPort,
+)
 from src.modules.auth.application.utils import anonymize_email, hash_otp
-from src.shared.api.utils import ClientMetadata
-from src.shared.application.ports.analytics import AnalyticsEventPort
-from src.shared.application.ports.cache import CachePort
-from src.shared.application.ports.logger import LoggerPort
-from src.shared.application.ports.rate_limiter import RateLimiterPort
-from src.shared.application.ports.turnstile import TurnstilePort
-from src.shared.application.ports.uow import UoWPort
-from src.shared.domain.enums import UserRole
+from src.shared.application.ports import (
+    AnalyticsEventPort,
+    CachePort,
+    LoggerPort,
+    RateLimiterPort,
+    TurnstilePort,
+    UoWPort,
+)
 
 
 class RegisterLocalUserUseCase[SessionType]:
@@ -30,7 +36,8 @@ class RegisterLocalUserUseCase[SessionType]:
 
     def __init__(
         self,
-        user_repo: UserRepositoryPort,
+        user_query_repo: UserQueryRepositoryPort,
+        user_command_repo: UserCommandRepositoryPort,
         hasher: PasswordHasherPort,
         logger: LoggerPort,
         email_sender: EmailSenderPort,
@@ -39,7 +46,8 @@ class RegisterLocalUserUseCase[SessionType]:
         turnstile: TurnstilePort,
         analytics: AnalyticsEventPort,
     ):
-        self._user_repo = user_repo
+        self._user_query_repo = user_query_repo
+        self._user_command_repo = user_command_repo
         self._hasher = hasher
         self._logger = logger
         self._email_sender = email_sender
@@ -67,7 +75,7 @@ class RegisterLocalUserUseCase[SessionType]:
         """
         if project_id is not None:
             role = UserRole.USER
-            is_admin = await self._user_repo.is_project_admin(
+            is_admin = await self._user_query_repo.is_project_admin(
                 uow.session, project_id, email
             )
             if is_admin:
@@ -99,7 +107,7 @@ class RegisterLocalUserUseCase[SessionType]:
                 raise TurnstileVerificationFailed("CAPTCHA verification failed")
 
         # 1. Check if email exists in PostgreSQL
-        existing = await self._user_repo.find_by_email(
+        existing = await self._user_query_repo.find_by_email(
             uow.session, email, project_id=project_id
         )
 
@@ -122,7 +130,7 @@ class RegisterLocalUserUseCase[SessionType]:
 
         if not existing:
             # 3a. Save pending user to PostgreSQL directly, but without a password.
-            await self._user_repo.create_user_with_password(
+            await self._user_command_repo.create_user_with_password(
                 session=uow.session,
                 email=email,
                 name=name,

@@ -8,7 +8,7 @@ from sqlalchemy import text
 
 from src.core.celery_app import celery_app
 from src.core.database import AsyncSessionLocal
-from src.modules.analytics.adapters import SQLAnalyticsRepository
+from src.core.container import app_container
 from src.modules.analytics.domain.entities import AnalyticsEvent
 from src.shared.domain.enums import EventType
 
@@ -34,7 +34,7 @@ def record_analytics_event(
     )
 
     async def _save():
-        repo = SQLAnalyticsRepository(session_factory=AsyncSessionLocal)
+        repo = app_container.analytics_repo
         await repo.save_event(event)
 
     try:

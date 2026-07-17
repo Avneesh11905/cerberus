@@ -4,11 +4,11 @@ Implementation of the ClaimsProviderPort.
 
 from uuid import UUID
 
-from src.modules.auth.application.ports.repository.user import UserRepositoryPort
-from src.modules.auth.application.ports.security.claims_provider import (
+from src.modules.auth.application.ports import (
     ClaimsProviderPort,
+    UserQueryRepositoryPort,
 )
-from src.shared.application.ports.cache import CachePort
+from src.shared.application.ports import CachePort
 
 
 class NullClaimsProviderAdapter[SessionType](ClaimsProviderPort[SessionType]):
@@ -25,9 +25,11 @@ class RoleClaimsProviderAdapter[SessionType](ClaimsProviderPort[SessionType]):
     Dynamically supplies the role of the user, caching it for performance.
     """
 
-    def __init__(self, cache: CachePort, user_repo: UserRepositoryPort[SessionType]):
+    def __init__(
+        self, cache: CachePort, user_query_repo: UserQueryRepositoryPort[SessionType]
+    ):
         self.cache = cache
-        self.user_repo = user_repo
+        self.user_query_repo = user_query_repo
 
     async def get_custom_claims(
         self, session: SessionType, user_id: UUID
@@ -38,7 +40,7 @@ class RoleClaimsProviderAdapter[SessionType](ClaimsProviderPort[SessionType]):
         if cached_role:
             return {"role": cached_role}
 
-        user = await self.user_repo.find_by_id(session, user_id)
+        user = await self.user_query_repo.find_by_id(session, user_id)
         if not user:
             # We silently return empty claims if not found here (though shouldn't happen)
             return {}

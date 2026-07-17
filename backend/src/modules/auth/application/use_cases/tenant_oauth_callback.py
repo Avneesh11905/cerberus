@@ -13,18 +13,16 @@ from uuid6 import uuid7
 from src.core.config import core_settings
 from src.modules.auth.application.ports import (
     RefreshTokenRepositoryPort,
-    UserRepositoryPort,
-)
-from src.modules.auth.application.ports.email_sender import EmailSenderPort
-from src.modules.auth.application.ports.security.access_token import AccessTokenPort
-from src.modules.auth.application.ports.security.claims_provider import (
+    UserQueryRepositoryPort,
+    UserCommandRepositoryPort,
+    EmailSenderPort,
+    AccessTokenPort,
     ClaimsProviderPort,
 )
 from src.modules.auth.application.utils import format_device_info
-from src.modules.auth.domain import UserIdentity
-from src.modules.auth.domain.session import ClientMetadata
-from src.modules.auth.domain.user import OAuthUserInfo
-from src.shared.application.ports.uow import UoWPort
+from src.modules.auth.domain.entities import UserIdentity, OAuthUserInfo
+from src.shared.domain.entities import ClientMetadata
+from src.shared.application.ports import UoWPort
 from src.shared.domain.enums import UserRole
 
 
@@ -39,13 +37,15 @@ class TenantOAuthCallbackUseCase[SessionType]:
 
     def __init__(
         self,
-        user_repo: "UserRepositoryPort",
+        user_query_repo: "UserQueryRepositoryPort",
+        user_command_repo: "UserCommandRepositoryPort",
         refresh_repo: "RefreshTokenRepositoryPort",
         email_sender: "EmailSenderPort",
         access_token: "AccessTokenPort",
         claims_provider: "ClaimsProviderPort",
     ):
-        self._user_repo = user_repo
+        self._user_query_repo = user_query_repo
+        self._user_command_repo = user_command_repo
         self._refresh_repo = refresh_repo
         self._email_sender = email_sender
         self._access_token = access_token
@@ -105,12 +105,12 @@ class TenantOAuthCallbackUseCase[SessionType]:
         role = self._resolve_role(email)
 
         # Step 1: Exact provider+sub match
-        user = await self._user_repo.find_by_oauth(
+        user = await self._user_query_repo.find_by_oauth(
             uow.session, provider, oauth_sub, project_id=None
         )
         if user:
             if getattr(user, "deleted_at", None) is not None:
-                await self._user_repo.undelete_user(uow.session, user.id)
+                await self._user_command_repo.undelete_user(uow.session, user.id)
                 user.deleted_at = None
                 await self._email_sender.send_account_restored_email(
                     user.email, user.name
@@ -139,10 +139,12 @@ class TenantOAuthCallbackUseCase[SessionType]:
             return user, refresh_token, access_token, False
 
         # Step 2: Email match → account linking
-        user = await self._user_repo.find_by_email(uow.session, email, project_id=None)
+        user = await self._user_query_repo.find_by_email(
+            uow.session, email, project_id=None
+        )
         if user:
             if getattr(user, "deleted_at", None) is not None:
-                await self._user_repo.undelete_user(uow.session, user.id)
+                await self._user_command_repo.undelete_user(uow.session, user.id)
                 user.deleted_at = None
                 await self._email_sender.send_account_restored_email(
                     user.email, user.name
@@ -150,11 +152,11 @@ class TenantOAuthCallbackUseCase[SessionType]:
 
             if role == UserRole.SUPERADMIN and user.role != UserRole.SUPERADMIN:
                 user.role = UserRole.SUPERADMIN
-                await self._user_repo.update_role(
+                await self._user_command_repo.update_role(
                     uow.session, user.id, UserRole.SUPERADMIN
                 )
 
-            await self._user_repo.link_oauth_account(
+            await self._user_command_repo.link_oauth_account(
                 uow.session, user.id, provider, oauth_sub, project_id=None
             )
             await self._check_new_login(uow.session, user, client_meta)
@@ -177,7 +179,7 @@ class TenantOAuthCallbackUseCase[SessionType]:
             return user, refresh_token, access_token, False
 
         # Step 3: Create new tenant user
-        new_user = await self._user_repo.create_user_with_oauth(
+        new_user = await self._user_command_repo.create_user_with_oauth(
             session=uow.session,
             email=email,
             name=name,
