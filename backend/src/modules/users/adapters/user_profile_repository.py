@@ -14,9 +14,9 @@ from src.modules.auth.application.ports import RefreshTokenRepositoryPort
 from src.modules.users.domain.entities import UserProfile
 from src.modules.users.domain.exceptions import UserNotFoundException
 from src.modules.users.infrastructure.models import User
+from src.modules.users.application.ports import UserProfileRepositoryPort
 
-
-class SQLUserProfileRepositoryAdapter:
+class SQLUserProfileRepositoryAdapter(UserProfileRepositoryPort[AsyncSession]):
     """Implements UserProfileRepositoryPort using SQLAlchemy."""
 
     def __init__(self, refresh_repo: RefreshTokenRepositoryPort):

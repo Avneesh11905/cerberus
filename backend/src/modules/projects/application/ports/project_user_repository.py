@@ -3,17 +3,17 @@ Defines the interface (Port) for interacting with end-users belonging to a speci
 Allows project owners (tenants) to manage the users of their projects.
 """
 
-from typing import Any, Protocol, Sequence
+from typing import Protocol, Sequence
 from uuid import UUID
 
 from src.modules.users.domain.entities import UserProfile
 from src.shared.domain.enums import UserRole
 
 
-class ProjectUserRepositoryPort(Protocol):
+class ProjectUserRepositoryPort[SessionType](Protocol):
     async def list_project_users(
         self,
-        session: Any,
+        session: SessionType,
         project_id: UUID,
         skip: int = 0,
         limit: int = 100,
@@ -23,25 +23,25 @@ class ProjectUserRepositoryPort(Protocol):
         ...
 
     async def count_project_users(
-        self, session: Any, project_id: UUID, search: str | None = None
+        self, session: SessionType, project_id: UUID, search: str | None = None
     ) -> int:
         """Count the total number of users for a specific project matching the search."""
         ...
 
     async def update_user_role(
-        self, session: Any, project_id: UUID, user_id: UUID, new_role: UserRole
+        self, session: SessionType, project_id: UUID, user_id: UUID, new_role: UserRole
     ) -> UserProfile | None:
         """Update the role of a user within a project."""
         ...
 
     async def update_user_status(
-        self, session: Any, project_id: UUID, user_id: UUID, is_active: bool
+        self, session: SessionType, project_id: UUID, user_id: UUID, is_active: bool
     ) -> UserProfile | None:
         """Update the active status of a user within a project."""
         ...
 
     async def update_tenant_user_status(
-        self, session: Any, tenant_id: UUID, email: str, is_active: bool
+        self, session: SessionType, tenant_id: UUID, email: str, is_active: bool
     ) -> Sequence[UserProfile]:
         """Update the active status of a user across all projects owned by a tenant."""
         ...
