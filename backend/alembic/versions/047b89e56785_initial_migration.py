@@ -469,4 +469,7 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_analytics_events_project_id"), table_name="analytics_events")
     op.drop_index(op.f("ix_analytics_events_event_type"), table_name="analytics_events")
     op.drop_table("analytics_events")
+    # Drop ENUM types
+    op.execute("DROP TYPE IF EXISTS globalrole;")
+    op.execute("DROP TYPE IF EXISTS event_type_enum;")
     # ### end Alembic commands ###
