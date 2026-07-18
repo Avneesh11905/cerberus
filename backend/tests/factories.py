@@ -3,9 +3,11 @@ from factory.alchemy import SQLAlchemyModelFactory
 from src.core.models import SystemLog
 from src.modules.users.infrastructure.models import User
 
+
 class BaseFactory(SQLAlchemyModelFactory):
     pass
     # Note: sqlalchemy_session should be injected in conftest.py or tests
+
 
 class SystemLogFactory(BaseFactory):
     class Meta:
@@ -14,8 +16,9 @@ class SystemLogFactory(BaseFactory):
     id = factory.Faker("uuid4")
     action = factory.Faker("word")
     entity_id = factory.Faker("uuid4")
-    details = {}
+    details: dict[str, str] = {}
     ip_address = factory.Faker("ipv4")
+
 
 class UserFactory(BaseFactory):
     class Meta:

@@ -1,5 +1,5 @@
-import pytest
 from src.core.config import database_settings
+
 
 def test_infra_containers_are_up(infra_containers):
     """
