@@ -15,7 +15,7 @@ from src.shared.domain.entities import ClientMetadata
 from src.shared.application.ports import UoWPort
 
 
-class RefreshSessionUseCase[SessionType]:
+class SessionRefreshUseCase[SessionType]:
     """Handles validating a refresh token and issuing a new access token."""
 
     def __init__(

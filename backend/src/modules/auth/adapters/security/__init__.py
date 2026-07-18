@@ -1,10 +1,11 @@
-from .claims_provider import NullClaimsProviderAdapter, RoleClaimsProviderAdapter
+from .claims_provider import RoleClaimsProviderAdapter
 from .password_hasher import Argon2PasswordHasherAdapter
 from .access_token import JWTAccessTokenAdapter
+from .oauth_service import OAuthServiceAdapter
 
 __all__ = [
     "JWTAccessTokenAdapter",
     "Argon2PasswordHasherAdapter",
-    "NullClaimsProviderAdapter",
     "RoleClaimsProviderAdapter",
+    "OAuthServiceAdapter",
 ]

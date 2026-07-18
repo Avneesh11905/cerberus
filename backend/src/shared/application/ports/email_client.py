@@ -3,7 +3,7 @@ Port: Shared Email Client
 
 Defines the generic interface for dispatching a pre-rendered email.
 Infrastructure adapters (Resend, SendGrid, Mailgun, etc.) implement this port.
-Domain-specific email services (e.g. AuthEmailServiceAdapter) depend on this port
+Domain-specific email services (e.g. AuthEmailSenderAdapter) depend on this port
 so that swapping the email provider only requires changing one file in shared/adapters.
 """
 

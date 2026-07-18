@@ -1,112 +1,132 @@
 from typing import Annotated
-
 from fastapi import Depends
-
-from src.modules.projects.application.use_cases.create_project import (
+from src.modules.projects.application.use_cases import (
     CreateProjectUseCase,
-)
-from src.modules.projects.application.use_cases.list_projects import ListProjectsUseCase
-from src.modules.projects.application.use_cases.get_project import GetProjectUseCase
-from src.modules.projects.application.use_cases.delete_project import (
+    ListProjectsUseCase,
+    GetProjectUseCase,
     DeleteProjectUseCase,
-)
-from src.modules.projects.application.use_cases.update_oauth import UpdateOauthUseCase
-from src.modules.projects.application.use_cases.update_origins import (
+    UpdateOauthUseCase,
     UpdateOriginsUseCase,
-)
-from src.modules.projects.application.use_cases.update_environment import (
     UpdateEnvironmentUseCase,
-)
-from src.modules.projects.application.use_cases.update_frontend_url import (
     UpdateFrontendUrlUseCase,
-)
-from src.modules.projects.application.use_cases.update_name import UpdateNameUseCase
-from src.modules.projects.application.use_cases.get_secrets import GetSecretsUseCase
-from src.modules.projects.application.use_cases.rotate_api_key import (
+    UpdateNameUseCase,
+    GetSecretsUseCase,
     RotateApiKeyUseCase,
-)
-from src.modules.projects.application.use_cases.rotate_jwt_secret import (
     RotateJwtSecretUseCase,
-)
-
-from src.modules.projects.application.use_cases.list_project_users import (
     ListProjectUsersUseCase,
-)
-from src.modules.projects.application.use_cases.update_user_role import (
     UpdateUserRoleUseCase,
-)
-from src.modules.projects.application.use_cases.toggle_user_status import (
     ToggleUserStatusUseCase,
-)
-from src.modules.projects.application.use_cases.toggle_tenant_user_status import (
     ToggleTenantUserStatusUseCase,
 )
-
-from src.modules.projects.application.container import projects_usecase_container
+from src.core.container import app_container
 
 
 def get_create_project_use_case() -> CreateProjectUseCase:
-    return projects_usecase_container.create_project_usecase
+    return CreateProjectUseCase(
+        query_repository=app_container.project_query_repo,
+        command_repository=app_container.project_command_repo,
+        api_key_adapter=app_container.api_key_adapter,
+        rsa_key_adapter=app_container.rsa_key_adapter,
+    )
 
 
 def get_list_projects_use_case() -> ListProjectsUseCase:
-    return projects_usecase_container.list_projects_usecase
+    return ListProjectsUseCase(query_repository=app_container.project_query_repo)
 
 
 def get_get_project_use_case() -> GetProjectUseCase:
-    return projects_usecase_container.get_project_usecase
+    return GetProjectUseCase(query_repository=app_container.project_query_repo)
 
 
 def get_delete_project_use_case() -> DeleteProjectUseCase:
-    return projects_usecase_container.delete_project_usecase
+    return DeleteProjectUseCase(
+        query_repository=app_container.project_query_repo,
+        command_repository=app_container.project_command_repo,
+    )
 
 
 def get_update_oauth_use_case() -> UpdateOauthUseCase:
-    return projects_usecase_container.update_oauth_usecase
+    return UpdateOauthUseCase(
+        query_repository=app_container.project_query_repo,
+        command_repository=app_container.project_command_repo,
+        encryption_adapter=app_container.encryption_adapter,
+    )
 
 
 def get_update_origins_use_case() -> UpdateOriginsUseCase:
-    return projects_usecase_container.update_origins_usecase
+    return UpdateOriginsUseCase(
+        query_repository=app_container.project_query_repo,
+        command_repository=app_container.project_command_repo,
+    )
 
 
 def get_update_environment_use_case() -> UpdateEnvironmentUseCase:
-    return projects_usecase_container.update_environment_usecase
+    return UpdateEnvironmentUseCase(
+        query_repository=app_container.project_query_repo,
+        command_repository=app_container.project_command_repo,
+    )
 
 
 def get_update_frontend_url_use_case() -> UpdateFrontendUrlUseCase:
-    return projects_usecase_container.update_frontend_url_usecase
+    return UpdateFrontendUrlUseCase(
+        query_repository=app_container.project_query_repo,
+        command_repository=app_container.project_command_repo,
+    )
 
 
 def get_update_name_use_case() -> UpdateNameUseCase:
-    return projects_usecase_container.update_name_usecase
+    return UpdateNameUseCase(
+        query_repository=app_container.project_query_repo,
+        command_repository=app_container.project_command_repo,
+    )
 
 
 def get_get_secrets_use_case() -> GetSecretsUseCase:
-    return projects_usecase_container.get_secrets_usecase
+    return GetSecretsUseCase(query_repository=app_container.project_query_repo)
 
 
 def get_rotate_api_key_use_case() -> RotateApiKeyUseCase:
-    return projects_usecase_container.rotate_api_key_usecase
+    return RotateApiKeyUseCase(
+        query_repository=app_container.project_query_repo,
+        command_repository=app_container.project_command_repo,
+        api_key_adapter=app_container.api_key_adapter,
+    )
 
 
 def get_rotate_jwt_secret_use_case() -> RotateJwtSecretUseCase:
-    return projects_usecase_container.rotate_jwt_secret_usecase
+    return RotateJwtSecretUseCase(
+        query_repository=app_container.project_query_repo,
+        command_repository=app_container.project_command_repo,
+        rsa_key_adapter=app_container.rsa_key_adapter,
+    )
 
 
 def get_list_project_users_use_case() -> ListProjectUsersUseCase:
-    return projects_usecase_container.list_project_users_usecase
+    return ListProjectUsersUseCase(
+        project_query_repository=app_container.project_query_repo,
+        project_user_repository=app_container.project_user_repo,
+    )
 
 
 def get_update_user_role_use_case() -> UpdateUserRoleUseCase:
-    return projects_usecase_container.update_user_role_usecase
+    return UpdateUserRoleUseCase(
+        project_query_repository=app_container.project_query_repo,
+        project_user_repository=app_container.project_user_repo,
+    )
 
 
 def get_toggle_user_status_use_case() -> ToggleUserStatusUseCase:
-    return projects_usecase_container.toggle_user_status_usecase
+    return ToggleUserStatusUseCase(
+        project_query_repository=app_container.project_query_repo,
+        project_user_repository=app_container.project_user_repo,
+    )
 
 
 def get_toggle_tenant_user_status_use_case() -> ToggleTenantUserStatusUseCase:
-    return projects_usecase_container.toggle_tenant_user_status_usecase
+    return ToggleTenantUserStatusUseCase(
+        project_query_repository=app_container.project_query_repo,
+        project_user_repository=app_container.project_user_repo,
+    )
 
 
 CreateProjectUseCaseDep = Annotated[

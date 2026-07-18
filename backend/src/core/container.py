@@ -22,13 +22,14 @@ from src.modules.analytics.adapters import SQLAnalyticsRepositoryAdapter
 from src.modules.users.adapters import SQLUserProfileRepositoryAdapter
 from src.modules.auth.adapters import (
     Argon2PasswordHasherAdapter,
-    AuthEmailServiceAdapter,
+    AuthEmailSenderAdapter,
     DBRefreshTokenRepositoryAdapter,
     JWTAccessTokenAdapter,
     RoleClaimsProviderAdapter,
     SQLUserQueryRepositoryAdapter,
     SQLUserCommandRepositoryAdapter,
     SQLUserMaintenanceRepositoryAdapter,
+    OAuthServiceAdapter,
 )
 from src.modules.projects.adapters import (
     SQLProjectCommandRepositoryAdapter,
@@ -129,7 +130,7 @@ class AppContainer:
             cache=self.cache_adapter,
         )
 
-        self.auth_email_sender = AuthEmailServiceAdapter(
+        self.auth_email_sender = AuthEmailSenderAdapter(
             email_client=self.email_client,
             from_email=email_settings.FROM,
             templates_dir=Path(__file__).parent.parent
@@ -160,6 +161,11 @@ class AppContainer:
             encryption_adapter=self.encryption_adapter
         )
         self.project_user_repo = SQLProjectUserRepositoryAdapter()
+
+        self.oauth_service = OAuthServiceAdapter(
+            project_query_repo=self.project_query_repo,
+            encryption_adapter=self.encryption_adapter,
+        )
 
         # Superadmin
         self.superadmin_tenant_repo = SQLTenantRepositoryAdapter()

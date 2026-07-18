@@ -8,7 +8,7 @@ It performs two distinct actions:
 
 from datetime import datetime, timezone
 
-from src.core.config import token_settings
+from src.core.config import TokenSettings
 from src.modules.auth.application.ports import RefreshTokenRepositoryPort
 from src.shared.application.ports import (
     CachePort,
@@ -16,12 +16,18 @@ from src.shared.application.ports import (
 )
 
 
-class LogoutUseCase[SessionType]:
+class SessionLogoutUseCase[SessionType]:
     """Handles logging out a user by revoking the refresh token and blacklisting the access token."""
 
-    def __init__(self, refresh_repo: RefreshTokenRepositoryPort, cache: CachePort):
+    def __init__(
+        self,
+        refresh_repo: RefreshTokenRepositoryPort,
+        cache: CachePort,
+        token_settings: TokenSettings,
+    ):
         self._refresh_repo = refresh_repo
         self._cache = cache
+        self.token_settings = token_settings
 
     async def execute(
         self,
@@ -43,6 +49,6 @@ class LogoutUseCase[SessionType]:
             now = int(datetime.now(timezone.utc).timestamp())
             ttl = exp - now
             if ttl > 0:
-                max_ttl = token_settings.ACCESS_TOKEN_LIFETIME_MINUTES * 60
+                max_ttl = self.token_settings.ACCESS_TOKEN_LIFETIME_MINUTES * 60
                 ttl = min(ttl, max_ttl)
                 await self._cache.set_string(f"blacklist:{jti}", "1", ttl)

@@ -7,15 +7,15 @@ from sqlalchemy import select
 from src.core.container import app_container
 from src.modules.auth.infrastructure.oauth import PARSERS, PROVIDERS
 from src.modules.auth.infrastructure.oauth.dynamic import get_dynamic_oauth_client
-from src.modules.auth.api.dependencies import (
-    get_cache_adapter,
-    get_oauth_callback_usecase,
-    get_tenant_oauth_callback_usecase,
+from src.modules.auth.api.dependencies.use_cases import (
+    get_oauth_callback_user_usecase,
+    get_oauth_callback_tenant_usecase,
 )
+from src.modules.auth.api.dependencies.core import get_cache_adapter
 from src.modules.auth.api.schemas import OAuthPreflightResponse
 from src.modules.auth.application.use_cases import (
-    OAuthCallbackUseCase,
-    TenantOAuthCallbackUseCase,
+    OAuthCallbackUserUseCase,
+    TenantOAuthCallbackUserUseCase,
 )
 from src.modules.auth.domain.exceptions import (
     InvalidProviderException,
@@ -43,7 +43,7 @@ router = APIRouter()
 """
 Exposes HTTP endpoints for OAuth provider redirects for project end-users.
 When Google/GitHub sends the user back, this route captures the authorization code,
-exchanges it for user details, and triggers the `OAuthCallbackUseCase` to establish a session.
+exchanges it for user details, and triggers the `OAuthCallbackUserUseCase` to establish a session.
 
 Note: For Cerberus Dashboard (tenant) callbacks, see tenant_oauth.py.
 """
@@ -54,7 +54,9 @@ async def oauth_callback(
     provider: str,
     request: Request,
     uow: UnitOfWorkDeps,
-    usecase: Annotated[OAuthCallbackUseCase, Depends(get_oauth_callback_usecase)],
+    usecase: Annotated[
+        OAuthCallbackUserUseCase, Depends(get_oauth_callback_user_usecase)
+    ],
     cache: Annotated[CachePort, Depends(get_cache_adapter)],
 ):
     """Handles the OAuth callback from the provider."""
@@ -388,7 +390,7 @@ async def tenant_oauth_callback(
     request: Request,
     uow: UnitOfWorkDeps,
     usecase: Annotated[
-        TenantOAuthCallbackUseCase, Depends(get_tenant_oauth_callback_usecase)
+        TenantOAuthCallbackUserUseCase, Depends(get_oauth_callback_tenant_usecase)
     ],
     cache: Annotated[CachePort, Depends(get_cache_adapter)],
 ):

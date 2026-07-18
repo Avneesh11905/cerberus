@@ -1,32 +1,32 @@
-from .change_password import ChangePasswordUseCase
-from .execute_password_reset import ExecutePasswordResetUseCase
-from .list_sessions import ListSessionsUseCase
-from .login_local import LoginLocalUserUseCase
-from .logout import LogoutUseCase
-from .logout_all import LogoutAllUseCase
-from .oauth_callback import OAuthCallbackUseCase
-from .refresh_session import RefreshSessionUseCase
-from .register_local import RegisterLocalUserUseCase
-from .request_new_verification_email import RequestNewVerificationEmailUseCase
-from .request_password_reset import RequestPasswordResetUseCase
-from .revoke_session import RevokeSessionUseCase
-from .verify_email import VerifyEmailUseCase
-from .tenant_oauth_callback import TenantOAuthCallbackUseCase
+from .password_change import PasswordChangeUseCase
+from .password_reset_request import PasswordResetRequestUseCase
+from .password_reset_execute import PasswordResetExecuteUseCase
+from .session_list import SessionListUseCase
+from .session_logout import SessionLogoutUseCase
+from .session_logout_all import SessionLogoutAllUseCase
+from .session_revoke import SessionRevokeUseCase
+from .session_refresh import SessionRefreshUseCase
+from .oauth_callback_tenant import TenantOAuthCallbackUserUseCase
+from .oauth_callback_user import OAuthCallbackUserUseCase
+from .local_register import LocalRegisterUseCase
+from .local_verify_email import LocalVerifyEmailUseCase
+from .local_resend_verification import LocalResendVerificationUseCase
+from .local_login import LocalLoginUseCase
 
 
 __all__ = [
-    "RegisterLocalUserUseCase",
-    "LoginLocalUserUseCase",
-    "RequestNewVerificationEmailUseCase",
-    "VerifyEmailUseCase",
-    "OAuthCallbackUseCase",
-    "RequestPasswordResetUseCase",
-    "ExecutePasswordResetUseCase",
-    "LogoutUseCase",
-    "LogoutAllUseCase",
-    "RefreshSessionUseCase",
-    "ListSessionsUseCase",
-    "RevokeSessionUseCase",
-    "ChangePasswordUseCase",
-    "TenantOAuthCallbackUseCase",
+    "LocalRegisterUseCase",
+    "LocalLoginUseCase",
+    "LocalResendVerificationUseCase",
+    "LocalVerifyEmailUseCase",
+    "OAuthCallbackUserUseCase",
+    "PasswordResetRequestUseCase",
+    "PasswordResetExecuteUseCase",
+    "SessionLogoutUseCase",
+    "SessionLogoutAllUseCase",
+    "SessionRefreshUseCase",
+    "SessionListUseCase",
+    "SessionRevokeUseCase",
+    "PasswordChangeUseCase",
+    "TenantOAuthCallbackUserUseCase",
 ]

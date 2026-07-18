@@ -3,7 +3,8 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends
 
-from src.modules.auth.api.dependencies import get_cache_adapter, require_role
+from src.modules.auth.api.dependencies.security import require_role
+from src.modules.auth.api.dependencies.core import get_cache_adapter
 from src.modules.auth.domain.entities import UserIdentity
 from src.modules.projects.api.dependencies import (
     GetSecretsUseCaseDep,

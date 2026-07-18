@@ -23,7 +23,7 @@ from src.shared.application.ports import (
 )
 
 
-class RequestNewVerificationEmailUseCase[SessionType]:
+class LocalResendVerificationUseCase[SessionType]:
     """Handles requesting a new verification OTP."""
 
     def __init__(

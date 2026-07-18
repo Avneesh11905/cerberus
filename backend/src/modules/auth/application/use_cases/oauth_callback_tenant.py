@@ -1,8 +1,8 @@
 """
-Use Case: TenantOAuthCallbackUseCase
+Use Case: TenantOAuthCallbackUserUseCase
 
 Handles the OAuth callback for Cerberus Dashboard users (tenants).
-Unlike OAuthCallbackUseCase, this use case:
+Unlike OAuthCallbackUserUseCase, this use case:
   - Never takes a project_id (tenants are global, not scoped to a project)
   - Does not need ProjectRepositoryPort
   - Assigns UserRole.SUPERADMIN if email matches SUPERADMIN_EMAIL, else UserRole.TENANT
@@ -26,7 +26,7 @@ from src.shared.application.ports import UoWPort
 from src.shared.domain.enums import UserRole
 
 
-class TenantOAuthCallbackUseCase[SessionType]:
+class TenantOAuthCallbackUserUseCase[SessionType]:
     """
     Orchestrates the OAuth callback flow for Cerberus Dashboard tenants.
 

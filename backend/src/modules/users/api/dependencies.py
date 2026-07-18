@@ -5,25 +5,33 @@ Module: Users API Dependencies
 from typing import Annotated
 
 from fastapi import Depends
-
+from src.core.container import app_container
 from src.modules.users.application.use_cases import (
     GetProfileUseCase,
     UpdateProfileUseCase,
     DeleteAccountUseCase,
 )
-from src.modules.users.application.container import users_usecase_container
 
 
 def get_get_profile_use_case() -> GetProfileUseCase:
-    return users_usecase_container.get_profile_usecase
+    return GetProfileUseCase(
+        profile_repository=app_container.user_profile_repo,
+        cache=app_container.cache_adapter,
+    )
 
 
 def get_update_profile_use_case() -> UpdateProfileUseCase:
-    return users_usecase_container.update_profile_usecase
+    return UpdateProfileUseCase(
+        profile_repository=app_container.user_profile_repo,
+        cache=app_container.cache_adapter,
+    )
 
 
 def get_delete_account_use_case() -> DeleteAccountUseCase:
-    return users_usecase_container.delete_account_usecase
+    return DeleteAccountUseCase(
+        profile_repository=app_container.user_profile_repo,
+        cache=app_container.cache_adapter,
+    )
 
 
 GetProfileUseCaseDep = Annotated[GetProfileUseCase, Depends(get_get_profile_use_case)]

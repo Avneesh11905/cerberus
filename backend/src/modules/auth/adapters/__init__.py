@@ -1,4 +1,4 @@
-from .email_sender import AuthEmailServiceAdapter
+from .email_sender import AuthEmailSenderAdapter
 from .repository import (
     DBRefreshTokenRepositoryAdapter,
     SQLUserQueryRepositoryAdapter,
@@ -7,20 +7,20 @@ from .repository import (
 )
 from .security import (
     JWTAccessTokenAdapter,
-    NullClaimsProviderAdapter,
     RoleClaimsProviderAdapter,
     Argon2PasswordHasherAdapter,
+    OAuthServiceAdapter,
 )
 
 
 __all__ = [
-    "AuthEmailServiceAdapter",
+    "AuthEmailSenderAdapter",
     "DBRefreshTokenRepositoryAdapter",
     "SQLUserQueryRepositoryAdapter",
     "SQLUserCommandRepositoryAdapter",
     "SQLUserMaintenanceRepositoryAdapter",
     "JWTAccessTokenAdapter",
-    "NullClaimsProviderAdapter",
     "Argon2PasswordHasherAdapter",
     "RoleClaimsProviderAdapter",
+    "OAuthServiceAdapter",
 ]

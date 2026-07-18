@@ -33,7 +33,7 @@ from src.shared.application.ports import (
 )
 
 
-class VerifyEmailUseCase[SessionType]:
+class LocalVerifyEmailUseCase[SessionType]:
     """Handles verification of the 6-digit OTP for email verification."""
 
     def __init__(

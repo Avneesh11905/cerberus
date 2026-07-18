@@ -3,15 +3,12 @@ from uuid import UUID
 
 from fastapi import Depends, HTTPException
 from sqlalchemy import select
-
-from src.modules.analytics.application.container import analytics_usecase_container
-from src.modules.analytics.application.use_cases.get_project_metrics import (
+from src.core.container import app_container
+from src.modules.analytics.application.use_cases import (
     GetProjectMetricsUseCase,
-)
-from src.modules.analytics.application.use_cases.get_tenant_metrics import (
     GetTenantMetricsUseCase,
 )
-from src.modules.auth.api.dependencies import get_current_user
+from src.modules.auth.api.dependencies.security import get_current_user
 from src.modules.auth.domain.entities import UserIdentity
 from src.modules.projects.infrastructure.models import Project
 from src.shared.api.dependencies import UnitOfWorkDeps
@@ -19,11 +16,11 @@ from src.shared.domain.enums import UserRole
 
 
 def get_project_metrics_use_case() -> GetProjectMetricsUseCase:
-    return analytics_usecase_container.get_project_metrics_usecase
+    return GetProjectMetricsUseCase(repository=app_container.analytics_repo)
 
 
 def get_tenant_metrics_use_case() -> GetTenantMetricsUseCase:
-    return analytics_usecase_container.get_tenant_metrics_usecase
+    return GetTenantMetricsUseCase(repository=app_container.analytics_repo)
 
 
 GetProjectMetricsUseCaseDeps = Annotated[

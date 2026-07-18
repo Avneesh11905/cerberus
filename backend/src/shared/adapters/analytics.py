@@ -3,6 +3,7 @@ from uuid import UUID
 
 from src.core.celery_app import celery_app
 
+
 class CeleryAnalyticsAdapter:
     def record_event(
         self,

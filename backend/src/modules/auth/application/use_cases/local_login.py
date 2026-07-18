@@ -9,7 +9,7 @@ from uuid import UUID
 
 from uuid6 import uuid7
 
-from src.core.config import core_settings
+from src.core.config import CoreSettings
 from src.core.exceptions import TurnstileVerificationFailed
 from src.modules.auth.application.utils import anonymize_email, format_device_info
 from src.modules.auth.application.ports import (
@@ -22,7 +22,10 @@ from src.modules.auth.application.ports import (
     AccessTokenPort,
     ClaimsProviderPort,
 )
-from src.modules.auth.domain.entities import UserIdentity
+from src.modules.users.application.ports.user_profile_repository import (
+    UserProfileRepositoryPort,
+)
+from src.modules.users.domain.entities import UserProfile
 from src.modules.auth.domain.exceptions import (
     InvalidCredentialsException,
     UnverifiedEmailException,
@@ -38,13 +41,14 @@ from src.shared.domain.entities import ClientMetadata
 from src.shared.domain.enums import UserRole
 
 
-class LoginLocalUserUseCase[SessionType]:
+class LocalLoginUseCase[SessionType]:
     """Handles user login with email and password."""
 
     def __init__(
         self,
         user_query_repo: UserQueryRepositoryPort[SessionType],
         user_command_repo: UserCommandRepositoryPort[SessionType],
+        user_profile_repo: UserProfileRepositoryPort[SessionType],
         refresh_repo: RefreshTokenRepositoryPort[SessionType],
         hasher: PasswordHasherPort,
         logger: LoggerPort,
@@ -55,9 +59,11 @@ class LoginLocalUserUseCase[SessionType]:
         rate_limiter: RateLimiterPort,
         turnstile: TurnstilePort,
         analytics: AnalyticsEventPort,
+        core_settings: CoreSettings,
     ):
         self._user_query_repo = user_query_repo
         self._user_command_repo = user_command_repo
+        self._user_profile_repo = user_profile_repo
         self._refresh_repo = refresh_repo
         self._hasher = hasher
         self._logger = logger
@@ -68,6 +74,7 @@ class LoginLocalUserUseCase[SessionType]:
         self._rate_limiter = rate_limiter
         self._turnstile = turnstile
         self._analytics = analytics
+        self.core_settings = core_settings
 
     async def execute(
         self,
@@ -78,10 +85,10 @@ class LoginLocalUserUseCase[SessionType]:
         project_id: UUID | None = None,
         is_challenged: bool = False,
         turnstile_token: str | None = None,
-    ) -> tuple[UserIdentity, str, str]:
+    ) -> tuple[UserProfile | None, str, str]:
         """
         Authenticate a user within a specific project context.
-        Returns (user, raw_refresh_token, access_token).
+        Returns (profile, raw_refresh_token, access_token).
         Raises ValueError on invalid credentials or unverified email.
         """
         limit_key = (
@@ -124,8 +131,9 @@ class LoginLocalUserUseCase[SessionType]:
         # in-memory AND persists the admin role back to the DB to keep them in sync.
         # A warning log is emitted so the self-heal is visible in the audit trail.
         if (
-            core_settings.SUPERADMIN_EMAIL
-            and email.strip().lower() == core_settings.SUPERADMIN_EMAIL.strip().lower()
+            self.core_settings.SUPERADMIN_EMAIL
+            and email.strip().lower()
+            == self.core_settings.SUPERADMIN_EMAIL.strip().lower()
             and project_id is None
             and user.role != UserRole.SUPERADMIN
         ):
@@ -280,4 +288,6 @@ class LoginLocalUserUseCase[SessionType]:
             metadata=client_meta.model_dump() if client_meta else None,
         )
 
-        return user, token, access_token
+        profile = await self._user_profile_repo.get_profile(uow.session, user.id)
+
+        return profile, token, access_token

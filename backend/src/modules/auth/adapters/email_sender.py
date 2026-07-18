@@ -22,7 +22,7 @@ from src.shared.application.ports import (
 )
 
 
-class AuthEmailServiceAdapter(EmailSenderPort):
+class AuthEmailSenderAdapter(EmailSenderPort):
     """
     Implements EmailSenderPort for authentication emails.
     Composes domain-specific emails (Welcome, OTP, Password Reset) using Jinja2 templates

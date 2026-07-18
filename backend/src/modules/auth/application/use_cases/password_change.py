@@ -16,7 +16,7 @@ from src.shared.application.ports import (
 )
 
 
-class ChangePasswordUseCase[SessionType]:
+class PasswordChangeUseCase[SessionType]:
     """Handles updating a user's password when they are already authenticated."""
 
     def __init__(

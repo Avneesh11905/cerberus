@@ -2,16 +2,14 @@ from fastapi import APIRouter
 from typing import Annotated
 from uuid import UUID
 from fastapi import Depends, Request
-from src.modules.auth.api.dependencies import (
-    get_register_local_usecase,
-    get_required_project_id,
-)
+from src.modules.auth.api.dependencies.use_cases import get_local_register_usecase
+from src.modules.auth.api.dependencies.project import get_required_project_id
 from src.modules.auth.api.schemas import (
     RegisterRequest,
     RegisterResponse,
 )
 from src.modules.auth.application.use_cases import (
-    RegisterLocalUserUseCase,
+    LocalRegisterUseCase,
 )
 from src.shared.api.dependencies import get_is_challenged, UnitOfWorkDeps
 from src.shared.api.utils import (
@@ -38,7 +36,7 @@ async def register_user(
     request: Request,
     req: RegisterRequest,
     uow: UnitOfWorkDeps,
-    usecase: Annotated[RegisterLocalUserUseCase, Depends(get_register_local_usecase)],
+    usecase: Annotated[LocalRegisterUseCase, Depends(get_local_register_usecase)],
     project_id: Annotated[UUID, Depends(get_required_project_id)],
     is_challenged: bool = Depends(get_is_challenged),
 ):
@@ -74,7 +72,7 @@ async def register_tenant(
     request: Request,
     req: RegisterRequest,
     uow: UnitOfWorkDeps,
-    usecase: Annotated[RegisterLocalUserUseCase, Depends(get_register_local_usecase)],
+    usecase: Annotated[LocalRegisterUseCase, Depends(get_local_register_usecase)],
     is_challenged: bool = Depends(get_is_challenged),
 ):
     """

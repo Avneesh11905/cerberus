@@ -11,10 +11,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.modules.auth.application.ports import RefreshTokenRepositoryPort
+from src.modules.users.application.ports import UserProfileRepositoryPort
 from src.modules.users.domain.entities import UserProfile
 from src.modules.users.domain.exceptions import UserNotFoundException
 from src.modules.users.infrastructure.models import User
-from src.modules.users.application.ports import UserProfileRepositoryPort
+
 
 class SQLUserProfileRepositoryAdapter(UserProfileRepositoryPort[AsyncSession]):
     """Implements UserProfileRepositoryPort using SQLAlchemy."""

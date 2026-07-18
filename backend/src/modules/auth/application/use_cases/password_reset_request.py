@@ -18,14 +18,18 @@ from src.shared.application.ports import (
     UoWPort,
 )
 from src.modules.auth.application.ports import UserQueryRepositoryPort, EmailSenderPort
+from src.modules.projects.application.ports.project_query_repository import (
+    ProjectQueryRepositoryPort,
+)
 
 
-class RequestPasswordResetUseCase[SessionType]:
+class PasswordResetRequestUseCase[SessionType]:
     """Handles generating a reset token and sending the email."""
 
     def __init__(
         self,
         user_query_repo: UserQueryRepositoryPort,
+        project_query_repo: ProjectQueryRepositoryPort[SessionType],
         cache: CachePort,
         email_sender: EmailSenderPort,
         frontend_url: str,
@@ -33,6 +37,7 @@ class RequestPasswordResetUseCase[SessionType]:
         turnstile: TurnstilePort,
     ):
         self.user_query_repo = user_query_repo
+        self.project_query_repo = project_query_repo
         self.cache = cache
         self.email_sender = email_sender
         self.frontend_url = frontend_url
@@ -44,7 +49,6 @@ class RequestPasswordResetUseCase[SessionType]:
         uow: UoWPort[SessionType],
         email: str,
         project_id: UUID | None = None,
-        frontend_url: str | None = None,
         client_meta: ClientMetadata | None = None,
         is_challenged: bool = False,
         turnstile_token: str | None = None,
@@ -85,7 +89,14 @@ class RequestPasswordResetUseCase[SessionType]:
             verification_settings.PASSWORD_RESET_EXPIRY_SECONDS,
         )
 
-        base_url = (frontend_url if frontend_url else self.frontend_url).rstrip("/")
+        # Resolve frontend_url from project if applicable
+        resolved_frontend_url = self.frontend_url
+        if project_id:
+            project = await self.project_query_repo.get_by_id(uow.session, project_id)
+            if project and project.frontend_url:
+                resolved_frontend_url = project.frontend_url
+
+        base_url = resolved_frontend_url.rstrip("/")
         reset_url = f"{base_url}/reset-password?token={token}"
         await self.email_sender.send_password_reset_email(email, reset_url)
 

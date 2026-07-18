@@ -2,16 +2,18 @@ from fastapi import APIRouter
 from typing import Annotated
 from uuid import UUID
 from fastapi import Depends, Request, Response
-from src.modules.auth.api.dependencies import (
+from src.modules.auth.api.dependencies.use_cases import (
+    get_local_login_usecase,
+    get_session_logout_all_usecase,
+    get_session_logout_usecase,
+    get_session_refresh_usecase,
+)
+from src.modules.auth.api.dependencies.security import (
     get_current_user,
-    get_login_local_usecase,
-    get_optional_project_id,
     verify_csrf,
     get_jwt_payload,
-    get_logout_all_usecase,
-    get_logout_usecase,
-    get_refresh_session_usecase,
 )
+from src.modules.auth.api.dependencies.project import get_optional_project_id
 from src.modules.auth.api.schemas import (
     LoginRequest,
     LoginResponse,
@@ -19,13 +21,12 @@ from src.modules.auth.api.schemas import (
     RefreshResponse,
 )
 from src.modules.auth.application.use_cases import (
-    RefreshSessionUseCase,
-    LogoutAllUseCase,
-    LogoutUseCase,
-    LoginLocalUserUseCase,
+    SessionRefreshUseCase,
+    SessionLogoutAllUseCase,
+    SessionLogoutUseCase,
+    LocalLoginUseCase,
 )
 from src.modules.auth.domain.entities import UserIdentity
-from src.core.container import app_container
 from src.shared.api.dependencies import get_is_challenged, UnitOfWorkDeps
 from src.shared.api.utils import (
     extract_client_metadata,
@@ -54,7 +55,7 @@ async def login_user(
     req: LoginRequest,
     response: Response,
     uow: UnitOfWorkDeps,
-    usecase: Annotated[LoginLocalUserUseCase, Depends(get_login_local_usecase)],
+    usecase: Annotated[LocalLoginUseCase, Depends(get_local_login_usecase)],
     project_id: Annotated[UUID, Depends(get_optional_project_id)],
     is_challenged: bool = Depends(get_is_challenged),
 ):
@@ -62,9 +63,8 @@ async def login_user(
     Authenticate an end-user.
     """
     client_meta = extract_client_metadata(request)
-    user_repo = app_container.user_profile_repo
     async with uow:
-        user, refresh_token, access_token = await usecase.execute(
+        profile, refresh_token, access_token = await usecase.execute(
             uow,
             req.email,
             req.password,
@@ -73,7 +73,6 @@ async def login_user(
             is_challenged=is_challenged,
             turnstile_token=req.turnstile_token,
         )
-        profile = await user_repo.get_profile(uow.session, user.id)
 
     set_refresh_token_cookie(response, refresh_token)
     csrf_token = generate_csrf_token(refresh_token)
@@ -97,16 +96,15 @@ async def login_tenant(
     req: LoginRequest,
     response: Response,
     uow: UnitOfWorkDeps,
-    usecase: Annotated[LoginLocalUserUseCase, Depends(get_login_local_usecase)],
+    usecase: Annotated[LocalLoginUseCase, Depends(get_local_login_usecase)],
     is_challenged: bool = Depends(get_is_challenged),
 ):
     """
     Authenticate a Cerberus tenant dashboard account.
     """
     client_meta = extract_client_metadata(request)
-    user_repo = app_container.user_profile_repo
     async with uow:
-        user, refresh_token, access_token = await usecase.execute(
+        profile, refresh_token, access_token = await usecase.execute(
             uow,
             req.email,
             req.password,
@@ -115,7 +113,6 @@ async def login_tenant(
             is_challenged=is_challenged,
             turnstile_token=req.turnstile_token,
         )
-        profile = await user_repo.get_profile(uow.session, user.id)
 
     set_refresh_token_cookie(response, refresh_token)
     csrf_token = generate_csrf_token(refresh_token)
@@ -135,7 +132,7 @@ async def login_tenant(
 """
 Exposes HTTP endpoints for refreshing access tokens.
 Reads the long-lived refresh token from a secure, HttpOnly cookie,
-triggers the `RefreshSessionUseCase`, and returns a fresh short-lived access token.
+triggers the `SessionRefreshUseCase`, and returns a fresh short-lived access token.
 """
 
 
@@ -144,7 +141,7 @@ async def refresh(
     request: Request,
     response: Response,
     uow: UnitOfWorkDeps,
-    usecase: Annotated[RefreshSessionUseCase, Depends(get_refresh_session_usecase)],
+    usecase: Annotated[SessionRefreshUseCase, Depends(get_session_refresh_usecase)],
 ):
     """
     Refresh the session and obtain a new Access Token.
@@ -181,7 +178,7 @@ async def refresh(
 
 """
 Exposes HTTP endpoints for ending user sessions.
-Extracts the active tokens from cookies and headers and delegates to the `LogoutUseCase` to invalidate them.
+Extracts the active tokens from cookies and headers and delegates to the `SessionLogoutUseCase` to invalidate them.
 """
 
 
@@ -192,7 +189,7 @@ async def logout(
     request: Request,
     response: Response,
     uow: UnitOfWorkDeps,
-    usecase: Annotated[LogoutUseCase, Depends(get_logout_usecase)],
+    usecase: Annotated[SessionLogoutUseCase, Depends(get_session_logout_usecase)],
     jwt_payload: Annotated[dict, Depends(get_jwt_payload)],
 ):
     """
@@ -227,7 +224,9 @@ async def logout_all(
     response: Response,
     user: Annotated[UserIdentity, Depends(get_current_user)],
     uow: UnitOfWorkDeps,
-    usecase: Annotated[LogoutAllUseCase, Depends(get_logout_all_usecase)],
+    usecase: Annotated[
+        SessionLogoutAllUseCase, Depends(get_session_logout_all_usecase)
+    ],
     jwt_payload: Annotated[dict, Depends(get_jwt_payload)],
 ):
     """

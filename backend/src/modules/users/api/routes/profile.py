@@ -8,7 +8,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Request, Response
 
 from src.modules.auth.domain.entities import UserIdentity
-from src.modules.auth.api.dependencies import (
+from src.modules.auth.api.dependencies.security import (
     get_current_user,
     get_jwt_payload,
     verify_csrf,

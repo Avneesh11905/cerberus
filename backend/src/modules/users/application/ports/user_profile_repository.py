@@ -10,11 +10,15 @@ from src.modules.users.domain.entities import UserProfile
 
 
 class UserProfileRepositoryPort[SessionType](Protocol):
-    async def get_profile(self, session: SessionType, user_id: UUID) -> UserProfile | None:
+    async def get_profile(
+        self, session: SessionType, user_id: UUID
+    ) -> UserProfile | None:
         """Fetch the user's profile."""
         ...
 
-    async def save_profile(self, session: SessionType, profile: UserProfile) -> UserProfile:
+    async def save_profile(
+        self, session: SessionType, profile: UserProfile
+    ) -> UserProfile:
         """Save a user's profile."""
         ...
 

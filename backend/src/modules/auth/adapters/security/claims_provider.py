@@ -11,15 +11,6 @@ from src.modules.auth.application.ports import (
 from src.shared.application.ports import CachePort
 
 
-class NullClaimsProviderAdapter[SessionType](ClaimsProviderPort[SessionType]):
-    """Returns no extra claims."""
-
-    async def get_custom_claims(
-        self, session: SessionType, user_id: UUID
-    ) -> dict[str, object]:
-        return {}
-
-
 class RoleClaimsProviderAdapter[SessionType](ClaimsProviderPort[SessionType]):
     """
     Dynamically supplies the role of the user, caching it for performance.

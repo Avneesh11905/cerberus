@@ -9,7 +9,7 @@ from src.modules.auth.domain.exceptions import SessionNotFoundException
 from src.shared.application.ports import UoWPort
 
 
-class RevokeSessionUseCase[SessionType]:
+class SessionRevokeUseCase[SessionType]:
     """Revokes a specific session family, logging out that device."""
 
     def __init__(self, refresh_repo: RefreshTokenRepositoryPort):

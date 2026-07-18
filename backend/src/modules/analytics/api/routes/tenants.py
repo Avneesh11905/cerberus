@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Path, Query
 from src.modules.analytics.api.dependencies import GetTenantMetricsUseCaseDeps
 from src.modules.analytics.api.schemas import MetricResponse, QueryAnalyticsResponse
 
-from src.modules.auth.api.dependencies import require_role
+from src.modules.auth.api.dependencies.security import require_role
 from src.modules.auth.domain.entities import UserIdentity
 from src.shared.domain.enums import UserRole
 

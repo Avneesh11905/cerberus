@@ -23,7 +23,7 @@ from src.shared.application.ports import (
 )
 
 
-class ExecutePasswordResetUseCase[SessionType]:
+class PasswordResetExecuteUseCase[SessionType]:
     """Handles validating the token and updating the password."""
 
     def __init__(

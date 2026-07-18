@@ -8,11 +8,11 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Request, Response
 
-from src.modules.auth.api.dependencies import (
-    get_optional_project_id,
-    get_request_new_verification_email_usecase,
-    get_verify_email_usecase,
+from src.modules.auth.api.dependencies.use_cases import (
+    get_local_resend_verification_usecase,
+    get_local_verify_email_usecase,
 )
+from src.modules.auth.api.dependencies.project import get_optional_project_id
 from src.modules.auth.api.schemas import (
     MessageResponse,
     RegisterResponse,
@@ -20,8 +20,8 @@ from src.modules.auth.api.schemas import (
     VerifyEmailRequest,
 )
 from src.modules.auth.application.use_cases import (
-    RequestNewVerificationEmailUseCase,
-    VerifyEmailUseCase,
+    LocalResendVerificationUseCase,
+    LocalVerifyEmailUseCase,
 )
 from src.shared.api.dependencies import get_is_challenged, UnitOfWorkDeps
 from src.shared.api.utils import extract_client_metadata, set_refresh_token_cookie
@@ -35,7 +35,9 @@ async def verify_email(
     response: Response,
     req: VerifyEmailRequest,
     uow: UnitOfWorkDeps,
-    usecase: Annotated[VerifyEmailUseCase, Depends(get_verify_email_usecase)],
+    usecase: Annotated[
+        LocalVerifyEmailUseCase, Depends(get_local_verify_email_usecase)
+    ],
     project_id: Annotated[UUID | None, Depends(get_optional_project_id)],
     is_challenged: bool = Depends(get_is_challenged),
 ):
@@ -70,8 +72,8 @@ async def resend_verification(
     req: RequestNewVerificationEmail,
     uow: UnitOfWorkDeps,
     usecase: Annotated[
-        RequestNewVerificationEmailUseCase,
-        Depends(get_request_new_verification_email_usecase),
+        LocalResendVerificationUseCase,
+        Depends(get_local_resend_verification_usecase),
     ],
     project_id: Annotated[UUID | None, Depends(get_optional_project_id)],
     is_challenged: bool = Depends(get_is_challenged),

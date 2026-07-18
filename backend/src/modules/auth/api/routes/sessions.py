@@ -7,15 +7,15 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
-from src.modules.auth.api.dependencies import (
-    get_current_user,
-    get_list_sessions_usecase,
-    get_revoke_session_usecase,
+from src.modules.auth.api.dependencies.use_cases import (
+    get_session_list_usecase,
+    get_session_revoke_usecase,
 )
+from src.modules.auth.api.dependencies.security import get_current_user
 from src.modules.auth.api.schemas import SessionResponse
 from src.modules.auth.application.use_cases import (
-    ListSessionsUseCase,
-    RevokeSessionUseCase,
+    SessionListUseCase,
+    SessionRevokeUseCase,
 )
 from src.modules.auth.domain.entities import UserIdentity
 from src.modules.auth.domain.exceptions import SessionNotFoundException
@@ -29,7 +29,7 @@ async def list_sessions(
     request: Request,
     user: Annotated[UserIdentity, Depends(get_current_user)],
     uow: UnitOfWorkDeps,
-    usecase: Annotated[ListSessionsUseCase, Depends(get_list_sessions_usecase)],
+    usecase: Annotated[SessionListUseCase, Depends(get_session_list_usecase)],
 ):
     """
     List all active sessions (devices) for the current user.
@@ -57,7 +57,7 @@ async def revoke_session(
     request: Request,
     user: Annotated[UserIdentity, Depends(get_current_user)],
     uow: UnitOfWorkDeps,
-    usecase: Annotated[RevokeSessionUseCase, Depends(get_revoke_session_usecase)],
+    usecase: Annotated[SessionRevokeUseCase, Depends(get_session_revoke_usecase)],
 ):
     """
     Revoke a specific session by its Family ID.

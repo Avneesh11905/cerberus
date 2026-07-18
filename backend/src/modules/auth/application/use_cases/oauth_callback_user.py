@@ -28,7 +28,7 @@ from src.shared.domain.entities import ClientMetadata
 from src.shared.domain.enums import UserRole
 
 
-class OAuthCallbackUseCase[SessionType]:
+class OAuthCallbackUserUseCase[SessionType]:
     """
     Orchestrates the OAuth callback flow:
     1. Upsert user with account-linking (find by provider, email, or create new).
@@ -39,13 +39,13 @@ class OAuthCallbackUseCase[SessionType]:
 
     def __init__(
         self,
-        user_query_repo: "UserQueryRepositoryPort",
-        user_command_repo: "UserCommandRepositoryPort",
-        refresh_repo: "RefreshTokenRepositoryPort",
-        email_sender: "EmailSenderPort",
-        access_token: "AccessTokenPort",
-        claims_provider: "ClaimsProviderPort",
-        project_repo: "ProjectRepositoryPort",
+        user_query_repo: UserQueryRepositoryPort,
+        user_command_repo: UserCommandRepositoryPort,
+        refresh_repo: RefreshTokenRepositoryPort,
+        email_sender: EmailSenderPort,
+        access_token: AccessTokenPort,
+        claims_provider: ClaimsProviderPort,
+        project_repo: ProjectRepositoryPort,
     ):
         self._user_query_repo = user_query_repo
         self._user_command_repo = user_command_repo

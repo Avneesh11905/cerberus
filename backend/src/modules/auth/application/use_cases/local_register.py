@@ -31,7 +31,7 @@ from src.shared.application.ports import (
 )
 
 
-class RegisterLocalUserUseCase[SessionType]:
+class LocalRegisterUseCase[SessionType]:
     """Handles user registration with email and password."""
 
     def __init__(

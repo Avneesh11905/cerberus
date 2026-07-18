@@ -9,6 +9,7 @@ import uuid
 from fastapi import Request
 from fastapi.responses import RedirectResponse, Response
 from itsdangerous import URLSafeSerializer
+from urllib.parse import urlparse
 
 from src.core.config import (
     cookie_settings,
@@ -153,3 +154,12 @@ async def build_auth_redirect_async(
     )
     redirect_url = f"{base_url}/auth/callback?code={code}&new_user={'true' if is_new_user else 'false'}"
     return RedirectResponse(url=redirect_url)
+
+
+def origin_from_url(value: str | None) -> str | None:
+    if not value:
+        return None
+    parsed = urlparse(value)
+    if not parsed.scheme or not parsed.netloc:
+        return None
+    return f"{parsed.scheme}://{parsed.netloc}".rstrip("/")

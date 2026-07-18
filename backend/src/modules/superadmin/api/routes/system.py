@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
-from src.modules.auth.api.dependencies import require_role
+from src.modules.auth.api.dependencies.security import require_role
 from src.modules.auth.domain.entities import UserIdentity
 from src.modules.superadmin.api.dependencies import (
     GetSystemAnalyticsUseCaseDep,
