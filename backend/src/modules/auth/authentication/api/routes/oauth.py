@@ -23,8 +23,6 @@ from src.shared.api.dependencies import UnitOfWorkDeps
 from src.shared.api.utils import (
     build_auth_redirect_async,
     extract_client_metadata,
-    generate_csrf_token,
-    set_refresh_token_cookie,
 )
 from src.shared.application.ports import CachePort
 
@@ -33,8 +31,6 @@ from urllib.parse import urlparse
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.core.database import get_db
 
-from fastapi import Response, status
-from pydantic import BaseModel
 
 router = APIRouter()
 
@@ -388,5 +384,3 @@ async def tenant_oauth_callback(
         access_token=access_token,
         user_id=str(user.id),
     )
-
-

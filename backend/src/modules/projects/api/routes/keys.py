@@ -4,6 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 
 from src.modules.auth.authorization.api.dependencies.roles import require_role
+from src.modules.auth.authorization.domain.enums import GlobalRole
 from src.modules.auth.authentication.api.dependencies.core import get_cache_adapter
 from src.modules.auth.authentication.domain.entities import UserIdentity
 from src.modules.projects.api.dependencies import (
@@ -27,7 +28,7 @@ async def get_project_secrets(
     project_id: UUID,
     uow: UnitOfWorkDeps,
     usecase: GetSecretsUseCaseDep,
-    user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
+    user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
 ):
     """
     Returns the RSA public key for the project.
@@ -46,7 +47,7 @@ async def rotate_project_api_key(
     project_id: UUID,
     uow: UnitOfWorkDeps,
     usecase: RotateApiKeyUseCaseDep,
-    user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
+    user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
 ):
     """Rotates the API key, invalidating the old one immediately."""
     async with uow:
@@ -61,7 +62,7 @@ async def rotate_project_jwt_secret(
     project_id: UUID,
     uow: UnitOfWorkDeps,
     usecase: RotateJwtSecretUseCaseDep,
-    user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
+    user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
     cache: Annotated[CachePort, Depends(get_cache_adapter)],
 ):
     """

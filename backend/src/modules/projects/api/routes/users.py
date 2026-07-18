@@ -4,6 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 
 from src.modules.auth.authorization.api.dependencies.roles import require_role
+from src.modules.auth.authorization.domain.enums import GlobalRole
 from src.modules.auth.authentication.domain.entities import UserIdentity
 from src.modules.projects.api.dependencies import (
     ListProjectUsersUseCaseDep,
@@ -27,7 +28,7 @@ async def list_project_users(
     project_id: UUID,
     uow: UnitOfWorkDeps,
     usecase: ListProjectUsersUseCaseDep,
-    user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
+    user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
     page: int = 1,
     size: int = 50,
     search: str | None = None,
@@ -50,7 +51,7 @@ async def update_project_user_role(
     req: ProjectUserRoleUpdateReq,
     uow: UnitOfWorkDeps,
     usecase: UpdateUserRoleUseCaseDep,
-    user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
+    user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
 ):
     """Update the role of an end-user within a project."""
     async with uow:
@@ -71,7 +72,7 @@ async def update_project_user_status(
     req: ProjectUserStatusUpdateReq,
     uow: UnitOfWorkDeps,
     usecase: ToggleUserStatusUseCaseDep,
-    user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
+    user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
 ):
     """Toggles is_active for a specific user in a project."""
     async with uow:
@@ -91,7 +92,7 @@ async def update_tenant_user_status(
     req: ProjectUserStatusUpdateReq,
     uow: UnitOfWorkDeps,
     usecase: ToggleTenantUserStatusUseCaseDep,
-    user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
+    user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
 ):
     """Toggles is_active for a user across all projects owned by the Tenant."""
     async with uow:

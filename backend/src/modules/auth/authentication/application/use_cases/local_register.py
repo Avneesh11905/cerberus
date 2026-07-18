@@ -12,8 +12,11 @@ from uuid import UUID
 
 from src.shared.domain.entities import ClientMetadata
 
-from src.core.config import core_settings, verification_settings
+from src.core.config import verification_settings
 from src.core.exceptions import TurnstileVerificationFailed
+from src.modules.auth.authorization.application.services.role_provisioning import (
+    RoleProvisioningService,
+)
 from src.modules.auth.authentication.application.ports import (
     PasswordHasherPort,
     UserQueryRepositoryPort,
@@ -45,6 +48,7 @@ class LocalRegisterUseCase[SessionType]:
         rate_limiter: RateLimiterPort,
         turnstile: TurnstilePort,
         analytics: AnalyticsEventPort,
+        role_provisioning: RoleProvisioningService[SessionType],
     ):
         self._user_query_repo = user_query_repo
         self._user_command_repo = user_command_repo
@@ -55,6 +59,7 @@ class LocalRegisterUseCase[SessionType]:
         self._rate_limiter = rate_limiter
         self._turnstile = turnstile
         self._analytics = analytics
+        self._role_provisioning = role_provisioning
 
     async def execute(
         self,
@@ -72,26 +77,10 @@ class LocalRegisterUseCase[SessionType]:
         Saves the pending registration data to Redis (Redis-First Flow).
         Raises ValueError if email already exists in DB.
         """
-        from src.modules.auth.authorization.domain.enums import GlobalRole, ProjectRole
-
-        # Resolve role type based on context
-        role: GlobalRole | ProjectRole = (
-            GlobalRole.TENANT if project_id is None else ProjectRole.USER
+        # Resolve role type based on context using the injected Authorization service
+        role = await self._role_provisioning.determine_default_role(
+            uow.session, email, project_id
         )
-
-        if project_id is not None:
-            is_admin = await self._user_query_repo.is_project_admin(
-                uow.session, project_id, email
-            )
-            if is_admin:
-                role = ProjectRole.ADMIN
-        else:
-            if (
-                core_settings.SUPERADMIN_EMAIL
-                and email.strip().lower()
-                == core_settings.SUPERADMIN_EMAIL.strip().lower()
-            ):
-                role = GlobalRole.SUPERADMIN
 
         # Rate limiting key
         limit_key = (

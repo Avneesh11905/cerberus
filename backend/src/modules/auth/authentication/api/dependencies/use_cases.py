@@ -36,6 +36,7 @@ def get_local_register_usecase() -> LocalRegisterUseCase:
         rate_limiter=app_container.rate_limiter,
         turnstile=app_container.turnstile_adapter,
         analytics=app_container.analytics_adapter,
+        role_provisioning=app_container.role_provisioning,
     )
 
 
@@ -80,6 +81,7 @@ def get_oauth_callback_user_usecase() -> OAuthCallbackUserUseCase:
         claims_provider=app_container.claims_provider,
         project_repo=app_container.project_query_repo,
         oauth_service=app_container.oauth_service,
+        role_provisioning=app_container.role_provisioning,
     )
 
 

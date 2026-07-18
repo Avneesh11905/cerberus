@@ -4,6 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 
 from src.modules.auth.authorization.api.dependencies.roles import require_role
+from src.modules.auth.authorization.domain.enums import GlobalRole
 from src.modules.auth.authentication.domain.entities import UserIdentity
 from src.modules.projects.api.dependencies import (
     CreateProjectUseCaseDep,
@@ -26,7 +27,7 @@ async def create_project(
     req: ProjectCreateReq,
     uow: UnitOfWorkDeps,
     usecase: CreateProjectUseCaseDep,
-    user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
+    user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
 ):
     """Create a new Cerberus project."""
     async with uow:
@@ -46,7 +47,7 @@ async def create_project(
 async def list_projects(
     uow: UnitOfWorkDeps,
     usecase: ListProjectsUseCaseDep,
-    user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
+    user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
 ):
     """List all projects owned by the authenticated tenant."""
     async with uow:
@@ -59,7 +60,7 @@ async def get_project(
     project_id: UUID,
     uow: UnitOfWorkDeps,
     usecase: GetProjectUseCaseDep,
-    user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
+    user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
 ):
     """Get a specific project by ID."""
     async with uow:
@@ -72,7 +73,7 @@ async def delete_project(
     project_id: UUID,
     uow: UnitOfWorkDeps,
     usecase: DeleteProjectUseCaseDep,
-    user: Annotated[UserIdentity, Depends(require_role("TENANT"))],
+    user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
 ):
     """Delete a project and all its associated data."""
     async with uow:

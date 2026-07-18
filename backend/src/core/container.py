@@ -23,6 +23,9 @@ from src.modules.users.adapters import SQLUserProfileRepositoryAdapter
 from src.modules.auth.authorization.infrastructure.claims_provider import (
     RoleClaimsProviderAdapter,
 )
+from src.modules.auth.authorization.application.services.role_provisioning import (
+    RoleProvisioningService,
+)
 from src.modules.auth.authentication.adapters import (
     Argon2PasswordHasherAdapter,
     AuthEmailSenderAdapter,
@@ -153,6 +156,10 @@ class AppContainer:
 
         self.claims_provider = RoleClaimsProviderAdapter(
             cache=self.cache_adapter, user_query_repo=self.user_query_repo
+        )
+
+        self.role_provisioning = RoleProvisioningService(
+            admin_query_repo=self.user_query_repo
         )
 
         # Projects CQRS

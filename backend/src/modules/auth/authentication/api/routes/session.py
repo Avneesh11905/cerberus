@@ -163,6 +163,7 @@ async def logout_all(
     delete_refresh_token_cookie(response)
     return MessageResponse(message="Logged out from all devices")
 
+
 """
 Exposes the POST /auth/exchange endpoint.
 
@@ -245,8 +246,6 @@ async def exchange(
         access_token=access_token,
         user=profile.model_dump() if profile else {},
     )
-
-
 
 
 @router.get("/sessions", response_model=list[SessionResponse])

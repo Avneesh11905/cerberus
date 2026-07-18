@@ -10,7 +10,7 @@ class UpdateProjectRoleUseCase[SessionType]:
         self.tenant_repository = tenant_repository
 
     async def execute(
-        self, session: SessionType, tenant_id: UUID, role: str
+        self, session: SessionType, tenant_id: UUID, role: GlobalRole
     ) -> TenantEntity:
         from src.core.config import core_settings
 
@@ -25,6 +25,6 @@ class UpdateProjectRoleUseCase[SessionType]:
 
             raise AbsoluteSuperadminImmutableException()
 
-        tenant.role = GlobalRole(role)
+        tenant.role = role
         await self.tenant_repository.save(session, tenant)
         return tenant

@@ -30,6 +30,9 @@ from src.shared.domain.entities import ClientMetadata
 from src.modules.auth.authentication.application.ports.security.oauth_service import (
     OAuthServicePort,
 )
+from src.modules.auth.authorization.application.services.role_provisioning import (
+    RoleProvisioningService,
+)
 
 
 class OAuthCallbackUserUseCase[SessionType, RequestType]:
@@ -52,6 +55,7 @@ class OAuthCallbackUserUseCase[SessionType, RequestType]:
         claims_provider: ClaimsProviderPort,
         project_repo: ProjectRepositoryPort,
         oauth_service: OAuthServicePort[SessionType, RequestType],
+        role_provisioning: RoleProvisioningService[SessionType],
     ):
         self._user_query_repo = user_query_repo
         self._user_command_repo = user_command_repo
@@ -61,6 +65,7 @@ class OAuthCallbackUserUseCase[SessionType, RequestType]:
         self._claims_provider = claims_provider
         self._project_repo = project_repo
         self._oauth_service = oauth_service
+        self._role_provisioning = role_provisioning
 
     async def _check_new_login(
         self,
@@ -130,15 +135,9 @@ class OAuthCallbackUserUseCase[SessionType, RequestType]:
         name = user_info.name
         picture = user_info.picture
 
-        from src.modules.auth.authorization.domain.enums import ProjectRole
-
-        role = ProjectRole.USER
-        if project_id is not None:
-            is_admin = await self._user_query_repo.is_project_admin(
-                uow.session, project_id, email
-            )
-            if is_admin:
-                role = ProjectRole.ADMIN
+        role = await self._role_provisioning.determine_default_role(
+            uow.session, email, project_id
+        )
 
         # Step 1: Check if this exact provider+sub already exists
         user = await self._user_query_repo.find_by_oauth(

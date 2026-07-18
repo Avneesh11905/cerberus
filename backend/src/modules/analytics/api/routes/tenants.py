@@ -7,6 +7,7 @@ from src.modules.analytics.api.dependencies import GetTenantMetricsUseCaseDeps
 from src.modules.analytics.api.schemas import MetricResponse, QueryAnalyticsResponse
 
 from src.modules.auth.authorization.api.dependencies.roles import require_role
+from src.modules.auth.authorization.domain.enums import GlobalRole
 from src.modules.auth.authentication.domain.entities import UserIdentity
 
 router = APIRouter()
@@ -18,7 +19,7 @@ router = APIRouter()
     summary="Get analytics for a specific tenant (Superadmin)",
 )
 async def get_tenant_analytics(
-    user: Annotated[UserIdentity, Depends(require_role(UserRole.SUPERADMIN))],
+    user: Annotated[UserIdentity, Depends(require_role(GlobalRole.SUPERADMIN))],
     use_case: GetTenantMetricsUseCaseDeps,
     tenant_id: UUID = Path(...),
     start_date: date = Query(default_factory=lambda: date.today() - timedelta(days=30)),

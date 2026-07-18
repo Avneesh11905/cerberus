@@ -8,7 +8,9 @@ from src.modules.auth.authentication.api.routes.password import (
 from src.modules.auth.authentication.api.routes.session import (
     router as session_router,
 )
-from src.modules.auth.authentication.api.routes.verification import router as verification_router
+from src.modules.auth.authentication.api.routes.verification import (
+    router as verification_router,
+)
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 router.include_router(local_router)

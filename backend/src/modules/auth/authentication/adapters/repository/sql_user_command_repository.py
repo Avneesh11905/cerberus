@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.modules.auth.authentication.application.ports import UserCommandRepositoryPort
 from src.modules.auth.authentication.domain.entities import UserIdentity
 from src.modules.auth.authentication.infrastructure.models import OAuthAccount, Password
+from src.modules.auth.authorization.domain.enums import GlobalRole, ProjectRole
 from src.modules.superadmin.infrastructure.models import Tenant
 from src.modules.users.infrastructure.models import User
 
@@ -29,7 +30,7 @@ class SQLUserCommandRepositoryAdapter(UserCommandRepositoryPort[AsyncSession]):
         provider: str,
         oauth_sub: str,
         project_id: UUID | None = None,
-        role: str = "user",
+        role: GlobalRole | ProjectRole = ProjectRole.USER,
     ) -> UserIdentity:
         """Create a new user and link an OAuth account."""
         if project_id:
@@ -104,7 +105,7 @@ class SQLUserCommandRepositoryAdapter(UserCommandRepositoryPort[AsyncSession]):
         password_hash: str | None,
         is_verified: bool = False,
         project_id: UUID | None = None,
-        role: str = "user",
+        role: GlobalRole | ProjectRole = ProjectRole.USER,
     ) -> UserIdentity:
         """Create a new user and store their local password."""
         if project_id:
@@ -223,9 +224,18 @@ class SQLUserCommandRepositoryAdapter(UserCommandRepositoryPort[AsyncSession]):
             if tenant_obj:
                 tenant_obj.deleted_at = None
 
-    async def update_role(self, session: AsyncSession, user_id: UUID, role) -> None:
+    async def update_role(
+        self, session: AsyncSession, user_id: UUID, role: GlobalRole | ProjectRole
+    ) -> None:
         """Persist a role change for a user. Used for admin self-heal recovery."""
         result = await session.execute(select(User).where(User.id == user_id))
         user = result.scalar_one_or_none()
-        if user:
+        if user and isinstance(role, ProjectRole):
             user.role = role
+        else:
+            tenant_res = await session.execute(
+                select(Tenant).where(Tenant.id == user_id)
+            )
+            tenant = tenant_res.scalar_one_or_none()
+            if tenant and isinstance(role, GlobalRole):
+                tenant.role = role
