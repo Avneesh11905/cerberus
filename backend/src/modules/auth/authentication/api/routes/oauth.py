@@ -9,14 +9,14 @@ from src.modules.auth.authentication.infrastructure.oauth.dynamic import (
     get_dynamic_oauth_client,
 )
 from src.modules.auth.authentication.api.dependencies.use_cases import (
-    get_oauth_callback_user_usecase,
-    get_oauth_callback_tenant_usecase,
+    get_project_user_oauth_callback_usecase,
+    get_tenant_oauth_callback_usecase,
 )
 from src.modules.auth.authentication.api.dependencies.core import get_cache_adapter
 from src.modules.auth.authentication.api.schemas import OAuthPreflightResponse
 from src.modules.auth.authentication.application.use_cases import (
-    OAuthCallbackUserUseCase,
-    TenantOAuthCallbackUserUseCase,
+    ProjectUserOAuthCallbackUseCase,
+    TenantOAuthCallbackUseCase,
 )
 from src.modules.projects.infrastructure.models import Project
 from src.shared.api.dependencies import UnitOfWorkDeps
@@ -37,7 +37,7 @@ router = APIRouter()
 """
 Exposes HTTP endpoints for OAuth provider redirects for project end-users.
 When Google/GitHub sends the user back, this route captures the authorization code,
-exchanges it for user details, and triggers the `OAuthCallbackUserUseCase` to establish a session.
+exchanges it for user details, and triggers the `ProjectUserOAuthCallbackUseCase` to establish a session.
 
 Note: For Cerberus Dashboard (tenant) callbacks, see tenant_oauth.py.
 """
@@ -49,7 +49,8 @@ async def oauth_callback(
     request: Request,
     uow: UnitOfWorkDeps,
     usecase: Annotated[
-        OAuthCallbackUserUseCase, Depends(get_oauth_callback_user_usecase)
+        ProjectUserOAuthCallbackUseCase,
+        Depends(get_project_user_oauth_callback_usecase),
     ],
     cache: Annotated[CachePort, Depends(get_cache_adapter)],
 ):
@@ -347,7 +348,7 @@ async def tenant_oauth_callback(
     request: Request,
     uow: UnitOfWorkDeps,
     usecase: Annotated[
-        TenantOAuthCallbackUserUseCase, Depends(get_oauth_callback_tenant_usecase)
+        TenantOAuthCallbackUseCase, Depends(get_tenant_oauth_callback_usecase)
     ],
     cache: Annotated[CachePort, Depends(get_cache_adapter)],
 ):

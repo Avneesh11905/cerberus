@@ -2,15 +2,15 @@ from .local_login import LocalLoginUseCase
 from .local_register import LocalRegisterUseCase
 from .local_resend_verification import LocalResendVerificationUseCase
 from .local_verify_email import LocalVerifyEmailUseCase
-from .oauth_callback_tenant import TenantOAuthCallbackUserUseCase
-from .oauth_callback_user import OAuthCallbackUserUseCase
-from .oauth_login_url_tenant import OAuthLoginUrlTenantUseCase
-from .oauth_login_url_user import OAuthLoginUrlUserUseCase
-from .oauth_preflight_user import OAuthPreflightUserUseCase
+from .tenant_oauth_callback import TenantOAuthCallbackUseCase
+from .project_user_oauth_callback import ProjectUserOAuthCallbackUseCase
+from .tenant_oauth_login_url import TenantOAuthLoginUrlUseCase
+from .project_user_oauth_login_url import ProjectUserOAuthLoginUrlUseCase
+from .validate_oauth_provider import ValidateOAuthProviderUseCase
 from .password_change import PasswordChangeUseCase
 from .password_reset_execute import PasswordResetExecuteUseCase
 from .password_reset_request import PasswordResetRequestUseCase
-from .session_list import SessionListUseCase
+from .list_active_sessions import ListActiveSessionsUseCase
 from .session_logout import SessionLogoutUseCase
 from .session_logout_all import SessionLogoutAllUseCase
 from .session_refresh import SessionRefreshUseCase
@@ -21,17 +21,17 @@ __all__ = [
     "LocalRegisterUseCase",
     "LocalResendVerificationUseCase",
     "LocalVerifyEmailUseCase",
-    "OAuthCallbackUserUseCase",
-    "OAuthLoginUrlTenantUseCase",
-    "OAuthLoginUrlUserUseCase",
-    "OAuthPreflightUserUseCase",
+    "ProjectUserOAuthCallbackUseCase",
+    "TenantOAuthLoginUrlUseCase",
+    "ProjectUserOAuthLoginUrlUseCase",
+    "ValidateOAuthProviderUseCase",
     "PasswordChangeUseCase",
     "PasswordResetExecuteUseCase",
     "PasswordResetRequestUseCase",
-    "SessionListUseCase",
+    "ListActiveSessionsUseCase",
     "SessionLogoutAllUseCase",
     "SessionLogoutUseCase",
     "SessionRefreshUseCase",
     "SessionRevokeUseCase",
-    "TenantOAuthCallbackUserUseCase",
+    "TenantOAuthCallbackUseCase",
 ]

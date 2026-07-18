@@ -9,7 +9,7 @@ from src.modules.auth.authentication.domain.entities import ActiveSession
 from src.shared.application.ports import UoWPort
 
 
-class SessionListUseCase[SessionType]:
+class ListActiveSessionsUseCase[SessionType]:
     """Lists all active sessions for a user."""
 
     def __init__(self, refresh_repo: RefreshTokenRepositoryPort[SessionType]):

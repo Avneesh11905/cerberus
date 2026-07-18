@@ -12,7 +12,7 @@ from src.modules.auth.authentication.api.dependencies.security import (
     verify_csrf,
 )
 from src.modules.auth.authentication.api.dependencies.use_cases import (
-    get_session_list_usecase,
+    get_list_active_sessions_usecase,
     get_session_logout_all_usecase,
     get_session_logout_usecase,
     get_session_refresh_usecase,
@@ -24,7 +24,7 @@ from src.modules.auth.authentication.api.schemas import (
     SessionResponse,
 )
 from src.modules.auth.authentication.application.use_cases import (
-    SessionListUseCase,
+    ListActiveSessionsUseCase,
     SessionLogoutAllUseCase,
     SessionLogoutUseCase,
     SessionRefreshUseCase,
@@ -253,7 +253,9 @@ async def list_sessions(
     request: Request,
     user: Annotated[UserIdentity, Depends(get_current_user)],
     uow: UnitOfWorkDeps,
-    usecase: Annotated[SessionListUseCase, Depends(get_session_list_usecase)],
+    usecase: Annotated[
+        ListActiveSessionsUseCase, Depends(get_list_active_sessions_usecase)
+    ],
 ):
     """
     List all active sessions (devices) for the current user.

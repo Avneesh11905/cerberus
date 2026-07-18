@@ -6,7 +6,7 @@ from src.modules.auth.authentication.application.ports.security.oauth_service im
 )
 
 
-class OAuthLoginUrlTenantUseCase[SessionType, RequestType]:
+class TenantOAuthLoginUrlUseCase[SessionType, RequestType]:
     """
     Initiates the OAuth authorization flow for a Cerberus Dashboard tenant user.
     Generates the authorization URL and the required session state payload.

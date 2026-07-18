@@ -7,7 +7,7 @@ from src.modules.projects.application.ports.project_query_repository import (
 from src.shared.application.ports.api_key import ApiKeyPort
 
 
-class OAuthPreflightUserUseCase[SessionType]:
+class ValidateOAuthProviderUseCase[SessionType]:
     """
     Validates an API key and ensures the requested OAuth provider is correctly
     configured before redirecting the user to the provider login URL.

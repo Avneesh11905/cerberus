@@ -22,7 +22,7 @@ def _origin_from_url(value: str | None) -> str | None:
     return f"{parsed.scheme}://{parsed.netloc}".rstrip("/")
 
 
-class OAuthLoginUrlUserUseCase[SessionType, RequestType]:
+class ProjectUserOAuthLoginUrlUseCase[SessionType, RequestType]:
     """
     Initiates the OAuth authorization flow for an end-user of a specific tenant project.
     Generates the authorization URL and the required session state payload.
