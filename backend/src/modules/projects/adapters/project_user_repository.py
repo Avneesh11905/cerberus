@@ -14,7 +14,6 @@ from src.modules.users.domain.entities import UserProfile
 from src.modules.users.infrastructure.models import User
 
 
-
 class SQLProjectUserRepositoryAdapter:
     """Implements ProjectUserRepositoryPort using SQLAlchemy."""
 
@@ -82,8 +81,6 @@ class SQLProjectUserRepositoryAdapter:
 
         result = await session.execute(stmt)
         return result.scalar_one() or 0
-
-
 
     async def update_user_status(
         self, session: AsyncSession, project_id: UUID, user_id: UUID, is_active: bool

@@ -228,9 +228,7 @@ class SQLUserCommandRepositoryAdapter(UserCommandRepositoryPort[AsyncSession]):
         self, session: AsyncSession, user_id: UUID, role: GlobalRole
     ) -> None:
         """Persist a role change for a tenant. Used for admin self-heal recovery."""
-        tenant_res = await session.execute(
-            select(Tenant).where(Tenant.id == user_id)
-        )
+        tenant_res = await session.execute(select(Tenant).where(Tenant.id == user_id))
         tenant = tenant_res.scalar_one_or_none()
         if tenant:
             tenant.role = role

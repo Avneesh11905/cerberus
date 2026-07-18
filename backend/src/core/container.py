@@ -154,8 +154,6 @@ class AppContainer:
         self.user_maintenance_repo = SQLUserMaintenanceRepositoryAdapter()
         self.password_hasher = Argon2PasswordHasherAdapter()
 
-
-
         self.role_provisioning = RoleProvisioningService(
             admin_query_repo=self.user_query_repo
         )
@@ -170,9 +168,9 @@ class AppContainer:
         self.project_user_repo = SQLProjectUserRepositoryAdapter()
 
         self.claims_provider = ProjectClaimsProviderAdapter(
-            cache=self.cache_adapter, 
+            cache=self.cache_adapter,
             user_query_repo=self.user_query_repo,
-            project_query_repo=self.project_query_repo
+            project_query_repo=self.project_query_repo,
         )
 
         self.oauth_service = OAuthServiceAdapter(

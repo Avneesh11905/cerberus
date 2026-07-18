@@ -19,13 +19,11 @@ from sqlalchemy import (
     Uuid,
     text,
 )
-from sqlalchemy import Enum
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid6 import uuid7
 
 from src.core.database import Base
-
 
 
 class User(Base):

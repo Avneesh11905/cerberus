@@ -8,7 +8,6 @@ from src.modules.auth.authorization.domain.enums import GlobalRole
 from src.modules.auth.authentication.domain.entities import UserIdentity
 from src.modules.projects.api.dependencies import (
     ListProjectUsersUseCaseDep,
-
     SetProjectUserActiveStatusUseCaseDep,
     SetTenantUserActiveStatusUseCaseDep,
     GetUserClaimsUseCaseDep,
@@ -16,7 +15,6 @@ from src.modules.projects.api.dependencies import (
 )
 from src.modules.projects.api.schemas import (
     PaginatedProjectUsersRes,
-
     ProjectUserStatusUpdateReq,
     UserClaimsRes,
     UserClaimsOverrideReq,
@@ -46,7 +44,6 @@ async def list_project_users(
     return PaginatedProjectUsersRes(
         items=list(users), total=total, page=page, size=size
     )
-
 
 
 @router.put("/{project_id}/users/{user_id}/status", response_model=dict)

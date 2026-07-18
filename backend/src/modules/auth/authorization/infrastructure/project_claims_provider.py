@@ -13,6 +13,7 @@ from src.shared.application.ports import CachePort
 
 from src.modules.projects.application.ports import ProjectQueryRepositoryPort
 
+
 class ProjectClaimsProviderAdapter[SessionType](ClaimsProviderPort[SessionType]):
     """
     Dynamically supplies the role and custom claims of the user, caching it for performance.

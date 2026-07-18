@@ -39,7 +39,6 @@ __all__ = [
     "UpdateNameUseCase",
     "UpdateOauthUseCase",
     "UpdateOriginsUseCase",
-
     "GetProjectClaimsUseCase",
     "UpdateProjectClaimsUseCase",
     "GetUserClaimsUseCase",

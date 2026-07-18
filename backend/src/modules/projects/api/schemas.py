@@ -146,7 +146,6 @@ class ProjectSecretsRes(BaseModel):
     public_key: str
 
 
-
 class ProjectUserStatusUpdateReq(BaseModel):
     is_active: bool
 

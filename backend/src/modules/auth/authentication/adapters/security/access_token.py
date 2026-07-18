@@ -58,7 +58,11 @@ class JWTAccessTokenAdapter:
             payload = jwt.decode(token, key, algorithms=[self._algorithm])
 
             payload_role = payload.get("role")
-            role = GlobalRole(payload_role) if payload_role in GlobalRole._value2member_map_ else None
+            role = (
+                GlobalRole(payload_role)
+                if payload_role in GlobalRole._value2member_map_
+                else None
+            )
             user = UserIdentity(
                 id=UUID(payload["sub"]),  # str -> UUID at JWT boundary
                 email=payload["email"],

@@ -14,7 +14,6 @@ from src.modules.projects.application.use_cases import (
     RotateApiKeyUseCase,
     RotateJwtSecretUseCase,
     ListProjectUsersUseCase,
-
     SetProjectUserActiveStatusUseCase,
     SetTenantUserActiveStatusUseCase,
     GetProjectClaimsUseCase,
@@ -112,7 +111,6 @@ def get_list_project_users_use_case() -> ListProjectUsersUseCase:
         project_query_repository=app_container.project_query_repo,
         project_user_repository=app_container.project_user_repo,
     )
-
 
 
 def get_set_project_user_active_status_use_case() -> SetProjectUserActiveStatusUseCase:
