@@ -15,13 +15,13 @@ class BaseProjectUseCase[SessionType]:
             setattr(self, k, v)
 
     async def _get_project_or_404(
-        self, session: SessionType, project_id: UUID, user_id: UUID
+        self, session: SessionType, project_id: UUID, user_id: UUID | None = None
     ) -> ProjectEntity:
         project = await self.query_repository.get_by_id(session, project_id)
         if not project:
             raise ProjectNotFoundError("Project not found")
 
-        if project.tenant_id != user_id:
+        if user_id is not None and project.tenant_id != user_id:
             raise ProjectForbiddenError("Forbidden")
 
         return project
