@@ -9,8 +9,8 @@ from src.modules.auth.authentication.domain.entities import UserIdentity
 from src.modules.projects.api.dependencies import (
     ListProjectUsersUseCaseDep,
     UpdateUserRoleUseCaseDep,
-    ToggleUserStatusUseCaseDep,
-    ToggleTenantUserStatusUseCaseDep,
+    SetProjectUserActiveStatusUseCaseDep,
+    SetTenantUserActiveStatusUseCaseDep,
 )
 from src.modules.projects.api.schemas import (
     PaginatedProjectUsersRes,
@@ -71,7 +71,7 @@ async def set_project_user_status(
     user_id: UUID,
     req: ProjectUserStatusUpdateReq,
     uow: UnitOfWorkDeps,
-    usecase: ToggleUserStatusUseCaseDep,
+    usecase: SetProjectUserActiveStatusUseCaseDep,
     user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
 ):
     """Toggles is_active for a specific user in a project."""
@@ -91,7 +91,7 @@ async def set_tenant_user_status(
     email: str,
     req: ProjectUserStatusUpdateReq,
     uow: UnitOfWorkDeps,
-    usecase: ToggleTenantUserStatusUseCaseDep,
+    usecase: SetTenantUserActiveStatusUseCaseDep,
     user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
 ):
     """Toggles is_active for a user across all projects owned by the Tenant."""

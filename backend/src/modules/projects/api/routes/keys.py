@@ -8,7 +8,7 @@ from src.modules.auth.authorization.domain.enums import GlobalRole
 from src.modules.auth.authentication.api.dependencies.core import get_cache_adapter
 from src.modules.auth.authentication.domain.entities import UserIdentity
 from src.modules.projects.api.dependencies import (
-    GetSecretsUseCaseDep,
+    GetProjectPublicCredentialsUseCaseDep,
     RotateApiKeyUseCaseDep,
     RotateJwtSecretUseCaseDep,
 )
@@ -27,7 +27,7 @@ router = APIRouter()
 async def get_project_secrets(
     project_id: UUID,
     uow: UnitOfWorkDeps,
-    usecase: GetSecretsUseCaseDep,
+    usecase: GetProjectPublicCredentialsUseCaseDep,
     user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
 ):
     """

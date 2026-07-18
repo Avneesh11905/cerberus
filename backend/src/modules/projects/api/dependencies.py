@@ -10,13 +10,13 @@ from src.modules.projects.application.use_cases import (
     UpdateEnvironmentUseCase,
     UpdateFrontendUrlUseCase,
     UpdateNameUseCase,
-    GetSecretsUseCase,
+    GetProjectPublicCredentialsUseCase,
     RotateApiKeyUseCase,
     RotateJwtSecretUseCase,
     ListProjectUsersUseCase,
     UpdateUserRoleUseCase,
-    ToggleUserStatusUseCase,
-    ToggleTenantUserStatusUseCase,
+    SetProjectUserActiveStatusUseCase,
+    SetTenantUserActiveStatusUseCase,
 )
 from src.core.container import app_container
 
@@ -81,8 +81,10 @@ def get_update_name_use_case() -> UpdateNameUseCase:
     )
 
 
-def get_get_secrets_use_case() -> GetSecretsUseCase:
-    return GetSecretsUseCase(query_repository=app_container.project_query_repo)
+def get_project_public_credentials_use_case() -> GetProjectPublicCredentialsUseCase:
+    return GetProjectPublicCredentialsUseCase(
+        query_repository=app_container.project_query_repo
+    )
 
 
 def get_rotate_api_key_use_case() -> RotateApiKeyUseCase:
@@ -115,15 +117,15 @@ def get_update_user_role_use_case() -> UpdateUserRoleUseCase:
     )
 
 
-def get_toggle_user_status_use_case() -> ToggleUserStatusUseCase:
-    return ToggleUserStatusUseCase(
+def get_set_project_user_active_status_use_case() -> SetProjectUserActiveStatusUseCase:
+    return SetProjectUserActiveStatusUseCase(
         project_query_repository=app_container.project_query_repo,
         project_user_repository=app_container.project_user_repo,
     )
 
 
-def get_toggle_tenant_user_status_use_case() -> ToggleTenantUserStatusUseCase:
-    return ToggleTenantUserStatusUseCase(
+def get_set_tenant_user_active_status_use_case() -> SetTenantUserActiveStatusUseCase:
+    return SetTenantUserActiveStatusUseCase(
         project_query_repository=app_container.project_query_repo,
         project_user_repository=app_container.project_user_repo,
     )
@@ -152,7 +154,9 @@ UpdateFrontendUrlUseCaseDep = Annotated[
     UpdateFrontendUrlUseCase, Depends(get_update_frontend_url_use_case)
 ]
 UpdateNameUseCaseDep = Annotated[UpdateNameUseCase, Depends(get_update_name_use_case)]
-GetSecretsUseCaseDep = Annotated[GetSecretsUseCase, Depends(get_get_secrets_use_case)]
+GetProjectPublicCredentialsUseCaseDep = Annotated[
+    GetProjectPublicCredentialsUseCase, Depends(get_project_public_credentials_use_case)
+]
 RotateApiKeyUseCaseDep = Annotated[
     RotateApiKeyUseCase, Depends(get_rotate_api_key_use_case)
 ]
@@ -166,9 +170,11 @@ ListProjectUsersUseCaseDep = Annotated[
 UpdateUserRoleUseCaseDep = Annotated[
     UpdateUserRoleUseCase, Depends(get_update_user_role_use_case)
 ]
-ToggleUserStatusUseCaseDep = Annotated[
-    ToggleUserStatusUseCase, Depends(get_toggle_user_status_use_case)
+SetProjectUserActiveStatusUseCaseDep = Annotated[
+    SetProjectUserActiveStatusUseCase,
+    Depends(get_set_project_user_active_status_use_case),
 ]
-ToggleTenantUserStatusUseCaseDep = Annotated[
-    ToggleTenantUserStatusUseCase, Depends(get_toggle_tenant_user_status_use_case)
+SetTenantUserActiveStatusUseCaseDep = Annotated[
+    SetTenantUserActiveStatusUseCase,
+    Depends(get_set_tenant_user_active_status_use_case),
 ]

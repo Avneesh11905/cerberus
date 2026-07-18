@@ -4,7 +4,7 @@ from src.modules.projects.application.ports import ProjectQueryRepositoryPort
 from .base_project import BaseProjectUseCase
 
 
-class GetSecretsUseCase[SessionType](BaseProjectUseCase[SessionType]):
+class GetProjectPublicCredentialsUseCase[SessionType](BaseProjectUseCase[SessionType]):
     def __init__(self, query_repository: ProjectQueryRepositoryPort):
         super().__init__(query_repository)
 

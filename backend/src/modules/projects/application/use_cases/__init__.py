@@ -3,13 +3,13 @@ from .base_project_user import BaseProjectUserUseCase
 from .create_project import CreateProjectUseCase
 from .delete_project import DeleteProjectUseCase
 from .get_project import GetProjectUseCase
-from .get_secrets import GetSecretsUseCase
+from .get_project_public_credentials import GetProjectPublicCredentialsUseCase
 from .list_project_users import ListProjectUsersUseCase
 from .list_projects import ListProjectsUseCase
 from .rotate_api_key import RotateApiKeyUseCase
 from .rotate_jwt_secret import RotateJwtSecretUseCase
-from .toggle_tenant_user_status import ToggleTenantUserStatusUseCase
-from .toggle_user_status import ToggleUserStatusUseCase
+from .set_tenant_user_active_status import SetTenantUserActiveStatusUseCase
+from .set_project_user_active_status import SetProjectUserActiveStatusUseCase
 from .update_environment import UpdateEnvironmentUseCase
 from .update_frontend_url import UpdateFrontendUrlUseCase
 from .update_name import UpdateNameUseCase
@@ -23,13 +23,13 @@ __all__ = [
     "CreateProjectUseCase",
     "DeleteProjectUseCase",
     "GetProjectUseCase",
-    "GetSecretsUseCase",
+    "GetProjectPublicCredentialsUseCase",
     "ListProjectUsersUseCase",
     "ListProjectsUseCase",
     "RotateApiKeyUseCase",
     "RotateJwtSecretUseCase",
-    "ToggleTenantUserStatusUseCase",
-    "ToggleUserStatusUseCase",
+    "SetTenantUserActiveStatusUseCase",
+    "SetProjectUserActiveStatusUseCase",
     "UpdateEnvironmentUseCase",
     "UpdateFrontendUrlUseCase",
     "UpdateNameUseCase",
