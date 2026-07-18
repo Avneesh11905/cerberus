@@ -66,7 +66,7 @@ async def update_project_user_role(
 
 
 @router.put("/{project_id}/users/{user_id}/status", response_model=dict)
-async def update_project_user_status(
+async def set_project_user_status(
     project_id: UUID,
     user_id: UUID,
     req: ProjectUserStatusUpdateReq,
@@ -87,7 +87,7 @@ async def update_project_user_status(
 
 
 @router.post("/users/{email}/status", response_model=dict)
-async def update_tenant_user_status(
+async def set_tenant_user_status(
     email: str,
     req: ProjectUserStatusUpdateReq,
     uow: UnitOfWorkDeps,

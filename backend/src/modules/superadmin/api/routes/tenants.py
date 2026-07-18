@@ -14,7 +14,7 @@ from src.modules.superadmin.api.dependencies import (
 from src.modules.superadmin.api.schemas import (
     PaginatedTenantRes,
     TenantRes,
-    ProjectRoleUpdateReq,
+    TenantGlobalRoleUpdateReq,
     TenantStatusUpdateReq,
 )
 from src.shared.api.dependencies import UnitOfWorkDeps
@@ -62,7 +62,7 @@ async def update_tenant_status(
 @router.patch("/tenants/{tenant_id}/role", response_model=TenantRes)
 async def update_tenant_role(
     tenant_id: UUID,
-    req: ProjectRoleUpdateReq,
+    req: TenantGlobalRoleUpdateReq,
     uow: UnitOfWorkDeps,
     use_case: UpdateProjectRoleUseCaseDep,
     admin: Annotated[UserIdentity, Depends(require_role(GlobalRole.SUPERADMIN))],

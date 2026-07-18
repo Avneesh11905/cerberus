@@ -30,7 +30,7 @@ class TenantStatusUpdateReq(BaseModel):
     is_active: bool
 
 
-class ProjectRoleUpdateReq(BaseModel):
+class TenantGlobalRoleUpdateReq(BaseModel):
     role: GlobalRole
 
 

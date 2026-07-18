@@ -34,7 +34,7 @@ def get_list_projects_use_case() -> ListProjectsUseCase:
     return ListProjectsUseCase(query_repository=app_container.project_query_repo)
 
 
-def get_get_project_use_case() -> GetProjectUseCase:
+def get_project_use_case() -> GetProjectUseCase:
     return GetProjectUseCase(query_repository=app_container.project_query_repo)
 
 
@@ -135,7 +135,7 @@ CreateProjectUseCaseDep = Annotated[
 ListProjectsUseCaseDep = Annotated[
     ListProjectsUseCase, Depends(get_list_projects_use_case)
 ]
-GetProjectUseCaseDep = Annotated[GetProjectUseCase, Depends(get_get_project_use_case)]
+GetProjectUseCaseDep = Annotated[GetProjectUseCase, Depends(get_project_use_case)]
 DeleteProjectUseCaseDep = Annotated[
     DeleteProjectUseCase, Depends(get_delete_project_use_case)
 ]
