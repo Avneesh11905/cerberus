@@ -27,22 +27,32 @@ def infra_containers():
             "postgresql+psycopg2://", "postgresql+asyncpg://"
         )
 
+        redis.get_wrapped_container().exec_run(
+            "redis-cli ACL SETUSER cerberus on >Cerberus123! +@all ~* &*"
+        )
+
         redis_host = redis.get_container_host_ip()
         redis_port = redis.get_exposed_port(6379)
-        redis_base = f"redis://{redis_host}:{redis_port}"
+        redis_base = f"redis://cerberus:Cerberus123!@{redis_host}:{redis_port}"
 
         os.environ["PGSQL_URL"] = pg_url_asyncpg
         os.environ["CACHE_URL"] = f"{redis_base}/0"
-        os.environ["CELERY_BROKER_URL"] = f"{redis_base}/1"
-        os.environ["CELERY_RESULT_URL"] = f"{redis_base}/2"
+        os.environ["CELERY_BROKER_URL"] = f"{redis_base}/0"
+        os.environ["CELERY_RESULT_URL"] = f"{redis_base}/0"
 
         # Patch pydantic settings
         from src.core.config import database_settings
 
         database_settings.PGSQL_URL = pg_url_asyncpg
         database_settings.CACHE_URL = f"{redis_base}/0"
-        database_settings.CELERY_BROKER_URL = f"{redis_base}/1"
-        database_settings.CELERY_RESULT_URL = f"{redis_base}/2"
+        database_settings.CELERY_BROKER_URL = f"{redis_base}/0"
+        database_settings.CELERY_RESULT_URL = f"{redis_base}/0"
+
+        # Explicitly patch Celery app to prevent using cached URLs
+        from src.core.celery_app import celery_app
+
+        celery_app.conf.broker_url = f"{redis_base}/0"
+        celery_app.conf.result_backend = f"{redis_base}/0"
 
         # Run Alembic migrations programmatically
         from alembic.config import Config
@@ -59,7 +69,11 @@ def infra_containers():
 @pytest.fixture(scope="session")
 def engine(infra_containers):
     pg_url = infra_containers["pg_url_asyncpg"]
-    eng = create_async_engine(pg_url, echo=False)
+    eng = create_async_engine(
+        pg_url,
+        echo=False,
+        connect_args={"prepared_statement_cache_size": 0, "statement_cache_size": 0},
+    )
     yield eng
     eng.sync_engine.dispose()
 
@@ -74,3 +88,40 @@ async def db_session(engine) -> AsyncGenerator[AsyncSession, None]:
         async with async_session() as session:
             yield session
         await conn.rollback()
+
+
+@pytest.fixture(scope="function")
+async def client(db_session) -> AsyncGenerator:
+    from httpx import AsyncClient, ASGITransport
+    from src import app
+    from src.core.database import get_db
+    from src.shared.api.dependencies import get_uow
+    from src.shared.adapters.uow import SQLAlchemyUoWAdapter
+
+    app.dependency_overrides[get_db] = lambda: db_session
+
+    async def override_get_uow():
+        class TestUnitOfWork(SQLAlchemyUoWAdapter):
+            def __init__(self):
+                self._session = db_session
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, exc_type, exc_val, exc_tb):
+                # Don't close session, db_session fixture handles it.
+                assert self._session is not None
+                if exc_type:
+                    await self._session.rollback()
+                else:
+                    await self._session.commit()
+
+        yield TestUnitOfWork()
+
+    app.dependency_overrides[get_uow] = override_get_uow
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        yield ac
+
+    app.dependency_overrides.clear()
