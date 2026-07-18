@@ -35,6 +35,7 @@ class SQLProjectUserRepositoryAdapter:
             receive_updates=user.receive_updates,
             is_active=user.is_active,
             login_methods=methods,
+            custom_claims=user.custom_claims,
         )
 
     async def list_project_users(
@@ -145,3 +146,21 @@ class SQLProjectUserRepositoryAdapter:
 
         await session.flush()
         return [self._to_profile(u) for u in users]
+
+    async def update_user_claims(
+        self, session: AsyncSession, project_id: UUID, user_id: UUID, overrides: dict
+    ) -> UserProfile | None:
+        result = await session.execute(
+            select(User)
+            .options(selectinload(User.oauth_accounts))
+            .where(User.id == user_id, User.project_id == project_id)
+        )
+        user = result.scalar_one_or_none()
+        
+        if not user:
+            return None
+            
+        user.custom_claims = overrides
+        await session.flush()
+        
+        return self._to_profile(user)

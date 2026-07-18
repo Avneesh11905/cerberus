@@ -17,6 +17,10 @@ from src.modules.projects.application.use_cases import (
     UpdateUserRoleUseCase,
     SetProjectUserActiveStatusUseCase,
     SetTenantUserActiveStatusUseCase,
+    GetProjectClaimsUseCase,
+    UpdateProjectClaimsUseCase,
+    GetUserClaimsUseCase,
+    UpdateUserClaimsUseCase,
 )
 from src.core.container import app_container
 
@@ -131,6 +135,33 @@ def get_set_tenant_user_active_status_use_case() -> SetTenantUserActiveStatusUse
     )
 
 
+def get_project_claims_use_case() -> GetProjectClaimsUseCase:
+    return GetProjectClaimsUseCase(query_repository=app_container.project_query_repo)
+
+
+def get_update_project_claims_use_case() -> UpdateProjectClaimsUseCase:
+    return UpdateProjectClaimsUseCase(
+        query_repository=app_container.project_query_repo,
+        command_repository=app_container.project_command_repo,
+        cache=app_container.cache_adapter,
+    )
+
+
+def get_get_user_claims_use_case() -> GetUserClaimsUseCase:
+    return GetUserClaimsUseCase(
+        query_repository=app_container.project_query_repo,
+        project_user_repository=app_container.project_user_repo,
+    )
+
+
+def get_update_user_claims_use_case() -> UpdateUserClaimsUseCase:
+    return UpdateUserClaimsUseCase(
+        query_repository=app_container.project_query_repo,
+        project_user_repository=app_container.project_user_repo,
+        cache=app_container.cache_adapter,
+    )
+
+
 CreateProjectUseCaseDep = Annotated[
     CreateProjectUseCase, Depends(get_create_project_use_case)
 ]
@@ -177,4 +208,16 @@ SetProjectUserActiveStatusUseCaseDep = Annotated[
 SetTenantUserActiveStatusUseCaseDep = Annotated[
     SetTenantUserActiveStatusUseCase,
     Depends(get_set_tenant_user_active_status_use_case),
+]
+GetProjectClaimsUseCaseDep = Annotated[
+    GetProjectClaimsUseCase, Depends(get_project_claims_use_case)
+]
+UpdateProjectClaimsUseCaseDep = Annotated[
+    UpdateProjectClaimsUseCase, Depends(get_update_project_claims_use_case)
+]
+GetUserClaimsUseCaseDep = Annotated[
+    GetUserClaimsUseCase, Depends(get_get_user_claims_use_case)
+]
+UpdateUserClaimsUseCaseDep = Annotated[
+    UpdateUserClaimsUseCase, Depends(get_update_user_claims_use_case)
 ]

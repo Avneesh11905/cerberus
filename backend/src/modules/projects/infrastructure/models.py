@@ -44,6 +44,9 @@ class Project(Base):
     allowed_origins: Mapped[list[str]] = mapped_column(
         JSONB, server_default=text("'[]'"), nullable=False
     )
+    default_claims: Mapped[dict] = mapped_column(
+        JSONB, server_default=text("'{}'"), nullable=False
+    )
     environment: Mapped[str] = mapped_column(
         String, server_default=text("'development'"), nullable=False
     )

@@ -167,3 +167,44 @@ class ProjectRotateApiKeyRes(BaseModel):
 
 class ProjectRotateRsaKeysRes(BaseModel):
     public_key: str
+
+
+RESERVED_CLAIM_KEYS = {"sub","email","role","exp","iat","jti",
+                        "project_id","is_verified","family_id"}
+
+class ProjectDefaultClaimsReq(BaseModel):
+    claims: dict[str, str | int | bool | float] = Field(default_factory=dict)
+
+    @field_validator("claims")
+    @classmethod
+    def validate_claims(cls, v):
+        if len(v) > 10:
+            raise ValueError("Maximum 10 claim keys")
+        forbidden = set(v.keys()) & RESERVED_CLAIM_KEYS
+        if forbidden:
+            raise ValueError(f"Reserved keys: {forbidden}")
+        for key in v:
+            if not key.isidentifier():
+                raise ValueError(f"Invalid key name: '{key}'")
+        return v
+
+class ProjectDefaultClaimsRes(BaseModel):
+    project_id: UUID
+    default_claims: dict[str, Any]
+
+class UserClaimsOverrideReq(BaseModel):
+    overrides: dict[str, str | int | bool | float] = Field(default_factory=dict)
+
+    @field_validator("overrides")
+    @classmethod
+    def validate_overrides(cls, v):
+        forbidden = set(v.keys()) & RESERVED_CLAIM_KEYS
+        if forbidden:
+            raise ValueError(f"Reserved keys: {forbidden}")
+        return v
+
+class UserClaimsRes(BaseModel):
+    user_id: UUID
+    default_claims: dict[str, Any]
+    user_overrides: dict[str, Any]
+    effective_claims: dict[str, Any]

@@ -12,6 +12,8 @@ from src.modules.projects.api.dependencies import (
     UpdateEnvironmentUseCaseDep,
     UpdateFrontendUrlUseCaseDep,
     UpdateNameUseCaseDep,
+    GetProjectClaimsUseCaseDep,
+    UpdateProjectClaimsUseCaseDep,
 )
 from src.modules.projects.api.schemas import (
     ProjectEnvUpdateReq,
@@ -21,6 +23,8 @@ from src.modules.projects.api.schemas import (
     ProjectOriginsUpdateReq,
     ProjectReadRes,
     ProjectRes,
+    ProjectDefaultClaimsReq,
+    ProjectDefaultClaimsRes,
 )
 from src.shared.api.dependencies import UnitOfWorkDeps
 
@@ -104,3 +108,34 @@ async def update_project_name(
     async with uow:
         project = await usecase.execute(uow.session, project_id, user.id, req.name)
     return ProjectRes.model_validate(project)
+
+
+@router.get("/{project_id}/claims", response_model=ProjectDefaultClaimsRes)
+async def get_project_claims(
+    project_id: UUID,
+    uow: UnitOfWorkDeps,
+    usecase: GetProjectClaimsUseCaseDep,
+    user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
+):
+    """Get default custom claims schema for a project."""
+    async with uow:
+        claims = await usecase.execute(uow.session, project_id, user.id)
+    return ProjectDefaultClaimsRes(project_id=project_id, default_claims=claims)
+
+
+@router.put("/{project_id}/claims", response_model=ProjectDefaultClaimsRes)
+async def update_project_claims(
+    project_id: UUID,
+    req: ProjectDefaultClaimsReq,
+    uow: UnitOfWorkDeps,
+    usecase: UpdateProjectClaimsUseCaseDep,
+    user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
+):
+    """Update default custom claims schema for a project."""
+    async with uow:
+        project = await usecase.execute(
+            uow.session, project_id, user.id, req.claims
+        )
+    return ProjectDefaultClaimsRes(
+        project_id=project_id, default_claims=project.default_claims
+    )

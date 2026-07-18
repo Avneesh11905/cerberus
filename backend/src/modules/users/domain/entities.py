@@ -21,6 +21,7 @@ class UserProfile(BaseModel):
     receive_updates: bool
     is_active: bool = True
     login_methods: list[str] = Field(default_factory=list)
+    custom_claims: dict = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def validate_picture(self) -> "UserProfile":

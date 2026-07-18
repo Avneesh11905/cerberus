@@ -27,6 +27,7 @@ class SQLProjectQueryRepositoryAdapter(ProjectQueryRepositoryPort[AsyncSession])
             api_key_hash=model.api_key_hash,
             oauth_config=model.oauth_config,
             allowed_origins=model.allowed_origins,
+            default_claims=model.default_claims,
             environment=model.environment,
             frontend_url=model.frontend_url,
             created_at=model.created_at,

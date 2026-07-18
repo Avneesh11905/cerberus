@@ -18,6 +18,7 @@ class ProjectEntity(BaseModel):
     admin_email: str | None = None
     oauth_config: dict = Field(default_factory=dict)
     allowed_origins: list[str] = Field(default_factory=list)
+    default_claims: dict = Field(default_factory=dict)
     environment: str = "development"
     frontend_url: str | None = None
     updated_at: datetime | None = None

@@ -20,6 +20,7 @@ from sqlalchemy import (
     text,
 )
 from sqlalchemy import Enum
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid6 import uuid7
 
@@ -68,6 +69,9 @@ class User(Base):
         server_default=text("'USER'"),
         nullable=False,
     )
+    custom_claims: Mapped[dict] = mapped_column(
+        JSONB, server_default=text("'{}'"), nullable=False
+    )
 
     project: Mapped["Project"] = relationship(back_populates="end_users")
     oauth_accounts: Mapped[list["OAuthAccount"]] = relationship(
@@ -81,6 +85,7 @@ class User(Base):
     )
 
     __table_args__ = (
+        Index("idx_users_custom_claims_gin", "custom_claims", postgresql_using="gin"),
         Index("uq_project_email", "email", "project_id", unique=True),
         Index(
             "idx_active_users",

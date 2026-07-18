@@ -11,11 +11,15 @@ from src.modules.projects.api.dependencies import (
     UpdateUserRoleUseCaseDep,
     SetProjectUserActiveStatusUseCaseDep,
     SetTenantUserActiveStatusUseCaseDep,
+    GetUserClaimsUseCaseDep,
+    UpdateUserClaimsUseCaseDep,
 )
 from src.modules.projects.api.schemas import (
     PaginatedProjectUsersRes,
     ProjectUserRoleUpdateReq,
     ProjectUserStatusUpdateReq,
+    UserClaimsRes,
+    UserClaimsOverrideReq,
 )
 from src.shared.api.dependencies import UnitOfWorkDeps
 from src.modules.auth.authorization.domain.enums import ProjectRole
@@ -103,3 +107,39 @@ async def set_tenant_user_status(
         "message": "Status updated across tenant projects successfully",
         "updated_projects": [u.project_id for u in updated_users],
     }
+
+
+@router.get("/{project_id}/users/{user_id}/claims", response_model=UserClaimsRes)
+async def get_user_claims(
+    project_id: UUID,
+    user_id: UUID,
+    uow: UnitOfWorkDeps,
+    usecase: GetUserClaimsUseCaseDep,
+    user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
+):
+    """Get custom claims for a specific user in a project."""
+    async with uow:
+        result = await usecase.execute(uow.session, project_id, user.id, user_id)
+    return UserClaimsRes(user_id=user_id, **result)
+
+
+@router.patch("/{project_id}/users/{user_id}/claims", response_model=UserClaimsRes)
+async def update_user_claims(
+    project_id: UUID,
+    user_id: UUID,
+    req: UserClaimsOverrideReq,
+    uow: UnitOfWorkDeps,
+    usecase: UpdateUserClaimsUseCaseDep,
+    user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
+):
+    """Update custom claims overrides for a specific user in a project."""
+    async with uow:
+        updated = await usecase.execute(
+            uow.session, project_id, user.id, user_id, req.overrides
+        )
+    return UserClaimsRes(
+        user_id=user_id,
+        default_claims={},  # In a full response this could be fetched if needed, but per plan returning updated.
+        user_overrides=updated.custom_claims,
+        effective_claims=updated.custom_claims,
+    )

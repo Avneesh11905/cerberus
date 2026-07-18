@@ -40,6 +40,7 @@ class SQLUserProfileRepositoryAdapter(UserProfileRepositoryPort[AsyncSession]):
             receive_updates=user.receive_updates,
             is_active=user.is_active,
             login_methods=methods,
+            custom_claims=user.custom_claims,
         )
 
     async def get_profile(
@@ -83,6 +84,7 @@ class SQLUserProfileRepositoryAdapter(UserProfileRepositoryPort[AsyncSession]):
             receive_updates=tenant.receive_updates,
             is_active=tenant.is_active,
             login_methods=methods,
+            custom_claims={},
         )
 
     async def save_profile(
@@ -134,6 +136,7 @@ class SQLUserProfileRepositoryAdapter(UserProfileRepositoryPort[AsyncSession]):
             receive_updates=tenant.receive_updates,
             is_active=tenant.is_active,
             login_methods=methods,
+            custom_claims={},
         )
 
     async def delete_user(self, session: AsyncSession, user_id: UUID) -> None:

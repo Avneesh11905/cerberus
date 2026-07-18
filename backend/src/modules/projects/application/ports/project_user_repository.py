@@ -49,3 +49,9 @@ class ProjectUserRepositoryPort[SessionType](Protocol):
     ) -> Sequence[UserProfile]:
         """Update the active status of a user across all projects owned by a tenant."""
         ...
+
+    async def update_user_claims(
+        self, session: SessionType, project_id: UUID, user_id: UUID, overrides: dict
+    ) -> UserProfile | None:
+        """Update custom claims for a user in a project."""
+        ...
