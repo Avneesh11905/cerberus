@@ -7,7 +7,6 @@ from typing import Protocol, Sequence
 from uuid import UUID
 
 from src.modules.users.domain.entities import UserProfile
-from src.modules.auth.authorization.domain.enums import ProjectRole
 
 
 class ProjectUserRepositoryPort[SessionType](Protocol):
@@ -26,16 +25,6 @@ class ProjectUserRepositoryPort[SessionType](Protocol):
         self, session: SessionType, project_id: UUID, search: str | None = None
     ) -> int:
         """Count the total number of users for a specific project matching the search."""
-        ...
-
-    async def update_user_role(
-        self,
-        session: SessionType,
-        project_id: UUID,
-        user_id: UUID,
-        new_role: ProjectRole,
-    ) -> UserProfile | None:
-        """Update the role of a user within a project."""
         ...
 
     async def update_user_status(

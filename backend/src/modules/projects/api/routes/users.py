@@ -8,7 +8,7 @@ from src.modules.auth.authorization.domain.enums import GlobalRole
 from src.modules.auth.authentication.domain.entities import UserIdentity
 from src.modules.projects.api.dependencies import (
     ListProjectUsersUseCaseDep,
-    UpdateUserRoleUseCaseDep,
+
     SetProjectUserActiveStatusUseCaseDep,
     SetTenantUserActiveStatusUseCaseDep,
     GetUserClaimsUseCaseDep,
@@ -16,13 +16,13 @@ from src.modules.projects.api.dependencies import (
 )
 from src.modules.projects.api.schemas import (
     PaginatedProjectUsersRes,
-    ProjectUserRoleUpdateReq,
+
     ProjectUserStatusUpdateReq,
     UserClaimsRes,
     UserClaimsOverrideReq,
 )
 from src.shared.api.dependencies import UnitOfWorkDeps
-from src.modules.auth.authorization.domain.enums import ProjectRole
+
 
 router = APIRouter()
 
@@ -47,26 +47,6 @@ async def list_project_users(
         items=list(users), total=total, page=page, size=size
     )
 
-
-@router.put("/{project_id}/users/{user_id}/role", response_model=dict)
-async def update_project_user_role(
-    project_id: UUID,
-    user_id: UUID,
-    req: ProjectUserRoleUpdateReq,
-    uow: UnitOfWorkDeps,
-    usecase: UpdateUserRoleUseCaseDep,
-    user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
-):
-    """Update the role of an end-user within a project."""
-    async with uow:
-        updated_user = await usecase.execute(
-            uow.session, project_id, user.id, user_id, ProjectRole(req.role)
-        )
-    return {
-        "message": "Role updated successfully",
-        "user_id": str(updated_user.id),
-        "role": updated_user.role,
-    }
 
 
 @router.put("/{project_id}/users/{user_id}/status", response_model=dict)

@@ -14,7 +14,7 @@ from src.modules.projects.application.use_cases import (
     RotateApiKeyUseCase,
     RotateJwtSecretUseCase,
     ListProjectUsersUseCase,
-    UpdateUserRoleUseCase,
+
     SetProjectUserActiveStatusUseCase,
     SetTenantUserActiveStatusUseCase,
     GetProjectClaimsUseCase,
@@ -114,12 +114,6 @@ def get_list_project_users_use_case() -> ListProjectUsersUseCase:
     )
 
 
-def get_update_user_role_use_case() -> UpdateUserRoleUseCase:
-    return UpdateUserRoleUseCase(
-        project_query_repository=app_container.project_query_repo,
-        project_user_repository=app_container.project_user_repo,
-    )
-
 
 def get_set_project_user_active_status_use_case() -> SetProjectUserActiveStatusUseCase:
     return SetProjectUserActiveStatusUseCase(
@@ -198,9 +192,7 @@ RotateJwtSecretUseCaseDep = Annotated[
 ListProjectUsersUseCaseDep = Annotated[
     ListProjectUsersUseCase, Depends(get_list_project_users_use_case)
 ]
-UpdateUserRoleUseCaseDep = Annotated[
-    UpdateUserRoleUseCase, Depends(get_update_user_role_use_case)
-]
+
 SetProjectUserActiveStatusUseCaseDep = Annotated[
     SetProjectUserActiveStatusUseCase,
     Depends(get_set_project_user_active_status_use_case),

@@ -35,10 +35,10 @@ class ProjectClaimsProviderAdapter[SessionType](ClaimsProviderPort[SessionType])
         if not user:
             return {}
 
-        claims: dict = {"role": user.role.value}
-
         if not user.project_id:
-            return claims
+            return {"role": user.role.value} if user.role else {}
+
+        claims: dict = {}
 
         cache_key = f"project:{user.project_id}:default_claims"
         defaults = await self.cache.get_json(cache_key)

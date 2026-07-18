@@ -8,13 +8,13 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, model_validator
 
-from src.modules.auth.authorization.domain.enums import ProjectRole, GlobalRole
+from src.modules.auth.authorization.domain.enums import GlobalRole
 
 
 class UserProfile(BaseModel):
     id: UUID
     email: str
-    role: GlobalRole | ProjectRole
+    role: GlobalRole | None = None
     project_id: UUID | None = None
     name: str | None = None
     picture: str | None = None

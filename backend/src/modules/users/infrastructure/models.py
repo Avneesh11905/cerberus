@@ -25,7 +25,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid6 import uuid7
 
 from src.core.database import Base
-from src.modules.auth.authorization.domain.enums import ProjectRole
+
 
 
 class User(Base):
@@ -64,10 +64,9 @@ class User(Base):
     project_id: Mapped[UUID] = mapped_column(
         Uuid, ForeignKey("projects.id", ondelete="CASCADE"), index=True, nullable=False
     )
-    role: Mapped[ProjectRole] = mapped_column(
-        Enum(ProjectRole, native_enum=True),
-        server_default=text("'USER'"),
-        nullable=False,
+    role: Mapped[str | None] = mapped_column(
+        String,
+        nullable=True,
     )
     custom_claims: Mapped[dict] = mapped_column(
         JSONB, server_default=text("'{}'"), nullable=False

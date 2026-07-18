@@ -146,9 +146,6 @@ class ProjectSecretsRes(BaseModel):
     public_key: str
 
 
-class ProjectUserRoleUpdateReq(BaseModel):
-    role: Literal["ADMIN", "USER"]
-
 
 class ProjectUserStatusUpdateReq(BaseModel):
     is_active: bool

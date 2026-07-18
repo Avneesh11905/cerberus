@@ -6,7 +6,7 @@ Contains pure domain entities related to tracking user sessions and devices.
 from datetime import datetime
 from uuid import UUID
 from pydantic import AnyHttpUrl, BaseModel, EmailStr
-from src.modules.auth.authorization.domain.enums import GlobalRole, ProjectRole
+from src.modules.auth.authorization.domain.enums import GlobalRole
 
 
 class ActiveSession(BaseModel):
@@ -27,7 +27,7 @@ class UserIdentity(BaseModel):
     id: UUID
     email: EmailStr
     is_verified: bool
-    role: GlobalRole | ProjectRole
+    role: GlobalRole | None = None
     project_id: UUID | None = None
     name: str | None = None
     picture: AnyHttpUrl | None = None

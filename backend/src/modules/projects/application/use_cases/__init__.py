@@ -15,7 +15,7 @@ from .update_frontend_url import UpdateFrontendUrlUseCase
 from .update_name import UpdateNameUseCase
 from .update_oauth import UpdateOauthUseCase
 from .update_origins import UpdateOriginsUseCase
-from .update_user_role import UpdateUserRoleUseCase
+
 from .get_project_claims import GetProjectClaimsUseCase
 from .update_project_claims import UpdateProjectClaimsUseCase
 from .get_user_claims import GetUserClaimsUseCase
@@ -39,7 +39,7 @@ __all__ = [
     "UpdateNameUseCase",
     "UpdateOauthUseCase",
     "UpdateOriginsUseCase",
-    "UpdateUserRoleUseCase",
+
     "GetProjectClaimsUseCase",
     "UpdateProjectClaimsUseCase",
     "GetUserClaimsUseCase",

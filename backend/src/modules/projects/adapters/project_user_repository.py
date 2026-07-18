@@ -12,7 +12,7 @@ from sqlalchemy.orm import selectinload
 
 from src.modules.users.domain.entities import UserProfile
 from src.modules.users.infrastructure.models import User
-from src.modules.auth.authorization.domain.enums import ProjectRole
+
 
 
 class SQLProjectUserRepositoryAdapter:
@@ -57,7 +57,6 @@ class SQLProjectUserRepositoryAdapter:
                 or_(
                     User.email.ilike(f"%{search}%"),
                     User.name.ilike(f"%{search}%"),
-                    User.role.cast(str).ilike(f"%{search}%"),
                 )
             )
 
@@ -78,34 +77,13 @@ class SQLProjectUserRepositoryAdapter:
                 or_(
                     User.email.ilike(f"%{search}%"),
                     User.name.ilike(f"%{search}%"),
-                    User.role.cast(str).ilike(f"%{search}%"),
                 )
             )
 
         result = await session.execute(stmt)
         return result.scalar_one() or 0
 
-    async def update_user_role(
-        self,
-        session: AsyncSession,
-        project_id: UUID,
-        user_id: UUID,
-        new_role: ProjectRole,
-    ) -> UserProfile | None:
-        result = await session.execute(
-            select(User)
-            .options(selectinload(User.oauth_accounts))
-            .where(User.id == user_id, User.project_id == project_id)
-        )
-        user = result.scalar_one_or_none()
 
-        if not user:
-            return None
-
-        user.role = new_role
-        await session.flush()
-
-        return self._to_profile(user)
 
     async def update_user_status(
         self, session: AsyncSession, project_id: UUID, user_id: UUID, is_active: bool

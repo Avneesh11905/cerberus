@@ -6,7 +6,7 @@ from typing import Protocol
 from uuid import UUID
 
 from src.modules.auth.authentication.domain.entities import UserIdentity
-from src.modules.auth.authorization.domain.enums import GlobalRole, ProjectRole
+from src.modules.auth.authorization.domain.enums import GlobalRole
 
 
 class UserCommandRepositoryPort[SessionType](Protocol):
@@ -21,7 +21,7 @@ class UserCommandRepositoryPort[SessionType](Protocol):
         provider: str,
         oauth_sub: str,
         project_id: UUID | None = None,
-        role: GlobalRole | ProjectRole = ProjectRole.USER,
+        role: GlobalRole | None = None,
     ) -> UserIdentity:
         """Create a new user and link an OAuth account."""
         ...
@@ -45,7 +45,7 @@ class UserCommandRepositoryPort[SessionType](Protocol):
         password_hash: str | None,
         is_verified: bool = False,
         project_id: UUID | None = None,
-        role: GlobalRole | ProjectRole = ProjectRole.USER,
+        role: GlobalRole | None = None,
     ) -> UserIdentity:
         """Create a new user and link a local password."""
         ...
@@ -71,7 +71,7 @@ class UserCommandRepositoryPort[SessionType](Protocol):
         ...
 
     async def update_role(
-        self, session: SessionType, user_id: UUID, role: GlobalRole | ProjectRole
+        self, session: SessionType, user_id: UUID, role: GlobalRole
     ) -> None:
         """Persist a new role for a user. Used for admin self-heal recovery."""
         ...

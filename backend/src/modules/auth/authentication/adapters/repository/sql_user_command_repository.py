@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.modules.auth.authentication.application.ports import UserCommandRepositoryPort
 from src.modules.auth.authentication.domain.entities import UserIdentity
 from src.modules.auth.authentication.infrastructure.models import OAuthAccount, Password
-from src.modules.auth.authorization.domain.enums import GlobalRole, ProjectRole
+from src.modules.auth.authorization.domain.enums import GlobalRole
 from src.modules.superadmin.infrastructure.models import Tenant
 from src.modules.users.infrastructure.models import User
 
@@ -30,7 +30,7 @@ class SQLUserCommandRepositoryAdapter(UserCommandRepositoryPort[AsyncSession]):
         provider: str,
         oauth_sub: str,
         project_id: UUID | None = None,
-        role: GlobalRole | ProjectRole = ProjectRole.USER,
+        role: GlobalRole | None = None,
     ) -> UserIdentity:
         """Create a new user and link an OAuth account."""
         if project_id:
@@ -40,7 +40,7 @@ class SQLUserCommandRepositoryAdapter(UserCommandRepositoryPort[AsyncSession]):
                 picture=picture,
                 is_verified=True,
                 project_id=project_id,
-                role=role,
+                role=None,  # DB still has column, it defaults safely or stores null
             )
             session.add(user)
             await session.flush()
@@ -105,7 +105,7 @@ class SQLUserCommandRepositoryAdapter(UserCommandRepositoryPort[AsyncSession]):
         password_hash: str | None,
         is_verified: bool = False,
         project_id: UUID | None = None,
-        role: GlobalRole | ProjectRole = ProjectRole.USER,
+        role: GlobalRole | None = None,
     ) -> UserIdentity:
         """Create a new user and store their local password."""
         if project_id:
@@ -114,7 +114,7 @@ class SQLUserCommandRepositoryAdapter(UserCommandRepositoryPort[AsyncSession]):
                 name=name,
                 is_verified=is_verified,
                 project_id=project_id,
-                role=role,
+                role=None,
             )
             session.add(user)
             await session.flush()
@@ -225,17 +225,12 @@ class SQLUserCommandRepositoryAdapter(UserCommandRepositoryPort[AsyncSession]):
                 tenant_obj.deleted_at = None
 
     async def update_role(
-        self, session: AsyncSession, user_id: UUID, role: GlobalRole | ProjectRole
+        self, session: AsyncSession, user_id: UUID, role: GlobalRole
     ) -> None:
-        """Persist a role change for a user. Used for admin self-heal recovery."""
-        result = await session.execute(select(User).where(User.id == user_id))
-        user = result.scalar_one_or_none()
-        if user and isinstance(role, ProjectRole):
-            user.role = role
-        else:
-            tenant_res = await session.execute(
-                select(Tenant).where(Tenant.id == user_id)
-            )
-            tenant = tenant_res.scalar_one_or_none()
-            if tenant and isinstance(role, GlobalRole):
-                tenant.role = role
+        """Persist a role change for a tenant. Used for admin self-heal recovery."""
+        tenant_res = await session.execute(
+            select(Tenant).where(Tenant.id == user_id)
+        )
+        tenant = tenant_res.scalar_one_or_none()
+        if tenant:
+            tenant.role = role

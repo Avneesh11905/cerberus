@@ -11,6 +11,7 @@ import jwt
 from uuid6 import uuid7
 
 from src.modules.auth.authentication.domain.entities import UserIdentity
+from src.modules.auth.authorization.domain.enums import GlobalRole
 
 
 class JWTAccessTokenAdapter:
@@ -36,7 +37,7 @@ class JWTAccessTokenAdapter:
             "sub": str(user.id),
             "email": str(user.email),
             "project_id": str(user.project_id) if user.project_id else None,
-            "role": user.role.value if hasattr(user.role, "value") else str(user.role),
+            "role": user.role.value if user.role else None,
             "is_verified": user.is_verified,
             "exp": expires,
             "iat": now,
@@ -55,10 +56,13 @@ class JWTAccessTokenAdapter:
         key = public_key_override if public_key_override else self._public_key
         try:
             payload = jwt.decode(token, key, algorithms=[self._algorithm])
+
+            payload_role = payload.get("role")
+            role = GlobalRole(payload_role) if payload_role in GlobalRole._value2member_map_ else None
             user = UserIdentity(
                 id=UUID(payload["sub"]),  # str -> UUID at JWT boundary
                 email=payload["email"],
-                role=payload.get("role", "USER"),
+                role=role,
                 project_id=UUID(payload["project_id"])
                 if payload.get("project_id")
                 else None,
