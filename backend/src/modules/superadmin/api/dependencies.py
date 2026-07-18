@@ -10,7 +10,7 @@ from src.modules.superadmin.application.use_cases import (
     GetSystemAnalyticsUseCase,
     ListTenantsUseCase,
     UpdateTenantStatusUseCase,
-    UpdateProjectRoleUseCase,
+    UpdateTenantGlobalRoleUseCase,
     ListTenantLogsUseCase,
 )
 
@@ -33,8 +33,8 @@ def get_update_tenant_status_use_case() -> UpdateTenantStatusUseCase:
     )
 
 
-def get_update_tenant_role_use_case() -> UpdateProjectRoleUseCase:
-    return UpdateProjectRoleUseCase(
+def get_update_tenant_global_role_use_case() -> UpdateTenantGlobalRoleUseCase:
+    return UpdateTenantGlobalRoleUseCase(
         tenant_repository=app_container.superadmin_tenant_repo
     )
 
@@ -52,8 +52,8 @@ ListTenantsUseCaseDep = Annotated[
 UpdateTenantStatusUseCaseDep = Annotated[
     UpdateTenantStatusUseCase, Depends(get_update_tenant_status_use_case)
 ]
-UpdateProjectRoleUseCaseDep = Annotated[
-    UpdateProjectRoleUseCase, Depends(get_update_tenant_role_use_case)
+UpdateTenantGlobalRoleUseCaseDep = Annotated[
+    UpdateTenantGlobalRoleUseCase, Depends(get_update_tenant_global_role_use_case)
 ]
 ListTenantLogsUseCaseDep = Annotated[
     ListTenantLogsUseCase, Depends(get_list_tenant_logs_use_case)

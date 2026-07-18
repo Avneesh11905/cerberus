@@ -7,7 +7,7 @@ invalidating the old token and issuing a brand new (Access Token, Refresh Token)
 
 from src.modules.auth.authentication.application.ports import (
     RefreshTokenRepositoryPort,
-    ProjectRepositoryPort,
+    ProjectKeyRepositoryPort,
     AccessTokenPort,
     ClaimsProviderPort,
 )
@@ -23,7 +23,7 @@ class SessionRefreshUseCase[SessionType]:
         refresh_repo: RefreshTokenRepositoryPort[SessionType],
         access_token: AccessTokenPort,
         claims_provider: ClaimsProviderPort,
-        project_repo: ProjectRepositoryPort[SessionType],
+        project_repo: ProjectKeyRepositoryPort[SessionType],
     ):
         self._refresh_repo = refresh_repo
         self._access_token = access_token

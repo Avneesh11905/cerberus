@@ -5,7 +5,7 @@ from src.modules.superadmin.domain.exceptions import TenantNotFoundException
 from src.modules.auth.authorization.domain.enums import GlobalRole
 
 
-class UpdateProjectRoleUseCase[SessionType]:
+class UpdateTenantGlobalRoleUseCase[SessionType]:
     def __init__(self, tenant_repository: TenantRepositoryPort):
         self.tenant_repository = tenant_repository
 

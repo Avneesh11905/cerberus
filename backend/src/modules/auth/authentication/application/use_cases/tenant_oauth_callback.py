@@ -4,7 +4,7 @@ Use Case: TenantOAuthCallbackUseCase
 Handles the OAuth callback for Cerberus Dashboard users (tenants).
 Unlike ProjectUserOAuthCallbackUseCase, this use case:
   - Never takes a project_id (tenants are global, not scoped to a project)
-  - Does not need ProjectRepositoryPort
+  - Does not need ProjectKeyRepositoryPort
   - Assigns UserRole.SUPERADMIN if email matches SUPERADMIN_EMAIL, else UserRole.TENANT
 """
 

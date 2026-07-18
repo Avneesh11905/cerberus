@@ -6,7 +6,7 @@ from .repository.user_query_repository import UserQueryRepositoryPort
 from .security.access_token import AccessTokenPort
 from .security.claims_provider import ClaimsProviderPort
 from .security.password_hasher import PasswordHasherPort
-from .repository.project import ProjectRepositoryPort
+from .repository.project_key_repository import ProjectKeyRepositoryPort
 
 __all__ = [
     "AccessTokenPort",
@@ -17,5 +17,5 @@ __all__ = [
     "UserQueryRepositoryPort",
     "UserCommandRepositoryPort",
     "UserMaintenanceRepositoryPort",
-    "ProjectRepositoryPort",
+    "ProjectKeyRepositoryPort",
 ]

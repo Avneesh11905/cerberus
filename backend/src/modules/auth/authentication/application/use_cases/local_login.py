@@ -21,7 +21,7 @@ from src.modules.auth.authentication.application.ports import (
     UserQueryRepositoryPort,
     UserCommandRepositoryPort,
     EmailSenderPort,
-    ProjectRepositoryPort,
+    ProjectKeyRepositoryPort,
     AccessTokenPort,
     ClaimsProviderPort,
 )
@@ -58,7 +58,7 @@ class LocalLoginUseCase[SessionType]:
         email_sender: EmailSenderPort,
         access_token: AccessTokenPort,
         claims_provider: ClaimsProviderPort,
-        project_repo: ProjectRepositoryPort[SessionType],
+        project_repo: ProjectKeyRepositoryPort[SessionType],
         rate_limiter: RateLimiterPort,
         turnstile: TurnstilePort,
         analytics: AnalyticsEventPort,

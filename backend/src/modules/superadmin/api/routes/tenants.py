@@ -9,7 +9,7 @@ from src.modules.auth.authentication.domain.entities import UserIdentity
 from src.modules.superadmin.api.dependencies import (
     ListTenantsUseCaseDep,
     UpdateTenantStatusUseCaseDep,
-    UpdateProjectRoleUseCaseDep,
+    UpdateTenantGlobalRoleUseCaseDep,
 )
 from src.modules.superadmin.api.schemas import (
     PaginatedTenantRes,
@@ -60,11 +60,11 @@ async def update_tenant_status(
 
 
 @router.patch("/tenants/{tenant_id}/role", response_model=TenantRes)
-async def update_tenant_role(
+async def update_tenant_global_role(
     tenant_id: UUID,
     req: TenantGlobalRoleUpdateReq,
     uow: UnitOfWorkDeps,
-    use_case: UpdateProjectRoleUseCaseDep,
+    use_case: UpdateTenantGlobalRoleUseCaseDep,
     admin: Annotated[UserIdentity, Depends(require_role(GlobalRole.SUPERADMIN))],
 ):
     """Promote or demote a tenant to/from SUPERADMIN."""

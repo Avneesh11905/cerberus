@@ -17,7 +17,7 @@ from src.modules.auth.authentication.application.ports import (
     UserQueryRepositoryPort,
     UserCommandRepositoryPort,
     EmailSenderPort,
-    ProjectRepositoryPort,
+    ProjectKeyRepositoryPort,
     AccessTokenPort,
     ClaimsProviderPort,
 )
@@ -53,7 +53,7 @@ class ProjectUserOAuthCallbackUseCase[SessionType, RequestType]:
         email_sender: EmailSenderPort,
         access_token: AccessTokenPort,
         claims_provider: ClaimsProviderPort,
-        project_repo: ProjectRepositoryPort,
+        project_repo: ProjectKeyRepositoryPort,
         oauth_service: OAuthServicePort[SessionType, RequestType],
         role_provisioning: RoleProvisioningService[SessionType],
     ):
