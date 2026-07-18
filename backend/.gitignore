@@ -38,3 +38,9 @@ Thumbs.db
 
 /scripts/redis/
 /coverage.json
+
+# MarkDown
+/AUDIT_REPORT.md
+/BACKEND_UNDERSTANDING.md
+/IMPLEMENTATION_PLAN.md
+/files.txt
