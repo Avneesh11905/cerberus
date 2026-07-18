@@ -30,7 +30,7 @@ class SQLUserCommandRepositoryAdapter(UserCommandRepositoryPort[AsyncSession]):
         provider: str,
         oauth_sub: str,
         project_id: UUID | None = None,
-        role: GlobalRole | None = None,
+        role: GlobalRole | str | None = None,
     ) -> UserIdentity:
         """Create a new user and link an OAuth account."""
         if project_id:
@@ -105,7 +105,7 @@ class SQLUserCommandRepositoryAdapter(UserCommandRepositoryPort[AsyncSession]):
         password_hash: str | None,
         is_verified: bool = False,
         project_id: UUID | None = None,
-        role: GlobalRole | None = None,
+        role: GlobalRole | str | None = None,
     ) -> UserIdentity:
         """Create a new user and store their local password."""
         if project_id:

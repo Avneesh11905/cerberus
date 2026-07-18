@@ -17,6 +17,7 @@ from src.core.exceptions import TurnstileVerificationFailed
 from src.modules.auth.authorization.application.services.role_provisioning import (
     RoleProvisioningService,
 )
+from src.modules.auth.authorization.domain.enums import GlobalRole
 from src.modules.auth.authentication.application.ports import (
     PasswordHasherPort,
     UserQueryRepositoryPort,
@@ -147,7 +148,7 @@ class LocalRegisterUseCase[SessionType]:
             "pending_password_hash": hashed,
             "pending_name": name,
             "project_id": str(project_id) if project_id else None,
-            "role": role.value,  # serialize enum to string — json.dumps cannot handle enum objects
+            "role": role.value if isinstance(role, GlobalRole) else role,
         }
 
         # 5. Save OTP to Redis for 15 minutes (resend window)

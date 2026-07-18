@@ -9,6 +9,7 @@ from src.modules.auth.authentication.application.ports import (
     UserQueryRepositoryPort,
 )
 from src.shared.application.ports import CachePort
+from src.modules.auth.authorization.domain.enums import GlobalRole
 
 
 from src.modules.projects.application.ports import ProjectQueryRepositoryPort
@@ -37,16 +38,24 @@ class ProjectClaimsProviderAdapter[SessionType](ClaimsProviderPort[SessionType])
             return {}
 
         if not user.project_id:
-            return {"role": user.role.value} if user.role else {}
+            return (
+                {
+                    "role": user.role.value
+                    if isinstance(user.role, GlobalRole)
+                    else user.role
+                }
+                if user.role
+                else {}
+            )
 
         claims: dict = {}
 
         cache_key = f"project:{user.project_id}:default_claims"
-        defaults = await self.cache.get_json(cache_key)
+        defaults = await self.cache.get_dict(cache_key)
         if defaults is None:
             project = await self.project_query_repo.get_by_id(session, user.project_id)
             defaults = project.default_claims if project else {}
-            await self.cache.set_json(cache_key, defaults, ttl=900)
+            await self.cache.set_dict(cache_key, defaults, ttl=900)
 
         if defaults:
             claims.update(defaults)

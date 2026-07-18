@@ -37,7 +37,7 @@ class JWTAccessTokenAdapter:
             "sub": str(user.id),
             "email": str(user.email),
             "project_id": str(user.project_id) if user.project_id else None,
-            "role": user.role.value if user.role else None,
+            "role": user.role.value if isinstance(user.role, GlobalRole) else user.role,
             "is_verified": user.is_verified,
             "exp": expires,
             "iat": now,
@@ -58,11 +58,7 @@ class JWTAccessTokenAdapter:
             payload = jwt.decode(token, key, algorithms=[self._algorithm])
 
             payload_role = payload.get("role")
-            role = (
-                GlobalRole(payload_role)
-                if payload_role in GlobalRole._value2member_map_
-                else None
-            )
+            role = str(payload_role) if payload_role is not None else None
             user = UserIdentity(
                 id=UUID(payload["sub"]),  # str -> UUID at JWT boundary
                 email=payload["email"],

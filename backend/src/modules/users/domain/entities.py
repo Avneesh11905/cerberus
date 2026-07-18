@@ -14,7 +14,7 @@ from src.modules.auth.authorization.domain.enums import GlobalRole
 class UserProfile(BaseModel):
     id: UUID
     email: str
-    role: GlobalRole | None = None
+    role: GlobalRole | str | None = None
     project_id: UUID | None = None
     name: str | None = None
     picture: str | None = None

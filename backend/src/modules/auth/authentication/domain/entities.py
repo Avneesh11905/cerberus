@@ -27,7 +27,7 @@ class UserIdentity(BaseModel):
     id: UUID
     email: EmailStr
     is_verified: bool
-    role: GlobalRole | None = None
+    role: GlobalRole | str | None = None
     project_id: UUID | None = None
     name: str | None = None
     picture: AnyHttpUrl | None = None

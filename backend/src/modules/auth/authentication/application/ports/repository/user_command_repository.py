@@ -21,7 +21,7 @@ class UserCommandRepositoryPort[SessionType](Protocol):
         provider: str,
         oauth_sub: str,
         project_id: UUID | None = None,
-        role: GlobalRole | None = None,
+        role: GlobalRole | str | None = None,
     ) -> UserIdentity:
         """Create a new user and link an OAuth account."""
         ...
@@ -45,7 +45,7 @@ class UserCommandRepositoryPort[SessionType](Protocol):
         password_hash: str | None,
         is_verified: bool = False,
         project_id: UUID | None = None,
-        role: GlobalRole | None = None,
+        role: GlobalRole | str | None = None,
     ) -> UserIdentity:
         """Create a new user and link a local password."""
         ...
