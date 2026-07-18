@@ -20,12 +20,14 @@ from src.core.config import (
 from src.core.database import AsyncSessionLocal
 from src.modules.analytics.adapters import SQLAnalyticsRepositoryAdapter
 from src.modules.users.adapters import SQLUserProfileRepositoryAdapter
-from src.modules.auth.adapters import (
+from src.modules.auth.authorization.infrastructure.claims_provider import (
+    RoleClaimsProviderAdapter,
+)
+from src.modules.auth.authentication.adapters import (
     Argon2PasswordHasherAdapter,
     AuthEmailSenderAdapter,
     DBRefreshTokenRepositoryAdapter,
     JWTAccessTokenAdapter,
-    RoleClaimsProviderAdapter,
     SQLUserQueryRepositoryAdapter,
     SQLUserCommandRepositoryAdapter,
     SQLUserMaintenanceRepositoryAdapter,

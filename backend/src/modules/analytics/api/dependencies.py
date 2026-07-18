@@ -8,11 +8,11 @@ from src.modules.analytics.application.use_cases import (
     GetProjectMetricsUseCase,
     GetTenantMetricsUseCase,
 )
-from src.modules.auth.api.dependencies.security import get_current_user
-from src.modules.auth.domain.entities import UserIdentity
+from src.modules.auth.authentication.api.dependencies.security import get_current_user
+from src.modules.auth.authentication.domain.entities import UserIdentity
 from src.modules.projects.infrastructure.models import Project
 from src.shared.api.dependencies import UnitOfWorkDeps
-from src.shared.domain.enums import UserRole
+from src.modules.auth.authorization.domain.enums import GlobalRole
 
 
 def get_project_metrics_use_case() -> GetProjectMetricsUseCase:
@@ -37,7 +37,7 @@ async def verify_project_ownership(
     uow: UnitOfWorkDeps,
 ) -> None:
     """Verifies that the current user's tenant owns the requested project, or the user is a superadmin."""
-    if user.role == UserRole.SUPERADMIN:
+    if user.role != GlobalRole.SUPERADMIN:
         return
 
     async with uow:

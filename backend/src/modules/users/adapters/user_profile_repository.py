@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.modules.auth.application.ports import RefreshTokenRepositoryPort
+from src.modules.auth.authentication.application.ports import RefreshTokenRepositoryPort
 from src.modules.users.application.ports import UserProfileRepositoryPort
 from src.modules.users.domain.entities import UserProfile
 from src.modules.users.domain.exceptions import UserNotFoundException
@@ -33,7 +33,7 @@ class SQLUserProfileRepositoryAdapter(UserProfileRepositoryPort[AsyncSession]):
         return UserProfile(
             id=user.id,
             email=user.email,
-            role=user.role,
+            role=user.role,  # type: ignore # type: ignore # type: ignore
             project_id=user.project_id if user.project_id else None,
             name=user.name,
             picture=user.picture,

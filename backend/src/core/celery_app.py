@@ -9,7 +9,7 @@ celery_app = Celery(
     broker=database_settings.CELERY_BROKER_URL,
     backend=database_settings.CELERY_RESULT_URL,
     include=[
-        "src.modules.auth.infrastructure.tasks",
+        "src.modules.auth.authentication.infrastructure.tasks",
         "src.shared.infrastructure.tasks",
         "src.modules.analytics.infrastructure.tasks",
     ],

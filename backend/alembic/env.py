@@ -13,7 +13,7 @@ load_dotenv(".env.local")
 # Import settings and metadata
 import src.core.models  # noqa: F401, E402
 import src.modules.analytics.infrastructure.models  # noqa: F401, E402
-import src.modules.auth.infrastructure.models  # noqa: F401, E402
+import src.modules.auth.authentication.infrastructure.models  # noqa: F401, E402
 import src.modules.projects.infrastructure.models  # noqa: F401, E402
 import src.modules.superadmin.infrastructure.models  # noqa: F401, E402
 

@@ -3,8 +3,8 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends
 
-from src.modules.auth.api.dependencies.security import require_role
-from src.modules.auth.domain.entities import UserIdentity
+from src.modules.auth.authorization.api.dependencies.roles import require_role
+from src.modules.auth.authentication.domain.entities import UserIdentity
 from src.modules.projects.api.dependencies import (
     ListProjectUsersUseCaseDep,
     UpdateUserRoleUseCaseDep,
@@ -17,7 +17,7 @@ from src.modules.projects.api.schemas import (
     ProjectUserStatusUpdateReq,
 )
 from src.shared.api.dependencies import UnitOfWorkDeps
-from src.shared.domain.enums import UserRole
+from src.modules.auth.authorization.domain.enums import ProjectRole
 
 router = APIRouter()
 
@@ -55,7 +55,7 @@ async def update_project_user_role(
     """Update the role of an end-user within a project."""
     async with uow:
         updated_user = await usecase.execute(
-            uow.session, project_id, user.id, user_id, UserRole(req.role)
+            uow.session, project_id, user.id, user_id, ProjectRole(req.role)
         )
     return {
         "message": "Role updated successfully",

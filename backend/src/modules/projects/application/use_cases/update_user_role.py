@@ -6,7 +6,7 @@ from src.modules.projects.application.ports import (
 )
 from src.modules.projects.domain.exceptions import ProjectError, ProjectNotFoundError
 from src.modules.users.domain.entities import UserProfile
-from src.shared.domain.enums import UserRole
+from src.modules.auth.authorization.domain.enums import ProjectRole
 from .base_project_user import BaseProjectUserUseCase
 
 
@@ -25,9 +25,9 @@ class UpdateUserRoleUseCase[SessionType](BaseProjectUserUseCase[SessionType]):
         project_id: UUID,
         tenant_id: UUID,
         user_id: UUID,
-        new_role: UserRole,
+        new_role: ProjectRole,
     ) -> UserProfile:
-        if new_role not in (UserRole.ADMIN, UserRole.USER):
+        if new_role not in (ProjectRole.ADMIN, ProjectRole.USER):
             raise ProjectError()
         await self._verify_project_ownership(session, project_id, tenant_id)
         user = await self.project_user_repository.update_user_role(

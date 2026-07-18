@@ -16,7 +16,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from src.core.config import core_settings
 
 # Auth
-from src.modules.auth.domain.exceptions import (
+from src.modules.auth.authentication.domain.exceptions import (
     AuthBaseException,
     CSRFValidationException,
     EmailAlreadyRegisteredException,

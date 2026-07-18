@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from src.modules.analytics.api.routes import router as analytics_router
-from src.modules.auth.api.routes import router as auth_router
+from src.modules.auth.authentication.api.routes import router as auth_router
 from src.modules.projects.api.routes import router as projects_router
 from src.modules.superadmin.api.routes import router as superadmin_router
 from src.modules.users.api.routes import router as users_router

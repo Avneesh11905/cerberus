@@ -7,8 +7,8 @@ During deletion, it ensures the current session is securely terminated by blackl
 from typing import Annotated
 from fastapi import APIRouter, Depends, Request, Response
 
-from src.modules.auth.domain.entities import UserIdentity
-from src.modules.auth.api.dependencies.security import (
+from src.modules.auth.authentication.domain.entities import UserIdentity
+from src.modules.auth.authentication.api.dependencies.security import (
     get_current_user,
     get_jwt_payload,
     verify_csrf,

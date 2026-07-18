@@ -3,17 +3,17 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends
 
-from src.modules.auth.api.dependencies.security import require_role
-from src.modules.auth.domain.entities import UserIdentity
+from src.modules.auth.authorization.api.dependencies.roles import require_role
+from src.modules.auth.authentication.domain.entities import UserIdentity
 from src.modules.superadmin.api.dependencies import (
     ListTenantsUseCaseDep,
     UpdateTenantStatusUseCaseDep,
-    UpdateTenantRoleUseCaseDep,
+    UpdateProjectRoleUseCaseDep,
 )
 from src.modules.superadmin.api.schemas import (
     PaginatedTenantRes,
     TenantRes,
-    TenantRoleUpdateReq,
+    ProjectRoleUpdateReq,
     TenantStatusUpdateReq,
 )
 from src.shared.api.dependencies import UnitOfWorkDeps
@@ -61,9 +61,9 @@ async def update_tenant_status(
 @router.patch("/tenants/{tenant_id}/role", response_model=TenantRes)
 async def update_tenant_role(
     tenant_id: UUID,
-    req: TenantRoleUpdateReq,
+    req: ProjectRoleUpdateReq,
     uow: UnitOfWorkDeps,
-    use_case: UpdateTenantRoleUseCaseDep,
+    use_case: UpdateProjectRoleUseCaseDep,
     admin: Annotated[UserIdentity, Depends(require_role("SUPERADMIN"))],
 ):
     """Promote or demote a tenant to/from SUPERADMIN."""

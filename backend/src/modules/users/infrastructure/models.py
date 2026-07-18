@@ -1,7 +1,10 @@
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
-    from src.modules.auth.infrastructure.models import OAuthAccount, Password
+    from src.modules.auth.authentication.infrastructure.models import (
+        OAuthAccount,
+        Password,
+    )
     from src.modules.projects.infrastructure.models import Project
 
 from datetime import datetime, timezone
@@ -16,12 +19,12 @@ from sqlalchemy import (
     Uuid,
     text,
 )
-from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid6 import uuid7
 
 from src.core.database import Base
-from src.shared.domain.enums import UserRole
+from src.modules.auth.authorization.domain.enums import ProjectRole
 
 
 class User(Base):
@@ -60,8 +63,8 @@ class User(Base):
     project_id: Mapped[UUID] = mapped_column(
         Uuid, ForeignKey("projects.id", ondelete="CASCADE"), index=True, nullable=False
     )
-    role: Mapped[UserRole] = mapped_column(
-        SQLEnum(UserRole, native_enum=True),
+    role: Mapped[ProjectRole] = mapped_column(
+        Enum(ProjectRole, native_enum=True),
         server_default=text("'USER'"),
         nullable=False,
     )

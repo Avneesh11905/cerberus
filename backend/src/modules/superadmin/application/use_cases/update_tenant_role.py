@@ -2,10 +2,10 @@ from uuid import UUID
 from src.modules.superadmin.application.ports import TenantRepositoryPort
 from src.modules.superadmin.domain.entities import TenantEntity
 from src.modules.superadmin.domain.exceptions import TenantNotFoundException
-from src.shared.domain.enums import UserRole
+from src.modules.auth.authorization.domain.enums import GlobalRole
 
 
-class UpdateTenantRoleUseCase[SessionType]:
+class UpdateProjectRoleUseCase[SessionType]:
     def __init__(self, tenant_repository: TenantRepositoryPort):
         self.tenant_repository = tenant_repository
 
@@ -25,6 +25,6 @@ class UpdateTenantRoleUseCase[SessionType]:
 
             raise AbsoluteSuperadminImmutableException()
 
-        tenant.role = UserRole(role)
+        tenant.role = GlobalRole(role)
         await self.tenant_repository.save(session, tenant)
         return tenant

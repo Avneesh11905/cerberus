@@ -12,7 +12,7 @@ from sqlalchemy.orm import selectinload
 
 from src.modules.users.domain.entities import UserProfile
 from src.modules.users.infrastructure.models import User
-from src.shared.domain.enums import UserRole
+from src.modules.auth.authorization.domain.enums import ProjectRole
 
 
 class SQLProjectUserRepositoryAdapter:
@@ -85,7 +85,11 @@ class SQLProjectUserRepositoryAdapter:
         return result.scalar_one() or 0
 
     async def update_user_role(
-        self, session: AsyncSession, project_id: UUID, user_id: UUID, new_role: UserRole
+        self,
+        session: AsyncSession,
+        project_id: UUID,
+        user_id: UUID,
+        new_role: ProjectRole,
     ) -> UserProfile | None:
         result = await session.execute(
             select(User)

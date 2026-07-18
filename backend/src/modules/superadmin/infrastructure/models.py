@@ -1,7 +1,10 @@
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
-    from src.modules.auth.infrastructure.models import OAuthAccount, Password
+    from src.modules.auth.authentication.infrastructure.models import (
+        OAuthAccount,
+        Password,
+    )
     from src.modules.projects.infrastructure.models import Project
 
 from datetime import datetime, timezone
@@ -15,12 +18,12 @@ from sqlalchemy import (
     Uuid,
     text,
 )
-from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid6 import uuid7
 
 from src.core.database import Base
-from src.shared.domain.enums import UserRole
+from src.modules.auth.authorization.domain.enums import GlobalRole
 
 
 class Tenant(Base):
@@ -56,8 +59,8 @@ class Tenant(Base):
         onupdate=lambda: datetime.now(timezone.utc),
     )
 
-    role: Mapped[UserRole] = mapped_column(
-        SQLEnum(UserRole, native_enum=True),
+    role: Mapped[GlobalRole] = mapped_column(
+        Enum(GlobalRole, native_enum=True),
         server_default=text("'TENANT'"),
         nullable=False,
     )

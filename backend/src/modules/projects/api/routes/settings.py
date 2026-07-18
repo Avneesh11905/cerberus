@@ -3,8 +3,8 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends
 
-from src.modules.auth.api.dependencies.security import require_role
-from src.modules.auth.domain.entities import UserIdentity
+from src.modules.auth.authorization.api.dependencies.roles import require_role
+from src.modules.auth.authentication.domain.entities import UserIdentity
 from src.modules.projects.api.dependencies import (
     UpdateOauthUseCaseDep,
     UpdateOriginsUseCaseDep,

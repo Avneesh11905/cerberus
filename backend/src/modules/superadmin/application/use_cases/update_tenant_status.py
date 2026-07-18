@@ -1,5 +1,5 @@
 from uuid import UUID
-from src.modules.auth.application.ports import RefreshTokenRepositoryPort
+from src.modules.auth.authentication.application.ports import RefreshTokenRepositoryPort
 from src.modules.superadmin.application.ports import TenantRepositoryPort
 from src.modules.superadmin.domain.entities import TenantEntity
 from src.modules.superadmin.domain.exceptions import TenantNotFoundException

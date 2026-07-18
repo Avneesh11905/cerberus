@@ -4,7 +4,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
-from src.shared.domain.enums import LogLevel, UserRole
+from src.modules.auth.authorization.domain.enums import GlobalRole
+from src.shared.domain.enums import LogLevel
 
 
 class TenantEntity(BaseModel):
@@ -12,7 +13,7 @@ class TenantEntity(BaseModel):
     email: str
     name: Optional[str]
     is_active: bool
-    role: UserRole
+    role: GlobalRole
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

@@ -60,6 +60,8 @@ services:
     restart: *restart-policy
     shm_size: '256mb'
     env_file: *env-file
+    ports:
+      - "5432:5432"
     command: [ "postgres", "-p", "${POSTGRES_PORT:-5432}" ]
     volumes:
       - ./postgres:/var/lib/postgresql
@@ -75,6 +77,8 @@ services:
     container_name: cerb-redis
     restart: *restart-policy
     env_file: *env-file
+    ports:
+      - "6379:6379"
     volumes:
       - ./redis/data:/data
       - ./redis/redis.acl:/mnt/users.acl:ro

@@ -7,7 +7,7 @@ from typing import Protocol, Sequence
 from uuid import UUID
 
 from src.modules.users.domain.entities import UserProfile
-from src.shared.domain.enums import UserRole
+from src.modules.auth.authorization.domain.enums import ProjectRole
 
 
 class ProjectUserRepositoryPort[SessionType](Protocol):
@@ -29,7 +29,11 @@ class ProjectUserRepositoryPort[SessionType](Protocol):
         ...
 
     async def update_user_role(
-        self, session: SessionType, project_id: UUID, user_id: UUID, new_role: UserRole
+        self,
+        session: SessionType,
+        project_id: UUID,
+        user_id: UUID,
+        new_role: ProjectRole,
     ) -> UserProfile | None:
         """Update the role of a user within a project."""
         ...

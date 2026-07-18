@@ -1,14 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class UserRole(str, Enum):
-    SUPERADMIN = "SUPERADMIN"
-    ADMIN = "ADMIN"
-    TENANT = "TENANT"
-    USER = "USER"
-
-
-class EventType(str, Enum):
+class EventType(StrEnum):
     LOGIN_SUCCESS = "LOGIN_SUCCESS"
     LOGIN_FAILED = "LOGIN_FAILED"
     OTP_ABUSE_ATTEMPT = "OTP_ABUSE_ATTEMPT"
@@ -18,7 +11,7 @@ class EventType(str, Enum):
     OTP_SENT = "OTP_SENT"
 
 
-class LogLevel(str, Enum):
+class LogLevel(StrEnum):
     TRACE = "TRACE"
     DEBUG = "DEBUG"
     INFO = "INFO"
