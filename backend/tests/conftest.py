@@ -66,10 +66,11 @@ def engine(infra_containers):
 
 @pytest.fixture(scope="function")
 async def db_session(engine) -> AsyncGenerator[AsyncSession, None]:
-    async_session = async_sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
-    )
-    async with async_session() as session:
-        yield session
-        # Transaction rollback happens if we use pytest-asyncio transaction mode,
-        # or we manually truncate/rollback here. We will just yield for now.
+    async with engine.connect() as conn:
+        await conn.begin()
+        async_session = async_sessionmaker(
+            bind=conn, class_=AsyncSession, expire_on_commit=False
+        )
+        async with async_session() as session:
+            yield session
+        await conn.rollback()
