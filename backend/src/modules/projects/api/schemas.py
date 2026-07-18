@@ -169,8 +169,18 @@ class ProjectRotateRsaKeysRes(BaseModel):
     public_key: str
 
 
-RESERVED_CLAIM_KEYS = {"sub","email","role","exp","iat","jti",
-                        "project_id","is_verified","family_id"}
+RESERVED_CLAIM_KEYS = {
+    "sub",
+    "email",
+    "role",
+    "exp",
+    "iat",
+    "jti",
+    "project_id",
+    "is_verified",
+    "family_id",
+}
+
 
 class ProjectDefaultClaimsReq(BaseModel):
     claims: dict[str, str | int | bool | float] = Field(default_factory=dict)
@@ -188,9 +198,11 @@ class ProjectDefaultClaimsReq(BaseModel):
                 raise ValueError(f"Invalid key name: '{key}'")
         return v
 
+
 class ProjectDefaultClaimsRes(BaseModel):
     project_id: UUID
     default_claims: dict[str, Any]
+
 
 class UserClaimsOverrideReq(BaseModel):
     overrides: dict[str, str | int | bool | float] = Field(default_factory=dict)
@@ -202,6 +214,7 @@ class UserClaimsOverrideReq(BaseModel):
         if forbidden:
             raise ValueError(f"Reserved keys: {forbidden}")
         return v
+
 
 class UserClaimsRes(BaseModel):
     user_id: UUID

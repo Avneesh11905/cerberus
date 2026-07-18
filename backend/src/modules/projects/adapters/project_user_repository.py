@@ -156,11 +156,11 @@ class SQLProjectUserRepositoryAdapter:
             .where(User.id == user_id, User.project_id == project_id)
         )
         user = result.scalar_one_or_none()
-        
+
         if not user:
             return None
-            
+
         user.custom_claims = overrides
         await session.flush()
-        
+
         return self._to_profile(user)

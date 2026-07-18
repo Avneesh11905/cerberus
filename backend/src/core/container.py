@@ -20,8 +20,8 @@ from src.core.config import (
 from src.core.database import AsyncSessionLocal
 from src.modules.analytics.adapters import SQLAnalyticsRepositoryAdapter
 from src.modules.users.adapters import SQLUserProfileRepositoryAdapter
-from src.modules.auth.authorization.infrastructure.claims_provider import (
-    RoleClaimsProviderAdapter,
+from src.modules.auth.authorization.infrastructure.project_claims_provider import (
+    ProjectClaimsProviderAdapter,
 )
 from src.modules.auth.authorization.application.services.role_provisioning import (
     RoleProvisioningService,
@@ -154,9 +154,7 @@ class AppContainer:
         self.user_maintenance_repo = SQLUserMaintenanceRepositoryAdapter()
         self.password_hasher = Argon2PasswordHasherAdapter()
 
-        self.claims_provider = RoleClaimsProviderAdapter(
-            cache=self.cache_adapter, user_query_repo=self.user_query_repo
-        )
+
 
         self.role_provisioning = RoleProvisioningService(
             admin_query_repo=self.user_query_repo
@@ -170,6 +168,12 @@ class AppContainer:
             encryption_adapter=self.encryption_adapter
         )
         self.project_user_repo = SQLProjectUserRepositoryAdapter()
+
+        self.claims_provider = ProjectClaimsProviderAdapter(
+            cache=self.cache_adapter, 
+            user_query_repo=self.user_query_repo,
+            project_query_repo=self.project_query_repo
+        )
 
         self.oauth_service = OAuthServiceAdapter(
             project_query_repo=self.project_query_repo,

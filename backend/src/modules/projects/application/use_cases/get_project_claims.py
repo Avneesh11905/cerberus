@@ -1,5 +1,6 @@
 from src.modules.projects.application.use_cases import BaseProjectUseCase
 
+
 class GetProjectClaimsUseCase[SessionType](BaseProjectUseCase[SessionType]):
     """Retrieves the default custom claims schema for a project."""
 

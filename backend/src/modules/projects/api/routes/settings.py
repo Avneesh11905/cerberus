@@ -133,9 +133,7 @@ async def update_project_claims(
 ):
     """Update default custom claims schema for a project."""
     async with uow:
-        project = await usecase.execute(
-            uow.session, project_id, user.id, req.claims
-        )
+        project = await usecase.execute(uow.session, project_id, user.id, req.claims)
     return ProjectDefaultClaimsRes(
         project_id=project_id, default_claims=project.default_claims
     )
