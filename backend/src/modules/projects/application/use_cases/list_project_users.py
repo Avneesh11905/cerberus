@@ -22,7 +22,7 @@ class ListProjectUsersUseCase[SessionType](BaseProjectUserUseCase[SessionType]):
         self,
         session: SessionType,
         project_id: UUID,
-        tenant_id: UUID,
+        tenant_id: UUID | None,
         skip: int = 0,
         limit: int = 100,
         search: str | None = None,

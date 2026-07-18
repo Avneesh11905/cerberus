@@ -1,3 +1,4 @@
+from uuid import UUID
 from src.modules.projects.application.use_cases import BaseProjectUseCase
 
 
@@ -7,7 +8,11 @@ class GetUserClaimsUseCase[SessionType](BaseProjectUseCase[SessionType]):
         self.project_user_repository = project_user_repository
 
     async def execute(
-        self, session: SessionType, project_id, tenant_id, user_id
+        self,
+        session: SessionType,
+        project_id: UUID,
+        tenant_id: UUID | None,
+        user_id: UUID,
     ) -> dict:
         project = await self._get_project_or_404(session, project_id, tenant_id)
         defaults = project.default_claims

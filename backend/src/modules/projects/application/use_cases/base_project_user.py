@@ -16,11 +16,11 @@ class BaseProjectUserUseCase[SessionType]:
             setattr(self, k, v)
 
     async def _verify_project_ownership(
-        self, session: SessionType, project_id: UUID, tenant_id: UUID
+        self, session: SessionType, project_id: UUID, tenant_id: UUID | None = None
     ) -> None:
         project = await self.project_query_repository.get_by_id(session, project_id)
         if not project:
             raise ProjectNotFoundError()
 
-        if project.tenant_id != tenant_id:
+        if tenant_id is not None and project.tenant_id != tenant_id:
             raise ProjectForbiddenError()

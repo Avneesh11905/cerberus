@@ -24,7 +24,7 @@ class SetProjectUserActiveStatusUseCase[SessionType](
         self,
         session: SessionType,
         project_id: UUID,
-        tenant_id: UUID,
+        tenant_id: UUID | None,
         user_id: UUID,
         is_active: bool,
     ) -> UserProfile:
