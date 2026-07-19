@@ -36,6 +36,7 @@ def mock_rate_limiter(mocker):
 
 
 @pytest.mark.asyncio
+@pytest.mark.sanity
 async def test_rate_limit_regular_route(client: AsyncClient, mock_rate_limiter):
     """
     Issue requests to a non-auth route until the limit is exceeded.

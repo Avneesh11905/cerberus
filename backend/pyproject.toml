@@ -68,7 +68,8 @@ filterwarnings = [
     "ignore:.*`httpx` with `starlette.testclient` is deprecated",
 ]
 markers = [
-    "smoke: mark a test as a smoke test."
+    "smoke: mark a test as a smoke test.",
+    "sanity: mark a test as a sanity check."
 ]
 
 [tool.mypy]

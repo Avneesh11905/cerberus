@@ -13,6 +13,7 @@ def celery_config():
 
 
 @pytest.mark.asyncio
+@pytest.mark.sanity
 async def test_registration_to_login_journey(
     client: AsyncClient, db_session, celery_app, mocker
 ):

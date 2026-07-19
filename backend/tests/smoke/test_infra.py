@@ -1,6 +1,10 @@
+import pytest
+
 from src.core.config import database_settings
 
 
+@pytest.mark.smoke
+@pytest.mark.sanity
 def test_infra_containers_are_up(infra_containers):
     """
     Smoke test to verify that the test infrastructure (Postgres & Redis)
