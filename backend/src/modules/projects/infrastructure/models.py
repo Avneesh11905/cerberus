@@ -32,7 +32,6 @@ class Project(Base):
         Uuid, ForeignKey("tenants.id", ondelete="CASCADE"), index=True
     )
     name: Mapped[str] = mapped_column(String, nullable=False)
-    admin_email: Mapped[str | None] = mapped_column(String, nullable=True)
     private_key: Mapped[str] = mapped_column(String, nullable=False)
     public_key: Mapped[str] = mapped_column(String, nullable=False)
     api_key_hash: Mapped[str] = mapped_column(

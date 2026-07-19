@@ -69,29 +69,22 @@ async def get_jwt_payload(
 
     try:
         unverified_payload = jwt.decode(token, options={"verify_signature": False})
-    except Exception as e:
-        print(f"DECODE ERROR: {e}")
+    except Exception:
         raise InvalidTokenException()
 
-    print(f"UNVERIFIED PAYLOAD: {unverified_payload}")
     public_key_override = None
     project_id = unverified_payload.get("project_id")
-    print(f"PROJECT ID: {project_id}")
     if project_id:
         cache_key = f"project_public_key:{project_id}"
         public_key_override = await cache_adapter.get_string(cache_key)
-        print(f"CACHE KEY: {cache_key} -> {public_key_override is not None}")
         if not public_key_override:
             from uuid import UUID
 
             project = await project_repo.get_by_id(db, UUID(project_id))
-            print(f"DB PROJECT: {project.id if project else None}")
             if project and project.public_key:
                 public_key_override = project.public_key
                 await cache_adapter.set_string(cache_key, public_key_override, ttl=600)
-                print("SET CACHE")
 
-    print(f"VERIFYING WITH OVERRIDE: {public_key_override is not None}")
     user, payload = access_token_adapter.verify(
         token, public_key_override=public_key_override
     )

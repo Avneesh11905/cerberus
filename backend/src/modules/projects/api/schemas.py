@@ -150,6 +150,12 @@ class ProjectUserStatusUpdateReq(BaseModel):
     is_active: bool
 
 
+class ProjectUserStatusUpdateRes(BaseModel):
+    message: str
+    user_id: UUID
+    is_active: bool
+
+
 class PaginatedProjectUsersRes(BaseModel):
     items: list[Any]  # Will hold UserProfile at runtime but we can type as Any or dict
     total: int

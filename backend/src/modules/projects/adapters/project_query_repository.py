@@ -19,7 +19,6 @@ class SQLProjectQueryRepositoryAdapter(ProjectQueryRepositoryPort[AsyncSession])
             id=model.id,
             tenant_id=model.tenant_id,
             name=model.name,
-            admin_email=model.admin_email,
             private_key=self._encryption_adapter.decrypt(model.private_key)
             if model.private_key
             else "",

@@ -17,6 +17,7 @@ from src.core.config import (
     url_settings,
 )
 
+from sqlalchemy.ext.asyncio import AsyncSession
 from src.core.database import AsyncSessionLocal
 from src.modules.analytics.adapters import SQLAnalyticsRepositoryAdapter
 from src.modules.users.adapters import SQLUserProfileRepositoryAdapter
@@ -154,8 +155,8 @@ class AppContainer:
         self.user_maintenance_repo = SQLUserMaintenanceRepositoryAdapter()
         self.password_hasher = Argon2PasswordHasherAdapter()
 
-        self.role_provisioning = RoleProvisioningService(
-            admin_query_repo=self.user_query_repo
+        self.role_provisioning: RoleProvisioningService[AsyncSession] = (
+            RoleProvisioningService()
         )
 
         # Projects CQRS

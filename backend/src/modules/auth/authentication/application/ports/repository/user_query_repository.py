@@ -38,9 +38,3 @@ class UserQueryRepositoryPort[SessionType](Protocol):
     ) -> str | None:
         """Look up the local password hash for a given user."""
         ...
-
-    async def is_project_admin(
-        self, session: SessionType, project_id: UUID, email: str
-    ) -> bool:
-        """Check if an email matches the project's admin_email."""
-        ...

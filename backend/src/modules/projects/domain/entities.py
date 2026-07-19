@@ -15,7 +15,6 @@ class ProjectEntity(BaseModel):
     api_key_hash: str
     created_at: datetime
 
-    admin_email: str | None = None
     oauth_config: dict = Field(default_factory=dict)
     allowed_origins: list[str] = Field(default_factory=list)
     default_claims: dict = Field(default_factory=dict)

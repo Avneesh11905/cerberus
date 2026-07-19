@@ -13,6 +13,7 @@ from src.modules.projects.api.dependencies import (
 from src.modules.projects.api.schemas import (
     PaginatedProjectUsersRes,
     ProjectUserStatusUpdateReq,
+    ProjectUserStatusUpdateRes,
     UserClaimsRes,
     UserClaimsOverrideReq,
 )
@@ -43,7 +44,9 @@ async def list_project_users(
     )
 
 
-@router.put("/{project_id}/users/{user_id}/status", response_model=dict)
+@router.put(
+    "/{project_id}/users/{user_id}/status", response_model=ProjectUserStatusUpdateRes
+)
 async def set_project_user_status(
     project_id: UUID,
     user_id: UUID,
@@ -57,11 +60,11 @@ async def set_project_user_status(
         updated_user = await usecase.execute(
             uow.session, project_id, user.id, user_id, req.is_active
         )
-    return {
-        "message": "Status updated successfully",
-        "user_id": str(updated_user.id),
-        "is_active": updated_user.is_active,
-    }
+    return ProjectUserStatusUpdateRes(
+        message="Status updated successfully",
+        user_id=updated_user.id,
+        is_active=updated_user.is_active,
+    )
 
 
 @router.post("/users/{email}/status", response_model=dict)

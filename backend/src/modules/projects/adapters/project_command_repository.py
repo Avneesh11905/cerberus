@@ -18,7 +18,6 @@ class SQLProjectCommandRepositoryAdapter(ProjectCommandRepositoryPort[AsyncSessi
             id=model.id,
             tenant_id=model.tenant_id,
             name=model.name,
-            admin_email=model.admin_email,
             private_key=self._encryption_adapter.decrypt(model.private_key)
             if model.private_key
             else "",
@@ -38,7 +37,6 @@ class SQLProjectCommandRepositoryAdapter(ProjectCommandRepositoryPort[AsyncSessi
             id=entity.id,
             tenant_id=entity.tenant_id,
             name=entity.name,
-            admin_email=entity.admin_email,
             private_key=self._encryption_adapter.encrypt(entity.private_key)
             if entity.private_key
             else "",

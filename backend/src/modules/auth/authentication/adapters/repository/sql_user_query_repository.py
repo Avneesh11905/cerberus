@@ -10,7 +10,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.modules.auth.authentication.application.ports import UserQueryRepositoryPort
 from src.modules.auth.authentication.domain.entities import UserIdentity
 from src.modules.auth.authentication.infrastructure.models import OAuthAccount, Password
-from src.modules.projects.infrastructure.models import Project
 from src.modules.superadmin.infrastructure.models import Tenant
 from src.modules.users.infrastructure.models import User
 
@@ -100,22 +99,3 @@ class SQLUserQueryRepositoryAdapter(UserQueryRepositoryPort[AsyncSession]):
         result = await session.execute(stmt)
         record = result.scalar_one_or_none()
         return record.password_hash if record else None
-
-    async def is_project_admin(
-        self, session: AsyncSession, project_id: UUID, email: str
-    ) -> bool:
-        """Check if an email is an admin/owner for the project."""
-        stmt = select(User).where(User.project_id == project_id, User.email == email)
-        result = await session.execute(stmt)
-        user = result.scalar_one_or_none()
-        if user and user.role == "admin":
-            return True
-
-        # Also check if it's the tenant owner
-        stmt_tenant = (
-            select(Tenant)
-            .join(Project, Project.tenant_id == Tenant.id)
-            .where(Project.id == project_id, Tenant.email == email)
-        )
-        result_tenant = await session.execute(stmt_tenant)
-        return result_tenant.scalar_one_or_none() is not None
