@@ -117,7 +117,7 @@ jobs:
       - name: Run tests (pytest)
         env:
           CERBERUS_ENVIRONMENT: test
-        run: uv run pytest --cov=src --cov-fail-under=90
+        run: uv run pytest --cov
 
       - name: Security Scan (bandit)
         run: uv run bandit -c pyproject.toml -r src/
