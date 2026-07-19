@@ -14,7 +14,7 @@ class CloudflareTurnstileAdapter:
             # If secret key is not configured, bypass in development, otherwise fail.
             return self.is_development
 
-        if self.is_development and token == "dummy-token":
+        if self.is_development and token == "dummy-token":  # nosec B105
             return True
 
         data = {"secret": self.secret_key, "response": token}

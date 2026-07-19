@@ -39,7 +39,7 @@ async def preview_email(
     tmpl_root = Path(__file__).parents[2] / "templates" / "emails"
 
     # --- GALLERY VIEW ---
-    env = Environment(loader=FileSystemLoader(tmpl_root))
+    env = Environment(loader=FileSystemLoader(tmpl_root), autoescape=True)
     if not template_path:
         templates = []
         for f in tmpl_root.rglob("*.html"):
@@ -63,7 +63,7 @@ async def preview_email(
         raise HTTPException(status_code=400, detail="Invalid template path")
     safe_path = safe_path.replace("\\", "/")
 
-    env = Environment(loader=FileSystemLoader(tmpl_root))
+    env = Environment(loader=FileSystemLoader(tmpl_root), autoescape=True)
     env.globals["now"] = datetime.datetime.now
     try:
         jinja_tmpl = env.get_template(safe_path)

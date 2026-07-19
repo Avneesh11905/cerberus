@@ -32,7 +32,7 @@ class SQLAlchemyUoWAdapter:
         return self
 
     async def __aexit__(self, exc_type, exc_val, traceback):
-        assert (
+        assert (  # nosec B101
             self._session is not None
         )  # guaranteed: __aenter__ sets it before __aexit__ runs
         try:
