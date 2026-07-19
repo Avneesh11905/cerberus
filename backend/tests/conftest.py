@@ -58,6 +58,14 @@ def infra_containers():
         celery_app.conf.broker_url = f"{redis_base}/0"
         celery_app.conf.result_backend = f"{redis_base}/0"
 
+        # Update the existing cache adapter's redis client in-place so that existing references
+        # (e.g. in FastAPI middleware built during test collection) point to the new testcontainer Redis.
+        from src.core.container import app_container
+        from redis.asyncio import Redis
+
+        new_redis = Redis.from_url(database_settings.CACHE_URL, decode_responses=True)
+        app_container.cache_adapter._client = new_redis
+
         # Run Alembic migrations programmatically
         import subprocess
 

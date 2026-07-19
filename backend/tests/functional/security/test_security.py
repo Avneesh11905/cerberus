@@ -2,8 +2,6 @@ import pytest
 from httpx import AsyncClient
 import time
 
-from src.core.container import app_container
-
 
 class FakeRateLimiter:
     def __init__(self):
@@ -22,6 +20,7 @@ class FakeRateLimiter:
 @pytest.fixture
 def mock_rate_limiter(mocker):
     from src.core.config import rate_limit_settings
+    from src.core.container import app_container
 
     mocker.patch.object(rate_limit_settings, "ENABLED", True)
 

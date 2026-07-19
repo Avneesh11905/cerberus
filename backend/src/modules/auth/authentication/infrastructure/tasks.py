@@ -6,7 +6,6 @@ import asyncio
 
 from src.core.celery_app import celery_app
 from src.core.config import account_settings
-from src.core.container import app_container
 from src.core.database import AsyncSessionLocal
 from src.shared.adapters import AsyncSQLLogger
 
@@ -14,6 +13,8 @@ logger = AsyncSQLLogger("BackgroundTasks")
 
 
 async def run_clean_expired_tokens():
+    from src.core.container import app_container
+
     try:
         async with AsyncSessionLocal() as db:
             count_tokens = await app_container.refresh_token_repo.cleanup_expired(db)
@@ -37,6 +38,8 @@ def clean_expired_tokens():
 
 
 async def run_clean_unverified_and_deleted_users():
+    from src.core.container import app_container
+
     try:
         async with AsyncSessionLocal() as db:
             count_users = (
@@ -81,6 +84,8 @@ def clean_unverified_and_deleted_users():
 @celery_app.task(name="dispatch_email_task")
 def dispatch_email_task(to_email: str, subject: str, html_content: str):
     """Celery task: Dispatch an email."""
+    from src.core.container import app_container
+
     try:
         app_container.email_client.send_email(to_email, subject, html_content)
 
