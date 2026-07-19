@@ -130,5 +130,5 @@ async def favicon():
     return FileResponse("src/shared/static/favicon.webp", media_type="image/webp")
 
 
-if core_settings.ENV == "development":
+if core_settings.ENV in ("development", "test"):
     app.include_router(debug_email_router)

@@ -67,3 +67,427 @@ async def test_tenant_registration_success(client: AsyncClient, mocker):
     )
     assert response.json()["expires_in_seconds"] == 300
     mock_execute.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_register_user_success(client: AsyncClient, mocker):
+    from src import app
+    from src.modules.auth.authentication.api.dependencies.project import (
+        get_required_project_id,
+    )
+    import uuid
+
+    mock_id = uuid.uuid4()
+    app.dependency_overrides[get_required_project_id] = lambda: mock_id
+
+    try:
+        mock_execute = mocker.patch(
+            "src.modules.auth.authentication.application.use_cases.LocalRegisterUseCase.execute",
+            return_value=300,
+        )
+
+        response = await client.post(
+            "/v1.0/auth/register",
+            json={
+                "email": "test_user@example.com",
+                "password": "StrongPassword123!",
+                "name": "Test User",
+            },
+            headers={"X-Cerberus-API-Key": "cerb_testkey"},
+        )
+
+        assert response.status_code == 201
+        assert response.json()["expires_in_seconds"] == 300
+        mock_execute.assert_called_once()
+    finally:
+        del app.dependency_overrides[get_required_project_id]
+
+
+@pytest.mark.asyncio
+async def test_login_user_success(client: AsyncClient, mocker):
+    from src import app
+    from src.modules.auth.authentication.api.dependencies.project import (
+        get_optional_project_id,
+    )
+    from src.modules.users.domain.entities import UserProfile
+    import uuid
+
+    mock_id = uuid.uuid4()
+    app.dependency_overrides[get_optional_project_id] = lambda: mock_id
+
+    try:
+        mock_profile = UserProfile(
+            id=uuid.uuid4(),
+            email="test_user@example.com",
+            name="Test User",
+            receive_updates=True,
+        )
+        mock_execute = mocker.patch(
+            "src.modules.auth.authentication.application.use_cases.LocalLoginUseCase.execute",
+            return_value=(mock_profile, "refresh_token", "access_token"),
+        )
+
+        response = await client.post(
+            "/v1.0/auth/login",
+            json={"email": "test_user@example.com", "password": "StrongPassword123!"},
+            headers={"X-Cerberus-API-Key": "cerb_testkey"},
+        )
+
+        assert response.status_code == 200
+        assert response.json()["access_token"] == "access_token"
+        mock_execute.assert_called_once()
+    finally:
+        del app.dependency_overrides[get_optional_project_id]
+
+
+@pytest.mark.asyncio
+async def test_forgot_password(client: AsyncClient, mocker):
+    mock_execute = mocker.patch(
+        "src.modules.auth.authentication.application.use_cases.PasswordResetRequestUseCase.execute"
+    )
+
+    response = await client.post(
+        "/v1.0/auth/password/forgot",
+        json={"email": "test@example.com"},
+    )
+
+    assert response.status_code == 200
+    assert (
+        response.json()["message"]
+        == "If an account with that email exists, we sent a password reset link."
+    )
+    mock_execute.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_reset_password_success(client: AsyncClient, mocker):
+    mock_execute = mocker.patch(
+        "src.modules.auth.authentication.application.use_cases.PasswordResetExecuteUseCase.execute",
+        return_value=True,
+    )
+
+    response = await client.post(
+        "/v1.0/auth/password/reset",
+        json={"token": "valid_token", "new_password": "NewStrongPassword123!"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["message"] == "Password successfully reset"
+    mock_execute.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_reset_password_failure(client: AsyncClient, mocker):
+    mock_execute = mocker.patch(
+        "src.modules.auth.authentication.application.use_cases.PasswordResetExecuteUseCase.execute",
+        return_value=False,
+    )
+
+    response = await client.post(
+        "/v1.0/auth/password/reset",
+        json={"token": "invalid_token", "new_password": "NewStrongPassword123!"},
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Invalid request"
+    mock_execute.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_change_password_unauthenticated(client: AsyncClient):
+    response = await client.patch(
+        "/v1.0/auth/password/",
+        json={"current_password": "old_password", "new_password": "new_password"},
+    )
+    # Should fail due to missing csrf / authentication
+    assert response.status_code in [401, 403]
+
+
+@pytest.mark.asyncio
+async def test_logout_unauthenticated(client: AsyncClient):
+    response = await client.post("/v1.0/auth/logout")
+    # Missing CSRF / Authentication
+    assert response.status_code in [401, 403]
+
+
+@pytest.mark.asyncio
+async def test_logout_all_unauthenticated(client: AsyncClient):
+    response = await client.post("/v1.0/auth/logout/all")
+    # Missing CSRF / Authentication
+    assert response.status_code in [401, 403]
+
+
+@pytest.mark.asyncio
+async def test_list_sessions_unauthenticated(client: AsyncClient):
+    response = await client.get("/v1.0/auth/sessions")
+    # Missing Auth
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_revoke_session_unauthenticated(client: AsyncClient):
+    response = await client.delete(
+        "/v1.0/auth/sessions/123e4567-e89b-12d3-a456-426614174000"
+    )
+    # Missing Auth
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_exchange_invalid_code(client: AsyncClient, mocker):
+    # Mock cache to return None
+    mocker.patch(
+        "src.shared.adapters.cache.RedisCacheAdapter.get_dict", return_value=None
+    )
+    response = await client.post("/v1.0/auth/exchange", json={"code": "invalid_code"})
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Invalid request"
+
+
+@pytest.mark.asyncio
+async def test_verify_email_success(client: AsyncClient, mocker):
+    from src.modules.auth.authentication.domain.entities import UserIdentity
+    import uuid
+
+    mock_user = UserIdentity(
+        id=uuid.uuid4(),
+        email="test@example.com",
+        is_verified=True,
+    )
+    mock_execute = mocker.patch(
+        "src.modules.auth.authentication.application.use_cases.LocalVerifyEmailUseCase.execute",
+        return_value=(mock_user, "mock_refresh_token"),
+    )
+
+    response = await client.post(
+        "/v1.0/auth/verify-email",
+        json={"email": "test@example.com", "otp": "123456"},
+    )
+    assert response.status_code == 200
+    assert response.json()["message"] == "Email verified successfully"
+    mock_execute.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_resend_verification_success(client: AsyncClient, mocker):
+    mock_execute = mocker.patch(
+        "src.modules.auth.authentication.application.use_cases.LocalResendVerificationUseCase.execute",
+        return_value=300,
+    )
+
+    response = await client.post(
+        "/v1.0/auth/verify-email/resend",
+        json={"email": "test@example.com"},
+    )
+    assert response.status_code == 200
+    assert response.json()["expires_in_seconds"] == 300
+    mock_execute.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_session_refresh_success(client: AsyncClient, mocker):
+    mock_execute = mocker.patch(
+        "src.modules.auth.authentication.application.use_cases.SessionRefreshUseCase.execute",
+        return_value=("new_access_token", "new_refresh_token"),
+    )
+
+    client.cookies.set("refresh_token", "valid_refresh_token")
+    response = await client.post("/v1.0/auth/refresh")
+    client.cookies.clear()
+    assert response.status_code == 200
+    assert response.json()["access_token"] == "new_access_token"
+    mock_execute.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_logout_success(client: AsyncClient, mocker):
+    from src import app
+    from src.modules.auth.authentication.api.dependencies.security import (
+        verify_csrf,
+        get_jwt_payload,
+    )
+
+    app.dependency_overrides[verify_csrf] = lambda: True
+    app.dependency_overrides[get_jwt_payload] = lambda: {
+        "jti": "mock_jti",
+        "exp": 1234567890,
+    }
+
+    try:
+        mock_execute = mocker.patch(
+            "src.modules.auth.authentication.application.use_cases.SessionLogoutUseCase.execute",
+            return_value=None,
+        )
+
+        client.cookies.set("refresh_token", "valid_refresh_token")
+        response = await client.post("/v1.0/auth/logout")
+        client.cookies.clear()
+        assert response.status_code == 200
+        assert response.json()["message"] == "Logged out"
+        mock_execute.assert_called_once()
+    finally:
+        del app.dependency_overrides[verify_csrf]
+        del app.dependency_overrides[get_jwt_payload]
+
+
+@pytest.mark.asyncio
+async def test_logout_all_success(client: AsyncClient, mocker):
+    from src import app
+    import uuid
+    from src.modules.auth.authentication.domain.entities import UserIdentity
+    from src.modules.auth.authentication.api.dependencies.security import (
+        verify_csrf,
+        get_jwt_payload,
+        get_current_user,
+    )
+
+    app.dependency_overrides[verify_csrf] = lambda: True
+    app.dependency_overrides[get_jwt_payload] = lambda: {
+        "jti": "mock_jti",
+        "exp": 1234567890,
+    }
+    app.dependency_overrides[get_current_user] = lambda: UserIdentity(
+        id=uuid.uuid4(), email="test@test.com", is_verified=True
+    )
+
+    try:
+        mock_execute = mocker.patch(
+            "src.modules.auth.authentication.application.use_cases.SessionLogoutAllUseCase.execute",
+            return_value=None,
+        )
+
+        client.cookies.set("refresh_token", "valid_refresh_token")
+        response = await client.post("/v1.0/auth/logout/all")
+        client.cookies.clear()
+        assert response.status_code == 200
+        assert response.json()["message"] == "Logged out from all devices"
+        mock_execute.assert_called_once()
+    finally:
+        del app.dependency_overrides[verify_csrf]
+        del app.dependency_overrides[get_jwt_payload]
+        del app.dependency_overrides[get_current_user]
+
+
+@pytest.mark.asyncio
+async def test_exchange_success(client: AsyncClient, mocker):
+    mock_data = {
+        "refresh_token": "mock_refresh_token",
+        "is_new_user": False,
+        "access_token": "mock_access_token",
+        "user_id": None,
+    }
+    mock_cache = mocker.patch(
+        "src.shared.adapters.cache.RedisCacheAdapter.get_dict", return_value=mock_data
+    )
+    mock_cache_del = mocker.patch(
+        "src.shared.adapters.cache.RedisCacheAdapter.delete_key", return_value=None
+    )
+
+    response = await client.post("/v1.0/auth/exchange", json={"code": "valid_code"})
+    assert response.status_code == 200
+    assert response.json()["access_token"] == "mock_access_token"
+    mock_cache.assert_called_once()
+    mock_cache_del.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_list_sessions_success(client: AsyncClient, mocker):
+    from src import app
+    import uuid
+    from src.modules.auth.authentication.domain.entities import UserIdentity
+    from src.modules.auth.authentication.api.dependencies.security import (
+        get_current_user,
+    )
+
+    app.dependency_overrides[get_current_user] = lambda: UserIdentity(
+        id=uuid.uuid4(), email="test@test.com", is_verified=True
+    )
+
+    try:
+        mock_execute = mocker.patch(
+            "src.modules.auth.authentication.application.use_cases.ListActiveSessionsUseCase.execute",
+            return_value=[],
+        )
+
+        client.cookies.set("refresh_token", "valid_refresh_token")
+        response = await client.get("/v1.0/auth/sessions")
+        client.cookies.clear()
+        assert response.status_code == 200
+        assert response.json() == []
+        mock_execute.assert_called_once()
+    finally:
+        del app.dependency_overrides[get_current_user]
+
+
+@pytest.mark.asyncio
+async def test_revoke_session_success(client: AsyncClient, mocker):
+    from src import app
+    import uuid
+    from src.modules.auth.authentication.domain.entities import UserIdentity
+    from src.modules.auth.authentication.api.dependencies.security import (
+        get_current_user,
+    )
+
+    app.dependency_overrides[get_current_user] = lambda: UserIdentity(
+        id=uuid.uuid4(), email="test@test.com", is_verified=True
+    )
+
+    try:
+        mock_execute = mocker.patch(
+            "src.modules.auth.authentication.application.use_cases.SessionRevokeUseCase.execute",
+            return_value=None,
+        )
+        client.cookies.set("refresh_token", "valid_refresh_token")
+        uid = uuid.uuid4()
+        response = await client.delete(f"/v1.0/auth/sessions/{uid}")
+        client.cookies.clear()
+        assert response.status_code == 204
+        mock_execute.assert_called_once()
+    finally:
+        del app.dependency_overrides[get_current_user]
+
+
+@pytest.mark.asyncio
+async def test_tenant_oauth_login_invalid_provider(client: AsyncClient):
+    response = await client.get("/v1.0/auth/tenant/login/invalid_provider")
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Invalid request"
+
+
+@pytest.mark.asyncio
+async def test_oauth_preflight_invalid_api_key(client: AsyncClient):
+    response = await client.post("/v1.0/auth/oauth/preflight/github")
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Authentication failed"
+
+
+@pytest.mark.asyncio
+async def test_login_oauth_no_project(client: AsyncClient):
+    response = await client.get("/v1.0/auth/login/github")
+    assert response.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_tenant_oauth_login_success(client: AsyncClient, mocker):
+    from fastapi import Response
+
+    mock_provider = mocker.Mock()
+    mock_provider.authorize_redirect = mocker.AsyncMock(
+        return_value=Response(
+            status_code=302, headers={"location": "https://github.com/login"}
+        )
+    )
+    mocker.patch(
+        "src.modules.auth.authentication.api.routes.oauth.PROVIDERS",
+        {"github": mock_provider},
+    )
+    response = await client.get("/v1.0/auth/tenant/login/github")
+    assert response.status_code == 302
+    assert response.headers["location"] == "https://github.com/login"
+
+
+@pytest.mark.asyncio
+async def test_tenant_oauth_callback_invalid_state(client: AsyncClient):
+    response = await client.get("/v1.0/auth/tenant/callback/github")
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Invalid request"
