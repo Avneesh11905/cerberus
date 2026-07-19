@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sess
 # To ensure our dynamic URLs are used, we dynamically update os.environ and pydantic settings.
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def infra_containers():
     """
     Spins up Postgres 18.4 and Redis 8.8.0 containers for the test session.
@@ -26,6 +26,10 @@ def infra_containers():
         pg_url_asyncpg = pg_url_psycopg.replace(
             "postgresql+psycopg2://", "postgresql+asyncpg://"
         )
+        if "?" in pg_url_asyncpg:
+            pg_url_asyncpg += "&ssl=disable"
+        else:
+            pg_url_asyncpg += "?ssl=disable"
 
         redis.get_wrapped_container().exec_run(
             "redis-cli ACL SETUSER cerberus on >Cerberus123! +@all ~* &*"
@@ -55,13 +59,22 @@ def infra_containers():
         celery_app.conf.result_backend = f"{redis_base}/0"
 
         # Run Alembic migrations programmatically
-        from alembic.config import Config
-        from alembic import command
+        import subprocess
 
-        alembic_cfg = Config("alembic.ini")
-        alembic_cfg.set_main_option("sqlalchemy.url", pg_url_psycopg)
+        env = os.environ.copy()
+        env["PGSQL_URL"] = pg_url_asyncpg
 
-        command.upgrade(alembic_cfg, "head")
+        # Run alembic in a subprocess to avoid asyncio.run() clashes with Pytest's event loop
+        result = subprocess.run(
+            ["uv", "run", "alembic", "upgrade", "head"],
+            env=env,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(
+                f"Alembic migration failed:\n{result.stderr}\n{result.stdout}"
+            )
 
         yield {"pg_url_asyncpg": pg_url_asyncpg, "redis_base": redis_base}
 
