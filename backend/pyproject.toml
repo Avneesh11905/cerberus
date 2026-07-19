@@ -78,3 +78,15 @@ python_version = "3.14"
 [[tool.mypy.overrides]]
 module = ["celery.*"]
 ignore_missing_imports = true
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "tests/*",
+    "src/core/database.py", 
+    "src/core/container.py"
+]
+
+[tool.coverage.report]
+fail_under = 70
+show_missing = true
