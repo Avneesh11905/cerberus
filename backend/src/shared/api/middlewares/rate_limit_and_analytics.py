@@ -65,7 +65,7 @@ class RateLimitAndAnalyticsMiddleware(BaseHTTPMiddleware):
             return response
 
         path = request.url.path
-        is_auth_route = path.startswith("/auth/")
+        is_auth_route = "/auth/" in path
 
         limit = self.auth_count if is_auth_route else self.default_count
         window = self.auth_window if is_auth_route else self.default_window
