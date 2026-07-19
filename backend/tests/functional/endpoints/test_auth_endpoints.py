@@ -6,7 +6,7 @@ from httpx import AsyncClient
 async def test_tenant_registration_validation_error(client: AsyncClient):
     # Missing email
     response = await client.post(
-        "/v1.0/auth/tenant/register",
+        "/v1.0/auth/register",
         json={"password": "strongpassword123!", "name": "Test Tenant"},
     )
     assert response.status_code == 422
@@ -15,9 +15,7 @@ async def test_tenant_registration_validation_error(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_tenant_login_validation_error(client: AsyncClient):
     # Missing password
-    response = await client.post(
-        "/v1.0/auth/tenant/login", json={"email": "test@example.com"}
-    )
+    response = await client.post("/v1.0/auth/login", json={"email": "test@example.com"})
     assert response.status_code == 422
 
 
@@ -52,7 +50,7 @@ async def test_tenant_registration_success(client: AsyncClient, mocker):
     )
 
     response = await client.post(
-        "/v1.0/auth/tenant/register",
+        "/v1.0/auth/register",
         json={
             "email": "test_success@example.com",
             "password": "StrongPassword123!",
@@ -73,12 +71,12 @@ async def test_tenant_registration_success(client: AsyncClient, mocker):
 async def test_register_user_success(client: AsyncClient, mocker):
     from src import app
     from src.modules.auth.authentication.api.dependencies.project import (
-        get_required_project_id,
+        get_optional_project_id,
     )
     import uuid
 
     mock_id = uuid.uuid4()
-    app.dependency_overrides[get_required_project_id] = lambda: mock_id
+    app.dependency_overrides[get_optional_project_id] = lambda: mock_id
 
     try:
         mock_execute = mocker.patch(
@@ -96,11 +94,12 @@ async def test_register_user_success(client: AsyncClient, mocker):
             headers={"X-Cerberus-API-Key": "cerb_testkey"},
         )
 
+        print(response.content)
         assert response.status_code == 201
         assert response.json()["expires_in_seconds"] == 300
         mock_execute.assert_called_once()
     finally:
-        del app.dependency_overrides[get_required_project_id]
+        del app.dependency_overrides[get_optional_project_id]
 
 
 @pytest.mark.asyncio

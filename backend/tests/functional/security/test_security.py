@@ -61,12 +61,12 @@ async def test_rate_limit_auth_escalation(client: AsyncClient, mock_rate_limiter
     Without a CAPTCHA token, they will return a 400 from the Turnstile exception.
     """
     for i in range(10):
-        resp = await client.post("/v1.0/auth/tenant/login", json={})
+        resp = await client.post("/v1.0/auth/login", json={})
         assert resp.status_code == 422, f"Request {i} didn't hit validation error"
 
     # The 11th request exceeds the rate limit.
     resp = await client.post(
-        "/v1.0/auth/tenant/login", json={"email": "a@example.com", "password": "b"}
+        "/v1.0/auth/login", json={"email": "a@example.com", "password": "b"}
     )
 
     # Fastapi Exception handler translates TurnstileVerificationFailed to 403 Forbidden.

@@ -51,7 +51,7 @@ async def test_registration_to_login_journey(
 
     my_celery_app.conf.task_always_eager = True
 
-    resp = await client.post("/v1.0/auth/tenant/register", json=reg_data)
+    resp = await client.post("/v1.0/auth/register", json=reg_data)
     assert resp.status_code == 201, resp.json()
 
     # 2. OTP Extraction
@@ -72,7 +72,7 @@ async def test_registration_to_login_journey(
 
     # 4. Login
     login_data = {"email": "e2e_journey@example.com", "password": "StrongPassword123!"}
-    resp = await client.post("/v1.0/auth/tenant/login", json=login_data)
+    resp = await client.post("/v1.0/auth/login", json=login_data)
     assert resp.status_code == 200, resp.json()
 
     tokens = resp.json()

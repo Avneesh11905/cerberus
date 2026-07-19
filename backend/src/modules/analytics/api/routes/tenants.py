@@ -19,7 +19,7 @@ router = APIRouter()
     summary="Get analytics for a specific tenant (Superadmin)",
 )
 async def get_tenant_analytics(
-    user: Annotated[UserIdentity, Depends(require_role(GlobalRole.SUPERADMIN))],
+    user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
     use_case: GetTenantMetricsUseCaseDeps,
     tenant_id: UUID = Path(...),
     start_date: date = Query(default_factory=lambda: date.today() - timedelta(days=30)),
