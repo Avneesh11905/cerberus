@@ -1,11 +1,10 @@
-from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
-from src.modules.auth.authorization.api.dependencies.roles import require_role
-from src.modules.auth.authorization.domain.enums import GlobalRole
-from src.modules.auth.authentication.domain.entities import UserIdentity
+from src.modules.auth.authorization.api.dependencies.roles import (
+    RequireSuperAdminRoleDep,
+)
 from src.modules.superadmin.api.dependencies import (
     ListTenantsUseCaseDep,
     UpdateTenantStatusUseCaseDep,
@@ -26,7 +25,7 @@ router = APIRouter()
 async def list_tenants(
     uow: UnitOfWorkDeps,
     use_case: ListTenantsUseCaseDep,
-    admin: Annotated[UserIdentity, Depends(require_role(GlobalRole.SUPERADMIN))],
+    admin: RequireSuperAdminRoleDep,
     page: int = 1,
     size: int = 50,
     search: str | None = None,
@@ -51,7 +50,7 @@ async def update_tenant_status(
     req: TenantStatusUpdateReq,
     uow: UnitOfWorkDeps,
     use_case: UpdateTenantStatusUseCaseDep,
-    admin: Annotated[UserIdentity, Depends(require_role(GlobalRole.SUPERADMIN))],
+    admin: RequireSuperAdminRoleDep,
 ):
     """Disable or re-enable a tenant account."""
     async with uow:
@@ -65,7 +64,7 @@ async def update_tenant_global_role(
     req: TenantGlobalRoleUpdateReq,
     uow: UnitOfWorkDeps,
     use_case: UpdateTenantGlobalRoleUseCaseDep,
-    admin: Annotated[UserIdentity, Depends(require_role(GlobalRole.SUPERADMIN))],
+    admin: RequireSuperAdminRoleDep,
 ):
     """Promote or demote a tenant to/from SUPERADMIN."""
     async with uow:

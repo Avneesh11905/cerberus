@@ -3,38 +3,34 @@ import hmac
 from typing import Annotated
 import jwt
 
-from fastapi import Depends, Request
+from fastapi import Depends, Request, Header, Cookie
 from itsdangerous import URLSafeSerializer
 from itsdangerous.exc import BadSignature
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.config import security_settings
-from src.core.database import get_db
 from src.modules.auth.authentication.api.dependencies.core import (
-    get_access_token_adapter,
-    get_cache_adapter,
-    get_project_repository,
+    AccessTokenAdapterDep,
+    ProjectQueryRepositoryDep,
 )
-from src.modules.auth.authentication.application.ports import AccessTokenPort
 from src.modules.auth.authentication.domain.entities import UserIdentity
 from src.modules.auth.authentication.domain.exceptions import (
     CSRFValidationException,
     InvalidTokenException,
     NotAuthenticatedException,
 )
-from src.modules.projects.application.ports import ProjectQueryRepositoryPort
-from src.shared.application.ports import CachePort
+from src.shared.api.dependencies import CacheAdapterDep, UnitOfWorkDeps
 
 
-async def verify_csrf(request: Request):
+async def verify_csrf(
+    request: Request,
+    csrf_cookie: Annotated[str | None, Cookie(alias="csrf_token")] = None,
+    csrf_header: Annotated[str | None, Header(alias="X-CSRF")] = None,
+    refresh_token: Annotated[str | None, Cookie(alias="refresh_token")] = None,
+):
     """
     Verifies the Double Submit Cookie for CSRF protection.
     The frontend must extract the non-HttpOnly 'csrf_token' cookie and attach it as the 'X-CSRF' header.
     """
-    csrf_cookie = request.cookies.get("csrf_token")
-    csrf_header = request.headers.get("X-CSRF")
-    refresh_token = request.cookies.get("refresh_token")
-
     if not csrf_cookie or not csrf_header:
         raise CSRFValidationException()
 
@@ -58,10 +54,10 @@ async def verify_csrf(request: Request):
 
 async def get_jwt_payload(
     request: Request,
-    access_token_adapter: Annotated[AccessTokenPort, Depends(get_access_token_adapter)],
-    cache_adapter: Annotated[CachePort, Depends(get_cache_adapter)],
-    db: AsyncSession = Depends(get_db),
-    project_repo: ProjectQueryRepositoryPort = Depends(get_project_repository),
+    access_token_adapter: AccessTokenAdapterDep,
+    cache_adapter: CacheAdapterDep,
+    project_repo: ProjectQueryRepositoryDep,
+    db: UnitOfWorkDeps,
 ) -> dict:
     """Extracts, verifies, and returns the raw JWT payload (including custom claims)."""
 
@@ -118,8 +114,15 @@ async def get_jwt_payload(
     return payload
 
 
+GetJWTPayloadDep = Annotated[dict, Depends(get_jwt_payload)]
+
+
 async def get_current_user(
-    payload: Annotated[dict, Depends(get_jwt_payload)],
+    payload: GetJWTPayloadDep,
 ) -> UserIdentity:
     """Returns the strongly typed UserIdentity object for normal API endpoints."""
     return payload["_user_obj"]
+
+
+GetCurrentUserDep = Annotated[UserIdentity, Depends(get_current_user)]
+VerifyCSRFDep = Depends(verify_csrf)

@@ -20,7 +20,7 @@ from src.modules.auth.authentication.application.use_cases import (
     TenantOAuthCallbackUseCase,
     ProjectUserOAuthLoginUrlUseCase,
     TenantOAuthLoginUrlUseCase,
-    ValidateOAuthProviderUseCase,
+    OAuthExchangeUseCase,
 )
 
 
@@ -79,7 +79,7 @@ def get_project_user_oauth_callback_usecase() -> ProjectUserOAuthCallbackUseCase
         email_sender=app_container.auth_email_sender,
         access_token=app_container.access_token_adapter,
         claims_provider=app_container.claims_provider,
-        project_repo=app_container.project_query_repo,
+        project_query_repo=app_container.project_query_repo,
         oauth_service=app_container.oauth_service,
         role_provisioning=app_container.role_provisioning,
     )
@@ -186,13 +186,6 @@ def get_session_revoke_usecase() -> SessionRevokeUseCase:
     )
 
 
-def get_validate_oauth_provider_usecase() -> ValidateOAuthProviderUseCase:
-    return ValidateOAuthProviderUseCase(
-        project_query_repo=app_container.project_query_repo,
-        api_key_adapter=app_container.api_key_adapter,
-    )
-
-
 def get_project_user_oauth_login_url_usecase() -> ProjectUserOAuthLoginUrlUseCase:
     return ProjectUserOAuthLoginUrlUseCase(
         project_query_repo=app_container.project_query_repo,
@@ -207,6 +200,13 @@ def get_tenant_oauth_login_url_usecase() -> TenantOAuthLoginUrlUseCase:
     )
 
 
+def get_oauth_exchange_usecase() -> OAuthExchangeUseCase:
+    return OAuthExchangeUseCase(
+        cache=app_container.cache_adapter,
+        user_profile_repo=app_container.user_profile_repo,
+    )
+
+
 LocalRegisterUseCaseDep = Annotated[
     LocalRegisterUseCase, Depends(get_local_register_usecase)
 ]
@@ -217,20 +217,20 @@ PasswordChangeUseCaseDep = Annotated[
 ProjectUserOAuthCallbackUseCaseDep = Annotated[
     ProjectUserOAuthCallbackUseCase, Depends(get_project_user_oauth_callback_usecase)
 ]
-ValidateOAuthProviderUseCaseDep = Annotated[
-    ValidateOAuthProviderUseCase, Depends(get_validate_oauth_provider_usecase)
-]
 ProjectUserOAuthLoginUrlUseCaseDep = Annotated[
     ProjectUserOAuthLoginUrlUseCase, Depends(get_project_user_oauth_login_url_usecase)
 ]
 TenantOAuthLoginUrlUseCaseDep = Annotated[
     TenantOAuthLoginUrlUseCase, Depends(get_tenant_oauth_login_url_usecase)
 ]
+TenantOAuthCallbackUseCaseDep = Annotated[
+    TenantOAuthCallbackUseCase, Depends(get_tenant_oauth_callback_usecase)
+]
 LocalResendVerificationUseCaseDep = Annotated[
     LocalResendVerificationUseCase,
     Depends(get_local_resend_verification_usecase),
 ]
-LocalLocalVerifyEmailUseCaseDep = Annotated[
+LocalVerifyEmailUseCaseDep = Annotated[
     LocalVerifyEmailUseCase, Depends(get_local_verify_email_usecase)
 ]
 PasswordResetRequestUseCaseDep = Annotated[
@@ -253,4 +253,7 @@ ListActiveSessionsUseCaseDep = Annotated[
 ]
 SessionRevokeUseCaseDep = Annotated[
     SessionRevokeUseCase, Depends(get_session_revoke_usecase)
+]
+OAuthExchangeUseCaseDep = Annotated[
+    OAuthExchangeUseCase, Depends(get_oauth_exchange_usecase)
 ]

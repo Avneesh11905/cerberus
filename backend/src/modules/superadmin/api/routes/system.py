@@ -1,10 +1,8 @@
-from typing import Annotated
+from fastapi import APIRouter
 
-from fastapi import APIRouter, Depends
-
-from src.modules.auth.authorization.api.dependencies.roles import require_role
-from src.modules.auth.authorization.domain.enums import GlobalRole
-from src.modules.auth.authentication.domain.entities import UserIdentity
+from src.modules.auth.authorization.api.dependencies.roles import (
+    RequireSuperAdminRoleDep,
+)
 from src.modules.superadmin.api.dependencies import (
     GetSystemAnalyticsUseCaseDep,
     ListTenantLogsUseCaseDep,
@@ -23,7 +21,7 @@ router = APIRouter()
 async def list_system_logs(
     uow: UnitOfWorkDeps,
     use_case: ListTenantLogsUseCaseDep,
-    admin: Annotated[UserIdentity, Depends(require_role(GlobalRole.SUPERADMIN))],
+    admin: RequireSuperAdminRoleDep,
     page: int = 1,
     limit: int = 100,
     level: str | None = None,
@@ -47,7 +45,7 @@ async def list_system_logs(
 async def get_system_analytics(
     uow: UnitOfWorkDeps,
     use_case: GetSystemAnalyticsUseCaseDep,
-    admin: Annotated[UserIdentity, Depends(require_role(GlobalRole.SUPERADMIN))],
+    admin: RequireSuperAdminRoleDep,
 ):
     """View system-wide aggregated analytics metrics."""
     async with uow:

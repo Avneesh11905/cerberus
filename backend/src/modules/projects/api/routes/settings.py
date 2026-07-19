@@ -1,11 +1,8 @@
-from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
-from src.modules.auth.authorization.api.dependencies.roles import require_role
-from src.modules.auth.authorization.domain.enums import GlobalRole
-from src.modules.auth.authentication.domain.entities import UserIdentity
+from src.modules.auth.authorization.api.dependencies.roles import RequireTenantRoleDep
 from src.modules.projects.api.dependencies import (
     UpdateOauthUseCaseDep,
     UpdateOriginsUseCaseDep,
@@ -37,7 +34,7 @@ async def update_project_oauth(
     req: ProjectOauthUpdateReq,
     uow: UnitOfWorkDeps,
     usecase: UpdateOauthUseCaseDep,
-    user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
+    user: RequireTenantRoleDep,
 ):
     """Update OAuth configuration (client_id, client_secret) for a project."""
     async with uow:
@@ -54,7 +51,7 @@ async def update_project_origins(
     req: ProjectOriginsUpdateReq,
     uow: UnitOfWorkDeps,
     usecase: UpdateOriginsUseCaseDep,
-    user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
+    user: RequireTenantRoleDep,
 ):
     """Update CORS allowed origins for a project."""
     async with uow:
@@ -70,7 +67,7 @@ async def update_project_environment(
     req: ProjectEnvUpdateReq,
     uow: UnitOfWorkDeps,
     usecase: UpdateEnvironmentUseCaseDep,
-    user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
+    user: RequireTenantRoleDep,
 ):
     """Update environment mode for a project."""
     async with uow:
@@ -86,7 +83,7 @@ async def update_project_frontend_url(
     req: ProjectFrontendUrlUpdateReq,
     uow: UnitOfWorkDeps,
     usecase: UpdateFrontendUrlUseCaseDep,
-    user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
+    user: RequireTenantRoleDep,
 ):
     """Update frontend URL for a project."""
     async with uow:
@@ -102,7 +99,7 @@ async def update_project_name(
     req: ProjectNameUpdateReq,
     uow: UnitOfWorkDeps,
     usecase: UpdateNameUseCaseDep,
-    user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
+    user: RequireTenantRoleDep,
 ):
     """Update name for a project."""
     async with uow:
@@ -115,7 +112,7 @@ async def get_project_claims(
     project_id: UUID,
     uow: UnitOfWorkDeps,
     usecase: GetProjectClaimsUseCaseDep,
-    user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
+    user: RequireTenantRoleDep,
 ):
     """Get default custom claims schema for a project."""
     async with uow:
@@ -129,7 +126,7 @@ async def update_project_claims(
     req: ProjectDefaultClaimsReq,
     uow: UnitOfWorkDeps,
     usecase: UpdateProjectClaimsUseCaseDep,
-    user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
+    user: RequireTenantRoleDep,
 ):
     """Update default custom claims schema for a project."""
     async with uow:

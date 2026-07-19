@@ -1,35 +1,29 @@
-from fastapi import APIRouter
-from typing import Annotated
+from fastapi import APIRouter, HTTPException, Request, status, Response
+from fastapi.responses import RedirectResponse
 from uuid import UUID
-from fastapi import Depends, HTTPException, Request
-from sqlalchemy import select
-from src.core.container import app_container
-from src.modules.auth.authentication.infrastructure.oauth import PROVIDERS
-from src.modules.auth.authentication.infrastructure.oauth.dynamic import (
-    get_dynamic_oauth_client,
-)
 from src.modules.auth.authentication.api.dependencies.use_cases import (
-    get_project_user_oauth_callback_usecase,
-    get_tenant_oauth_callback_usecase,
+    ProjectUserOAuthCallbackUseCaseDep,
+    TenantOAuthCallbackUseCaseDep,
+    ProjectUserOAuthLoginUrlUseCaseDep,
+    OAuthExchangeUseCaseDep,
+    TenantOAuthLoginUrlUseCaseDep,
 )
-from src.modules.auth.authentication.api.dependencies.core import get_cache_adapter
-from src.modules.auth.authentication.api.schemas import OAuthPreflightResponse
-from src.modules.auth.authentication.application.use_cases import (
-    ProjectUserOAuthCallbackUseCase,
-    TenantOAuthCallbackUseCase,
+from src.modules.auth.authentication.api.dependencies.project import (
+    RequiredProjectIdDep,
 )
-from src.modules.projects.infrastructure.models import Project
-from src.shared.api.dependencies import UnitOfWorkDeps
+from src.modules.auth.authentication.api.schemas import (
+    OAuthPreflightResponse,
+    ExchangeRequest,
+    ExchangeResponse,
+)
+from src.modules.auth.authentication.domain.exceptions import OAuthFailedException
+from src.shared.api.dependencies import UnitOfWorkDeps, CacheAdapterDep
 from src.shared.api.utils import (
     build_auth_redirect_async,
     extract_client_metadata,
+    generate_csrf_token,
+    set_refresh_token_cookie,
 )
-from src.shared.application.ports import CachePort
-
-import secrets
-from urllib.parse import urlparse
-from sqlalchemy.ext.asyncio import AsyncSession
-from src.core.database import get_db
 
 
 router = APIRouter()
@@ -48,11 +42,8 @@ async def oauth_callback(
     provider: str,
     request: Request,
     uow: UnitOfWorkDeps,
-    usecase: Annotated[
-        ProjectUserOAuthCallbackUseCase,
-        Depends(get_project_user_oauth_callback_usecase),
-    ],
-    cache: Annotated[CachePort, Depends(get_cache_adapter)],
+    usecase: ProjectUserOAuthCallbackUseCaseDep,
+    cache: CacheAdapterDep,
 ):
     """Handles the OAuth callback from the provider."""
     session_state = request.session.pop("oauth_state", {})
@@ -73,28 +64,21 @@ async def oauth_callback(
     )
 
     if not project_id_str:
-        # End-user callback always requires a project context.
-        # For Cerberus Dashboard callback, use GET /auth/tenant/callback/{provider} instead.
         raise HTTPException(
             status_code=400,
             detail="No project context found in OAuth session state.",
         )
 
     project_id = UUID(project_id_str)
-
-    # Fetch fallback_frontend_url
-    async with uow:
-        result = await uow.session.execute(
-            select(Project.frontend_url).where(Project.id == project_id)
-        )
-        fallback_frontend_url = result.scalars().first()
-
-    # The Use Case now handles fetching the client, exchanging the code,
-    # parsing the token, and creating the user/session.
     client_meta = extract_client_metadata(request)
-
     async with uow:
-        user, refresh_token, access_token, is_new_user = await usecase.execute(
+        (
+            user,
+            refresh_token,
+            access_token,
+            is_new_user,
+            fallback_frontend_url,
+        ) = await usecase.execute(
             uow=uow,
             provider=provider,
             project_id=project_id,
@@ -102,15 +86,13 @@ async def oauth_callback(
             client_meta=client_meta,
         )
 
-    # Resolve the frontend URL to redirect back to
-    # 1. Try to use the dynamic origin from the session (validated during login)
     frontend_url = request.session.get("oauth_tenant_url")
 
     # 2. Fallback to the statically configured frontend_url we cached earlier
     if not frontend_url and fallback_frontend_url:
         frontend_url = fallback_frontend_url
 
-    # Clean up session
+    # Clean up sessio
     request.session.pop("oauth_project_id", None)
     request.session.pop("oauth_tenant_url", None)
 
@@ -148,62 +130,15 @@ Note: For Cerberus Dashboard (tenant) login, see tenant_oauth.py.
 """
 
 
-def _origin_from_url(value: str | None) -> str | None:
-    if not value:
-        return None
-    parsed = urlparse(value)
-    if not parsed.scheme or not parsed.netloc:
-        return None
-    return f"{parsed.scheme}://{parsed.netloc}".rstrip("/")
-
-
-async def _resolve_project_for_oauth(
-    provider: str,
-    project_id: UUID,
-    request: Request,
-    db: AsyncSession,
-):
-    """
-    Shared helper: given a resolved project_id, validate the OAuth provider config
-    and write oauth_project_id + oauth_tenant_url into the session.
-    Returns the configured oauth_client. Raises HTTPException on any failure.
-    """
-    result = await db.execute(select(Project).where(Project.id == project_id))
-    project = result.scalars().first()
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
-
-    provider_config = project.oauth_config.get(provider, {})
-    client_id = provider_config.get("client_id")
-    client_secret_enc = provider_config.get("client_secret")
-    client_secret = (
-        app_container.encryption_adapter.decrypt(client_secret_enc)
-        if client_secret_enc
-        else None
-    )
-    if not provider_config.get("enabled") or not client_id or not client_secret:
-        raise HTTPException(status_code=400, detail="Provider not available")
-
-    request.session["oauth_project_id"] = str(project_id)
-
-    # Validate and persist the request origin so the callback can redirect back safely.
-    request_origin = _origin_from_url(
-        request.headers.get("origin")
-    ) or _origin_from_url(request.headers.get("referer"))
-    allowed_origins = {origin.rstrip("/") for origin in (project.allowed_origins or [])}
-    if request_origin and request_origin in allowed_origins:
-        request.session["oauth_tenant_url"] = request_origin
-
-    return get_dynamic_oauth_client(provider, client_id, client_secret)
-
-
 @router.post(
     "/oauth/preflight/{provider}",
     status_code=200,
     response_model=OAuthPreflightResponse,
 )
 async def oauth_preflight(
-    provider: str, request: Request, db: AsyncSession = Depends(get_db)
+    provider: str,
+    request: Request,
+    project_id: RequiredProjectIdDep,
 ):
     """
     Establish OAuth session context without exposing the API key in a browser URL.
@@ -218,32 +153,7 @@ async def oauth_preflight(
     **Returns:**
     `{ "redirect_url": "/auth/login/{provider}" }`
     """
-    api_key = request.headers.get("X-Cerberus-API-Key")
-    if not api_key:
-        raise HTTPException(status_code=401, detail="Missing API key")
-    if not api_key.startswith("cerb_"):
-        raise HTTPException(status_code=401, detail="Invalid API Key format")
-
-    key_hash = app_container.api_key_adapter.hash(api_key)
-    result = await db.execute(select(Project).where(Project.api_key_hash == key_hash))
-    project = result.scalars().first()
-    if not project:
-        raise HTTPException(status_code=401, detail="Invalid API Key")
-
-    # Validate provider config eagerly so the caller gets an error now, not after redirect
-    provider_config = project.oauth_config.get(provider, {})
-    client_id = provider_config.get("client_id")
-    client_secret_enc = provider_config.get("client_secret")
-    client_secret = (
-        app_container.encryption_adapter.decrypt(client_secret_enc)
-        if client_secret_enc
-        else None
-    )
-    if not provider_config.get("enabled") or not client_id or not client_secret:
-        raise HTTPException(status_code=400, detail="Provider not available")
-
-    # Store project ID in a dedicated preflight key (single-use, consumed by GET /auth/login/{provider})
-    request.session["oauth_preflight_project_id"] = str(project.id)
+    request.session["oauth_preflight_project_id"] = str(project_id)
 
     redirect_path = str(request.url_for("login", provider=provider))
     return OAuthPreflightResponse(redirect_url=redirect_path)
@@ -253,8 +163,8 @@ async def oauth_preflight(
 async def login(
     provider: str,
     request: Request,
-    api_key: str | None = None,
-    db: AsyncSession = Depends(get_db),
+    uow: UnitOfWorkDeps,
+    usecase: ProjectUserOAuthLoginUrlUseCaseDep,
 ):
     """
     Redirect the browser to the OAuth provider's authorization page.
@@ -265,7 +175,6 @@ async def login(
     2. `api_key` query parameter (legacy — kept for backwards compatibility).
     """
     project_id = None
-
     # 1. Preferred path: project context was pre-established by the preflight endpoint
     preflight_project_id = request.session.get("oauth_preflight_project_id")
     if preflight_project_id:
@@ -273,37 +182,83 @@ async def login(
         # Consume the preflight token (single-use)
         request.session.pop("oauth_preflight_project_id", None)
 
-    # 2. Legacy path: api_key in query string
-    if project_id is None and api_key:
-        if not api_key.startswith("cerb_"):
-            raise HTTPException(status_code=401, detail="Invalid API Key format")
-        key_hash = app_container.api_key_adapter.hash(api_key)
-        result = await db.execute(
-            select(Project).where(Project.api_key_hash == key_hash)
-        )
-        project = result.scalars().first()
-        if not project:
-            raise HTTPException(status_code=401, detail="Invalid API Key")
-        project_id = project.id
+    try:
+        async with uow:
+            url, session_data = await usecase.execute(
+                session=uow.session,
+                request=request,
+                provider=provider,
+                redirect_uri=str(request.url_for("oauth_callback", provider=provider)),
+                project_id=project_id,
+                request_origin=request.headers.get("origin")
+                or request.headers.get("referer"),
+            )
+    except OAuthFailedException as e:
+        status_code = 401 if "API Key" in str(e) else 400
+        raise HTTPException(status_code=status_code, detail=str(e))
 
-    if not project_id:
-        # End-user login always requires a project context.
-        # For Cerberus Dashboard login, use GET /auth/tenant/login/{provider} instead.
+    # Store the required OAuth state in the user's session
+    for key, value in session_data.items():
+        request.session[key] = value
+
+    return RedirectResponse(url, status_code=302)
+
+
+"""
+Exposes the POST /auth/exchange endpoint.
+
+After an OAuth login, the callback stores the refresh token in Redis under a
+short-lived one-time code and redirects the browser to
+{frontend}/auth/callback?code=<code>&new_user=<bool>.
+
+The frontend redeems the code here. Because this request originates from the
+frontend JS (not an OAuth provider redirect), the Origin header is correct and
+cookies are set host-only on cerberus-api. No broad cookie domain is ever needed.
+"""
+
+
+@router.post("/exchange", response_model=ExchangeResponse)
+async def exchange(
+    body: ExchangeRequest,
+    response: Response,
+    uow: UnitOfWorkDeps,
+    usecase: OAuthExchangeUseCaseDep,
+):
+    """
+    Redeem a one-time exchange code for session cookies.
+
+    After an OAuth login the browser is redirected to the frontend with a short-lived
+    code. The frontend calls this endpoint to convert that code into a refresh token
+    cookie (HttpOnly) and a CSRF cookie. The code is consumed immediately on use.
+
+    No CSRF check is required here because:
+    - The code is a one-time UUID generated during the OAuth callback
+    - It expires in 2 minutes
+    - It is transmitted in a JSON body (not a form), which cannot be forged cross-site
+    """
+    try:
+        refresh_token, is_new_user, access_token, profile_dict = await usecase.execute(
+            session=uow.session,
+            code=body.code,
+        )
+    except OAuthFailedException as e:
         raise HTTPException(
-            status_code=400,
-            detail="No project context found. Provide X-Cerberus-API-Key or use the preflight flow.",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
         )
 
-    oauth_client = await _resolve_project_for_oauth(provider, project_id, request, db)
+    set_refresh_token_cookie(response, refresh_token)
 
-    nonce = secrets.token_urlsafe(16)
-    request.session["oauth_state"] = {
-        "project_id": str(project_id),
-        "nonce": nonce,
-    }
+    # Derive the CSRF token the same way set_refresh_token_cookie does so that
+    # SDK clients on foreign domains (who cannot read document.cookie across
+    # origins) can store it in memory and attach it as X-CSRF on future requests.
+    csrf_token = generate_csrf_token(refresh_token)
 
-    return await oauth_client.authorize_redirect(
-        request, str(request.url_for("oauth_callback", provider=provider)), state=nonce
+    return ExchangeResponse(
+        is_new_user=is_new_user,
+        csrf_token=csrf_token,
+        access_token=access_token,
+        user=profile_dict if profile_dict else {},
     )
 
 
@@ -321,25 +276,38 @@ Routes:
 
 
 @router.get("/tenant/login/{provider}")
-async def tenant_login(provider: str, request: Request):
+async def tenant_login(
+    provider: str,
+    request: Request,
+    uow: UnitOfWorkDeps,
+    usecase: TenantOAuthLoginUrlUseCaseDep,
+):
     """
     Redirect the browser to the OAuth provider for Cerberus Dashboard login.
 
     Uses globally configured provider credentials from .env.
     No API key or project context needed — tenants log into the platform itself.
     """
-    oauth_client = PROVIDERS.get(provider)
-    if not oauth_client:
-        raise HTTPException(status_code=400, detail=f"Invalid provider: {provider}")
+    try:
+        url, session_data = await usecase.execute(
+            session=uow.session,
+            request=request,
+            provider=provider,
+            redirect_uri=str(
+                request.url_for("tenant_oauth_callback", provider=provider)
+            ),
+        )
+    except OAuthFailedException as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        # Catch and map any generic errors from the service layer to HTTP 400
+        raise HTTPException(status_code=400, detail=str(e))
 
-    nonce = secrets.token_urlsafe(16)
-    request.session["tenant_oauth_state"] = {"nonce": nonce}
+    # Store the required OAuth state in the user's session
+    for key, value in session_data.items():
+        request.session[key] = value
 
-    return await oauth_client.authorize_redirect(
-        request,
-        str(request.url_for("tenant_oauth_callback", provider=provider)),
-        state=nonce,
-    )
+    return RedirectResponse(url, status_code=302)
 
 
 @router.get("/tenant/callback/{provider}")
@@ -347,10 +315,8 @@ async def tenant_oauth_callback(
     provider: str,
     request: Request,
     uow: UnitOfWorkDeps,
-    usecase: Annotated[
-        TenantOAuthCallbackUseCase, Depends(get_tenant_oauth_callback_usecase)
-    ],
-    cache: Annotated[CachePort, Depends(get_cache_adapter)],
+    usecase: TenantOAuthCallbackUseCaseDep,
+    cache: CacheAdapterDep,
 ):
     """
     Handle the OAuth provider redirect for Cerberus Dashboard tenant login.

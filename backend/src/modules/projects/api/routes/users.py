@@ -1,11 +1,8 @@
-from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
-from src.modules.auth.authorization.api.dependencies.roles import require_role
-from src.modules.auth.authorization.domain.enums import GlobalRole
-from src.modules.auth.authentication.domain.entities import UserIdentity
+from src.modules.auth.authorization.api.dependencies.roles import RequireTenantRoleDep
 from src.modules.projects.api.dependencies import (
     ListProjectUsersUseCaseDep,
     SetProjectUserActiveStatusUseCaseDep,
@@ -30,7 +27,7 @@ async def list_project_users(
     project_id: UUID,
     uow: UnitOfWorkDeps,
     usecase: ListProjectUsersUseCaseDep,
-    user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
+    user: RequireTenantRoleDep,
     page: int = 1,
     size: int = 50,
     search: str | None = None,
@@ -53,7 +50,7 @@ async def set_project_user_status(
     req: ProjectUserStatusUpdateReq,
     uow: UnitOfWorkDeps,
     usecase: SetProjectUserActiveStatusUseCaseDep,
-    user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
+    user: RequireTenantRoleDep,
 ):
     """Toggles is_active for a specific user in a project."""
     async with uow:
@@ -73,7 +70,7 @@ async def set_tenant_user_status(
     req: ProjectUserStatusUpdateReq,
     uow: UnitOfWorkDeps,
     usecase: SetTenantUserActiveStatusUseCaseDep,
-    user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
+    user: RequireTenantRoleDep,
 ):
     """Toggles is_active for a user across all projects owned by the Tenant."""
     async with uow:
@@ -92,7 +89,7 @@ async def get_user_claims(
     user_id: UUID,
     uow: UnitOfWorkDeps,
     usecase: GetUserClaimsUseCaseDep,
-    user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
+    user: RequireTenantRoleDep,
 ):
     """Get custom claims for a specific user in a project."""
     async with uow:
@@ -107,7 +104,7 @@ async def update_user_claims(
     req: UserClaimsOverrideReq,
     uow: UnitOfWorkDeps,
     usecase: UpdateUserClaimsUseCaseDep,
-    user: Annotated[UserIdentity, Depends(require_role(GlobalRole.TENANT))],
+    user: RequireTenantRoleDep,
 ):
     """Update custom claims overrides for a specific user in a project."""
     async with uow:

@@ -1,14 +1,10 @@
-from typing import Annotated
-from uuid import UUID
-
-from fastapi import APIRouter, Depends, Request, Response
-
+from fastapi import APIRouter, Request, Response
 from src.modules.auth.authentication.api.dependencies.project import (
-    get_optional_project_id,
+    OptionalProjectIdDep,
 )
 from src.modules.auth.authentication.api.dependencies.use_cases import (
-    get_local_login_usecase,
-    get_local_register_usecase,
+    LocalLoginUseCaseDep,
+    LocalRegisterUseCaseDep,
 )
 from src.modules.auth.authentication.api.schemas import (
     LoginRequest,
@@ -16,11 +12,7 @@ from src.modules.auth.authentication.api.schemas import (
     RegisterRequest,
     RegisterResponse,
 )
-from src.modules.auth.authentication.application.use_cases import (
-    LocalLoginUseCase,
-    LocalRegisterUseCase,
-)
-from src.shared.api.dependencies import UnitOfWorkDeps, get_is_challenged
+from src.shared.api.dependencies import UnitOfWorkDeps, IsChallengedDep
 from src.shared.api.utils import (
     extract_client_metadata,
     generate_csrf_token,
@@ -44,9 +36,9 @@ async def register_user(
     request: Request,
     req: RegisterRequest,
     uow: UnitOfWorkDeps,
-    usecase: Annotated[LocalRegisterUseCase, Depends(get_local_register_usecase)],
-    is_challenged: Annotated[bool, Depends(get_is_challenged)],
-    project_id: Annotated[UUID | None, Depends(get_optional_project_id)],
+    usecase: LocalRegisterUseCaseDep,
+    is_challenged: IsChallengedDep,
+    project_id: OptionalProjectIdDep,
 ):
     """
     Register a new end-user for a specific project.
@@ -80,9 +72,9 @@ async def login_user(
     req: LoginRequest,
     response: Response,
     uow: UnitOfWorkDeps,
-    usecase: Annotated[LocalLoginUseCase, Depends(get_local_login_usecase)],
-    is_challenged: Annotated[bool, Depends(get_is_challenged)],
-    project_id: Annotated[UUID, Depends(get_optional_project_id)],
+    usecase: LocalLoginUseCaseDep,
+    is_challenged: IsChallengedDep,
+    project_id: OptionalProjectIdDep,
 ):
     """
     Authenticate an end-user.

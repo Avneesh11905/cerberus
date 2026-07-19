@@ -1,25 +1,11 @@
 import secrets
 from typing import Any
-from urllib.parse import urlparse
 from uuid import UUID
-
-from src.modules.auth.authentication.application.ports.security.oauth_service import (
-    OAuthServicePort,
-)
+from src.shared.api.utils import origin_from_url
 from src.modules.auth.authentication.domain.exceptions import OAuthFailedException
-from src.modules.projects.application.ports.project_query_repository import (
-    ProjectQueryRepositoryPort,
-)
-from src.shared.application.ports.api_key import ApiKeyPort
-
-
-def _origin_from_url(value: str | None) -> str | None:
-    if not value:
-        return None
-    parsed = urlparse(value)
-    if not parsed.scheme or not parsed.netloc:
-        return None
-    return f"{parsed.scheme}://{parsed.netloc}".rstrip("/")
+from src.modules.auth.authentication.application.ports import OAuthServicePort
+from src.modules.projects.application.ports import ProjectQueryRepositoryPort
+from src.shared.application.ports import ApiKeyPort
 
 
 class ProjectUserOAuthLoginUrlUseCase[SessionType, RequestType]:
@@ -45,24 +31,11 @@ class ProjectUserOAuthLoginUrlUseCase[SessionType, RequestType]:
         provider: str,
         redirect_uri: str,
         project_id: UUID | None = None,
-        api_key: str | None = None,
         request_origin: str | None = None,
     ) -> tuple[str, dict[str, Any]]:
         """
         Returns a tuple of (authorization_url, session_data_to_store)
         """
-        # Resolve project via API Key if pre-flight project_id isn't provided
-        if not project_id and api_key:
-            if not api_key.startswith("cerb_"):
-                raise OAuthFailedException("Invalid API Key format")
-            key_hash = self.api_key_adapter.hash(api_key)
-            project = await self.project_query_repo.get_by_api_key_hash(
-                session, key_hash
-            )
-            if not project:
-                raise OAuthFailedException("Invalid API Key")
-            project_id = project.id
-
         if not project_id:
             raise OAuthFailedException(
                 "No project context found. Provide API key or use preflight flow."
@@ -80,7 +53,7 @@ class ProjectUserOAuthLoginUrlUseCase[SessionType, RequestType]:
 
         session_data: dict[str, Any] = {"oauth_project_id": str(project_id)}
 
-        origin = _origin_from_url(request_origin)
+        origin = origin_from_url(request_origin)
         allowed_origins = {orig.rstrip("/") for orig in (project.allowed_origins or [])}
         if origin and origin in allowed_origins:
             session_data["oauth_tenant_url"] = origin

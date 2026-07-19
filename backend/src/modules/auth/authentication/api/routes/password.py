@@ -3,22 +3,19 @@ Exposes HTTP endpoints for the password reset flow (both requesting a reset and 
 Translates HTTP requests into the corresponding `PasswordResetRequestUseCase` and `PasswordResetExecuteUseCase`.
 """
 
-from typing import Annotated
-from uuid import UUID
-
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request
 
 from src.modules.auth.authentication.api.dependencies.use_cases import (
-    get_password_change_usecase,
-    get_password_reset_execute_usecase,
-    get_password_reset_request_usecase,
+    PasswordChangeUseCaseDep,
+    PasswordResetExecuteUseCaseDep,
+    PasswordResetRequestUseCaseDep,
 )
 from src.modules.auth.authentication.api.dependencies.security import (
-    get_current_user,
-    verify_csrf,
+    GetCurrentUserDep,
+    VerifyCSRFDep,
 )
 from src.modules.auth.authentication.api.dependencies.project import (
-    get_optional_project_id,
+    OptionalProjectIdDep,
 )
 from src.modules.auth.authentication.api.schemas import (
     ChangePasswordRequest,
@@ -26,13 +23,7 @@ from src.modules.auth.authentication.api.schemas import (
     MessageResponse,
     ResetPasswordRequest,
 )
-from src.modules.auth.authentication.application.use_cases import (
-    PasswordChangeUseCase,
-    PasswordResetExecuteUseCase,
-    PasswordResetRequestUseCase,
-)
-from src.modules.auth.authentication.domain.entities import UserIdentity
-from src.shared.api.dependencies import get_is_challenged, UnitOfWorkDeps
+from src.shared.api.dependencies import UnitOfWorkDeps, IsChallengedDep
 from src.shared.api.utils import extract_client_metadata
 
 router = APIRouter(prefix="/password")
@@ -42,13 +33,10 @@ router = APIRouter(prefix="/password")
 async def forgot_password(
     request: Request,
     body: ForgotPasswordRequest,
-    background_tasks: BackgroundTasks,
     uow: UnitOfWorkDeps,
-    usecase: Annotated[
-        PasswordResetRequestUseCase, Depends(get_password_reset_request_usecase)
-    ],
-    project_id: Annotated[UUID | None, Depends(get_optional_project_id)],
-    is_challenged: bool = Depends(get_is_challenged),
+    usecase: PasswordResetRequestUseCaseDep,
+    project_id: OptionalProjectIdDep,
+    is_challenged: IsChallengedDep,
 ):
     """
     Request a password reset email.
@@ -83,10 +71,8 @@ async def reset_password(
     request: Request,
     body: ResetPasswordRequest,
     uow: UnitOfWorkDeps,
-    usecase: Annotated[
-        PasswordResetExecuteUseCase, Depends(get_password_reset_execute_usecase)
-    ],
-    is_challenged: bool = Depends(get_is_challenged),
+    usecase: PasswordResetExecuteUseCaseDep,
+    is_challenged: IsChallengedDep,
 ):
     """
     Execute a password reset using a valid token.
@@ -115,13 +101,13 @@ async def reset_password(
     return MessageResponse(message="Password successfully reset")
 
 
-@router.patch("/", response_model=MessageResponse, dependencies=[Depends(verify_csrf)])
+@router.patch("/", response_model=MessageResponse, dependencies=[VerifyCSRFDep])
 async def change_password(
     request: Request,
     req: ChangePasswordRequest,
-    current_user: Annotated[UserIdentity, Depends(get_current_user)],
+    current_user: GetCurrentUserDep,
     uow: UnitOfWorkDeps,
-    usecase: Annotated[PasswordChangeUseCase, Depends(get_password_change_usecase)],
+    usecase: PasswordChangeUseCaseDep,
 ):
     """
     Update the authenticated user's or tenant's password.

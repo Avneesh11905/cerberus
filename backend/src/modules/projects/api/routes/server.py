@@ -1,10 +1,9 @@
-from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
 from src.modules.auth.authentication.api.dependencies.project import (
-    get_required_project_id,
+    RequiredProjectIdDep,
 )
 from src.modules.projects.api.dependencies import (
     ListProjectUsersUseCaseDep,
@@ -28,7 +27,7 @@ router = APIRouter(prefix="/server", tags=["Server M2M"])
 async def list_project_users_m2m(
     uow: UnitOfWorkDeps,
     usecase: ListProjectUsersUseCaseDep,
-    project_id: Annotated[UUID, Depends(get_required_project_id)],
+    project_id: RequiredProjectIdDep,
     page: int = 1,
     size: int = 50,
     search: str | None = None,
@@ -53,7 +52,7 @@ async def set_project_user_status_m2m(
     req: ProjectUserStatusUpdateReq,
     uow: UnitOfWorkDeps,
     usecase: SetProjectUserActiveStatusUseCaseDep,
-    project_id: Annotated[UUID, Depends(get_required_project_id)],
+    project_id: RequiredProjectIdDep,
 ):
     """
     Toggles is_active for a specific user in the project.
@@ -75,7 +74,7 @@ async def get_user_claims_m2m(
     user_id: UUID,
     uow: UnitOfWorkDeps,
     usecase: GetUserClaimsUseCaseDep,
-    project_id: Annotated[UUID, Depends(get_required_project_id)],
+    project_id: RequiredProjectIdDep,
 ):
     """
     Get custom claims for a specific user in the project.
@@ -92,7 +91,7 @@ async def update_user_claims_m2m(
     req: UserClaimsOverrideReq,
     uow: UnitOfWorkDeps,
     usecase: UpdateUserClaimsUseCaseDep,
-    project_id: Annotated[UUID, Depends(get_required_project_id)],
+    project_id: RequiredProjectIdDep,
 ):
     """
     Update custom claims for a specific user in a project.

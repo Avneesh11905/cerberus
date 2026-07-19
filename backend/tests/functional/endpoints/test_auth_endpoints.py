@@ -468,17 +468,12 @@ async def test_login_oauth_no_project(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_tenant_oauth_login_success(client: AsyncClient, mocker):
-    from fastapi import Response
-
-    mock_provider = mocker.Mock()
-    mock_provider.authorize_redirect = mocker.AsyncMock(
-        return_value=Response(
-            status_code=302, headers={"location": "https://github.com/login"}
-        )
-    )
     mocker.patch(
-        "src.modules.auth.authentication.api.routes.oauth.PROVIDERS",
-        {"github": mock_provider},
+        "src.modules.auth.authentication.application.use_cases.TenantOAuthLoginUrlUseCase.execute",
+        return_value=(
+            "https://github.com/login",
+            {"tenant_oauth_state": {"nonce": "test_nonce"}},
+        ),
     )
     response = await client.get("/v1.0/auth/tenant/login/github")
     assert response.status_code == 302

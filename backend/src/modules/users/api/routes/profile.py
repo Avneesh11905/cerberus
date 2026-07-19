@@ -4,14 +4,12 @@ Handles fetching, updating, and completely deleting a user's account.
 During deletion, it ensures the current session is securely terminated by blacklisting the active JWT.
 """
 
-from typing import Annotated
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Request, Response
 
-from src.modules.auth.authentication.domain.entities import UserIdentity
 from src.modules.auth.authentication.api.dependencies.security import (
-    get_current_user,
-    get_jwt_payload,
-    verify_csrf,
+    GetCurrentUserDep,
+    GetJWTPayloadDep,
+    VerifyCSRFDep,
 )
 from src.modules.users.api.schemas import ProfileUpdate, UserProfileRes
 from src.modules.users.api.dependencies import (
@@ -28,7 +26,7 @@ router = APIRouter()
 @router.get("/me", response_model=UserProfileRes)
 async def get_profile(
     request: Request,
-    current_user: Annotated[UserIdentity, Depends(get_current_user)],
+    current_user: GetCurrentUserDep,
     uow: UnitOfWorkDeps,
     use_case: GetProfileUseCaseDep,
 ):
@@ -46,11 +44,11 @@ async def get_profile(
     return UserProfileRes.model_validate(profile)
 
 
-@router.patch("/me", dependencies=[Depends(verify_csrf)], response_model=UserProfileRes)
+@router.patch("/me", dependencies=[VerifyCSRFDep], response_model=UserProfileRes)
 async def update_profile(
     request: Request,
     body: ProfileUpdate,
-    current_user: Annotated[UserIdentity, Depends(get_current_user)],
+    current_user: GetCurrentUserDep,
     uow: UnitOfWorkDeps,
     use_case: UpdateProfileUseCaseDep,
 ):
@@ -73,11 +71,11 @@ async def update_profile(
     return UserProfileRes.model_validate(updated)
 
 
-@router.delete("/me", dependencies=[Depends(verify_csrf)])
+@router.delete("/me", dependencies=[VerifyCSRFDep])
 async def delete_me(
     request: Request,
-    current_user: Annotated[UserIdentity, Depends(get_current_user)],
-    jwt_payload: Annotated[dict, Depends(get_jwt_payload)],
+    current_user: GetCurrentUserDep,
+    jwt_payload: GetJWTPayloadDep,
     uow: UnitOfWorkDeps,
     use_case: DeleteAccountUseCaseDep,
 ):

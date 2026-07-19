@@ -3,23 +3,19 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import Depends, Header, HTTPException, Request, status
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.database import get_db
 from src.modules.auth.authentication.api.dependencies.core import (
-    get_cache_adapter,
-    get_project_repository,
+    ProjectQueryRepositoryDep,
 )
-from src.modules.projects.application.ports import ProjectQueryRepositoryPort
-from src.shared.application.ports import CachePort
+from src.shared.api.dependencies import CacheAdapterDep, UnitOfWorkDeps
 
 
 async def get_optional_project_id(
     request: Request,
+    cache_adapter: CacheAdapterDep,
+    db: UnitOfWorkDeps,
+    project_repo: ProjectQueryRepositoryDep,
     api_key: Annotated[str | None, Header(alias="X-Cerberus-API-Key")] = None,
-    db: AsyncSession = Depends(get_db),
-    cache_adapter: CachePort = Depends(get_cache_adapter),
-    project_repo: ProjectQueryRepositoryPort = Depends(get_project_repository),
 ) -> UUID | None:
     if api_key:
         if not api_key.startswith("cerb_"):
@@ -59,3 +55,7 @@ async def get_required_project_id(
             detail="Project API Key (X-Cerberus-API-Key header) is required.",
         )
     return project_id
+
+
+OptionalProjectIdDep = Annotated[UUID | None, Depends(get_optional_project_id)]
+RequiredProjectIdDep = Annotated[UUID, Depends(get_required_project_id)]

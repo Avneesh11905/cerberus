@@ -1,36 +1,23 @@
-from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from pydantic import BaseModel
-
-from src.core.container import app_container
-from src.modules.auth.authentication.api.dependencies.core import get_cache_adapter
+from fastapi import APIRouter, HTTPException, Request, Response
 from src.modules.auth.authentication.api.dependencies.security import (
-    get_current_user,
-    get_jwt_payload,
-    verify_csrf,
+    GetCurrentUserDep,
+    GetJWTPayloadDep,
+    VerifyCSRFDep,
 )
 from src.modules.auth.authentication.api.dependencies.use_cases import (
-    get_list_active_sessions_usecase,
-    get_session_logout_all_usecase,
-    get_session_logout_usecase,
-    get_session_refresh_usecase,
-    get_session_revoke_usecase,
+    ListActiveSessionsUseCaseDep,
+    SessionSessionLogoutAllUseCaseDep,
+    SessionSessionLogoutUseCaseDep,
+    SessionRefreshUseCaseDep,
+    SessionRevokeUseCaseDep,
 )
 from src.modules.auth.authentication.api.schemas import (
     MessageResponse,
     RefreshResponse,
     SessionResponse,
 )
-from src.modules.auth.authentication.application.use_cases import (
-    ListActiveSessionsUseCase,
-    SessionLogoutAllUseCase,
-    SessionLogoutUseCase,
-    SessionRefreshUseCase,
-    SessionRevokeUseCase,
-)
-from src.modules.auth.authentication.domain.entities import UserIdentity
 from src.modules.auth.authentication.domain.exceptions import SessionNotFoundException
 from src.shared.api.dependencies import UnitOfWorkDeps
 from src.shared.api.utils import (
@@ -39,7 +26,6 @@ from src.shared.api.utils import (
     generate_csrf_token,
     set_refresh_token_cookie,
 )
-from src.shared.application.ports import CachePort
 
 router = APIRouter()
 
@@ -55,7 +41,7 @@ async def refresh(
     request: Request,
     response: Response,
     uow: UnitOfWorkDeps,
-    usecase: Annotated[SessionRefreshUseCase, Depends(get_session_refresh_usecase)],
+    usecase: SessionRefreshUseCaseDep,
 ):
     """
     Refresh the session and obtain a new Access Token.
@@ -96,15 +82,13 @@ Extracts the active tokens from cookies and headers and delegates to the `Sessio
 """
 
 
-@router.post(
-    "/logout", dependencies=[Depends(verify_csrf)], response_model=MessageResponse
-)
+@router.post("/logout", dependencies=[VerifyCSRFDep], response_model=MessageResponse)
 async def logout(
     request: Request,
     response: Response,
     uow: UnitOfWorkDeps,
-    usecase: Annotated[SessionLogoutUseCase, Depends(get_session_logout_usecase)],
-    jwt_payload: Annotated[dict, Depends(get_jwt_payload)],
+    usecase: SessionSessionLogoutUseCaseDep,
+    jwt_payload: GetJWTPayloadDep,
 ):
     """
     Log out the current user and invalidate their session.
@@ -131,17 +115,15 @@ async def logout(
 
 
 @router.post(
-    "/logout/all", dependencies=[Depends(verify_csrf)], response_model=MessageResponse
+    "/logout/all", dependencies=[VerifyCSRFDep], response_model=MessageResponse
 )
 async def logout_all(
     request: Request,
     response: Response,
-    user: Annotated[UserIdentity, Depends(get_current_user)],
+    user: GetCurrentUserDep,
     uow: UnitOfWorkDeps,
-    usecase: Annotated[
-        SessionLogoutAllUseCase, Depends(get_session_logout_all_usecase)
-    ],
-    jwt_payload: Annotated[dict, Depends(get_jwt_payload)],
+    usecase: SessionSessionLogoutAllUseCaseDep,
+    jwt_payload: GetJWTPayloadDep,
 ):
     """
     Log out from every active device / session.
@@ -164,98 +146,12 @@ async def logout_all(
     return MessageResponse(message="Logged out from all devices")
 
 
-"""
-Exposes the POST /auth/exchange endpoint.
-
-After an OAuth login, the callback stores the refresh token in Redis under a
-short-lived one-time code and redirects the browser to
-{frontend}/auth/callback?code=<code>&new_user=<bool>.
-
-The frontend redeems the code here. Because this request originates from the
-frontend JS (not an OAuth provider redirect), the Origin header is correct and
-cookies are set host-only on cerberus-api. No broad cookie domain is ever needed.
-"""
-
-
-class ExchangeRequest(BaseModel):
-    code: str
-
-
-class ExchangeResponse(BaseModel):
-    is_new_user: bool
-    csrf_token: str
-    access_token: str
-    user: dict
-    """CSRF token to store in memory on clients that cannot read it from document.cookie
-    (i.e. SDK consumers on foreign domains). Must be sent as the X-CSRF header on all
-    subsequent state-mutating requests.
-    """
-
-
-@router.post("/exchange", response_model=ExchangeResponse)
-async def exchange(
-    request: Request,
-    response: Response,
-    body: ExchangeRequest,
-    cache: Annotated[CachePort, Depends(get_cache_adapter)],
-    uow: UnitOfWorkDeps,
-):
-    """
-    Redeem a one-time exchange code for session cookies.
-
-    After an OAuth login the browser is redirected to the frontend with a short-lived
-    code. The frontend calls this endpoint to convert that code into a refresh token
-    cookie (HttpOnly) and a CSRF cookie. The code is consumed immediately on use.
-
-    No CSRF check is required here because:
-    - The code is a one-time UUID generated during the OAuth callback
-    - It expires in 2 minutes
-    - It is transmitted in a JSON body (not a form), which cannot be forged cross-site
-    """
-    data = await cache.get_dict(f"exchange_code:{body.code}")
-    if not data:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired exchange code",
-        )
-
-    # One-time use — delete immediately before setting cookies
-    await cache.delete_key(f"exchange_code:{body.code}")
-
-    refresh_token: str = data["refresh_token"]
-    is_new_user: bool = data.get("is_new_user", False)
-    access_token: str = data.get("access_token", "")
-    user_id_str: str | None = data.get("user_id")
-
-    profile = None
-    if user_id_str:
-        user_repo = app_container.user_profile_repo
-        async with uow:
-            profile = await user_repo.get_profile(uow.session, UUID(user_id_str))
-
-    set_refresh_token_cookie(response, refresh_token)
-
-    # Derive the CSRF token the same way set_refresh_token_cookie does so that
-    # SDK clients on foreign domains (who cannot read document.cookie across
-    # origins) can store it in memory and attach it as X-CSRF on future requests.
-    csrf_token = generate_csrf_token(refresh_token)
-
-    return ExchangeResponse(
-        is_new_user=is_new_user,
-        csrf_token=csrf_token,
-        access_token=access_token,
-        user=profile.model_dump() if profile else {},
-    )
-
-
 @router.get("/sessions", response_model=list[SessionResponse])
 async def list_sessions(
     request: Request,
-    user: Annotated[UserIdentity, Depends(get_current_user)],
+    user: GetCurrentUserDep,
     uow: UnitOfWorkDeps,
-    usecase: Annotated[
-        ListActiveSessionsUseCase, Depends(get_list_active_sessions_usecase)
-    ],
+    usecase: ListActiveSessionsUseCaseDep,
 ):
     """
     List all active sessions (devices) for the current user.
@@ -281,9 +177,9 @@ async def list_sessions(
 async def revoke_session(
     family_id: UUID,
     request: Request,
-    user: Annotated[UserIdentity, Depends(get_current_user)],
+    user: GetCurrentUserDep,
     uow: UnitOfWorkDeps,
-    usecase: Annotated[SessionRevokeUseCase, Depends(get_session_revoke_usecase)],
+    usecase: SessionRevokeUseCaseDep,
 ):
     """
     Revoke a specific session by its Family ID.

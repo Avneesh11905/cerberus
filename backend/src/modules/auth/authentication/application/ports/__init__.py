@@ -1,12 +1,17 @@
 from .email_sender import EmailSenderPort
-from .repository.refresh_token import RefreshTokenRepositoryPort
-from .repository.user_command_repository import UserCommandRepositoryPort
-from .repository.user_maintenance_repository import UserMaintenanceRepositoryPort
-from .repository.user_query_repository import UserQueryRepositoryPort
-from .security.access_token import AccessTokenPort
-from .security.claims_provider import ClaimsProviderPort
-from .security.password_hasher import PasswordHasherPort
-from .repository.project_key_repository import ProjectKeyRepositoryPort
+from .repository import (
+    RefreshTokenRepositoryPort,
+    UserCommandRepositoryPort,
+    UserMaintenanceRepositoryPort,
+    UserQueryRepositoryPort,
+    ProjectKeyRepositoryPort,
+)
+from .security import (
+    AccessTokenPort,
+    ClaimsProviderPort,
+    PasswordHasherPort,
+    OAuthServicePort,
+)
 
 __all__ = [
     "AccessTokenPort",
@@ -18,4 +23,5 @@ __all__ = [
     "UserCommandRepositoryPort",
     "UserMaintenanceRepositoryPort",
     "ProjectKeyRepositoryPort",
+    "OAuthServicePort",
 ]

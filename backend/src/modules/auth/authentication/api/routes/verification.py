@@ -3,17 +3,14 @@ Exposes HTTP endpoints for the email verification flow.
 Handles validating the 6-digit OTP sent via email and allowing users to request a new OTP if it expired.
 """
 
-from typing import Annotated
-from uuid import UUID
+from fastapi import APIRouter, Request, Response
 
-from fastapi import APIRouter, Depends, Request, Response
-
-from src.modules.auth.authentication.api.dependencies.use_cases import (
-    get_local_resend_verification_usecase,
-    get_local_verify_email_usecase,
-)
 from src.modules.auth.authentication.api.dependencies.project import (
-    get_optional_project_id,
+    OptionalProjectIdDep,
+)
+from src.modules.auth.authentication.api.dependencies.use_cases import (
+    LocalResendVerificationUseCaseDep,
+    LocalVerifyEmailUseCaseDep,
 )
 from src.modules.auth.authentication.api.schemas import (
     MessageResponse,
@@ -21,11 +18,7 @@ from src.modules.auth.authentication.api.schemas import (
     RequestNewVerificationEmail,
     VerifyEmailRequest,
 )
-from src.modules.auth.authentication.application.use_cases import (
-    LocalResendVerificationUseCase,
-    LocalVerifyEmailUseCase,
-)
-from src.shared.api.dependencies import get_is_challenged, UnitOfWorkDeps
+from src.shared.api.dependencies import UnitOfWorkDeps, IsChallengedDep
 from src.shared.api.utils import extract_client_metadata, set_refresh_token_cookie
 
 router = APIRouter()
@@ -37,11 +30,9 @@ async def verify_email(
     response: Response,
     req: VerifyEmailRequest,
     uow: UnitOfWorkDeps,
-    usecase: Annotated[
-        LocalVerifyEmailUseCase, Depends(get_local_verify_email_usecase)
-    ],
-    project_id: Annotated[UUID | None, Depends(get_optional_project_id)],
-    is_challenged: bool = Depends(get_is_challenged),
+    usecase: LocalVerifyEmailUseCaseDep,
+    is_challenged: IsChallengedDep,
+    project_id: OptionalProjectIdDep,
 ):
     """
     Verify a user's email address using a 6-digit OTP.
@@ -73,12 +64,9 @@ async def resend_verification(
     request: Request,
     req: RequestNewVerificationEmail,
     uow: UnitOfWorkDeps,
-    usecase: Annotated[
-        LocalResendVerificationUseCase,
-        Depends(get_local_resend_verification_usecase),
-    ],
-    project_id: Annotated[UUID | None, Depends(get_optional_project_id)],
-    is_challenged: bool = Depends(get_is_challenged),
+    usecase: LocalResendVerificationUseCaseDep,
+    is_challenged: IsChallengedDep,
+    project_id: OptionalProjectIdDep,
 ):
     """
     Resend the 6-digit verification OTP.

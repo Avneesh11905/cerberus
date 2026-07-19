@@ -26,4 +26,8 @@ async def get_uow():
     yield SQLAlchemyUoWAdapter()
 
 
+CacheAdapterDep = Annotated[CachePort, Depends(get_cache_adapter)]
+
 UnitOfWorkDeps = Annotated[UoWPort, Depends(get_uow)]
+
+IsChallengedDep = Annotated[bool, Depends(get_is_challenged)]

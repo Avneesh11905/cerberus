@@ -23,7 +23,14 @@ def test_verify_csrf_success():
     # Should not raise any exception
     import asyncio
 
-    asyncio.run(verify_csrf(request))
+    asyncio.run(
+        verify_csrf(
+            request,
+            csrf_cookie=request.cookies.get("csrf_token"),
+            csrf_header=request.headers.get("X-CSRF"),
+            refresh_token=request.cookies.get("refresh_token"),
+        )
+    )
 
 
 def test_verify_csrf_missing_cookie_or_header():
@@ -34,7 +41,14 @@ def test_verify_csrf_missing_cookie_or_header():
     with pytest.raises(CSRFValidationException):
         import asyncio
 
-        asyncio.run(verify_csrf(request))
+        asyncio.run(
+            verify_csrf(
+                request,
+                csrf_cookie=request.cookies.get("csrf_token"),
+                csrf_header=request.headers.get("X-CSRF"),
+                refresh_token=request.cookies.get("refresh_token"),
+            )
+        )
 
 
 def test_verify_csrf_mismatch_cookie_header():
@@ -45,7 +59,14 @@ def test_verify_csrf_mismatch_cookie_header():
     with pytest.raises(CSRFValidationException):
         import asyncio
 
-        asyncio.run(verify_csrf(request))
+        asyncio.run(
+            verify_csrf(
+                request,
+                csrf_cookie=request.cookies.get("csrf_token"),
+                csrf_header=request.headers.get("X-CSRF"),
+                refresh_token=request.cookies.get("refresh_token"),
+            )
+        )
 
 
 def test_verify_csrf_bad_signature():
@@ -59,7 +80,14 @@ def test_verify_csrf_bad_signature():
     with pytest.raises(CSRFValidationException):
         import asyncio
 
-        asyncio.run(verify_csrf(request))
+        asyncio.run(
+            verify_csrf(
+                request,
+                csrf_cookie=request.cookies.get("csrf_token"),
+                csrf_header=request.headers.get("X-CSRF"),
+                refresh_token=request.cookies.get("refresh_token"),
+            )
+        )
 
 
 def test_verify_csrf_tampered_refresh_token():
@@ -79,4 +107,11 @@ def test_verify_csrf_tampered_refresh_token():
     with pytest.raises(CSRFValidationException):
         import asyncio
 
-        asyncio.run(verify_csrf(request))
+        asyncio.run(
+            verify_csrf(
+                request,
+                csrf_cookie=request.cookies.get("csrf_token"),
+                csrf_header=request.headers.get("X-CSRF"),
+                refresh_token=request.cookies.get("refresh_token"),
+            )
+        )

@@ -17,12 +17,14 @@ from src.modules.auth.authentication.application.ports import (
     UserQueryRepositoryPort,
     UserCommandRepositoryPort,
     EmailSenderPort,
-    ProjectKeyRepositoryPort,
     AccessTokenPort,
     ClaimsProviderPort,
 )
 from src.modules.auth.authentication.application.utils import format_device_info
 from src.modules.auth.authentication.domain.entities import UserIdentity
+from src.modules.projects.application.ports.project_query_repository import (
+    ProjectQueryRepositoryPort,
+)
 from src.shared.application.ports import UoWPort
 from src.shared.domain.entities import ClientMetadata
 
@@ -53,7 +55,7 @@ class ProjectUserOAuthCallbackUseCase[SessionType, RequestType]:
         email_sender: EmailSenderPort,
         access_token: AccessTokenPort,
         claims_provider: ClaimsProviderPort,
-        project_repo: ProjectKeyRepositoryPort,
+        project_query_repo: ProjectQueryRepositoryPort,
         oauth_service: OAuthServicePort[SessionType, RequestType],
         role_provisioning: RoleProvisioningService[SessionType],
     ):
@@ -63,7 +65,7 @@ class ProjectUserOAuthCallbackUseCase[SessionType, RequestType]:
         self._email_sender = email_sender
         self._access_token = access_token
         self._claims_provider = claims_provider
-        self._project_repo = project_repo
+        self._project_query_repo = project_query_repo
         self._oauth_service = oauth_service
         self._role_provisioning = role_provisioning
 
@@ -113,7 +115,7 @@ class ProjectUserOAuthCallbackUseCase[SessionType, RequestType]:
         project_id: UUID,
         request: RequestType,
         client_meta: ClientMetadata | None = None,
-    ) -> tuple[UserIdentity, str, str, bool]:
+    ) -> tuple[UserIdentity, str, str, bool, str | None]:
         """
         Process an OAuth callback.
 
@@ -124,8 +126,11 @@ class ProjectUserOAuthCallbackUseCase[SessionType, RequestType]:
             request: The raw framework request object containing the code/state.
 
         Returns:
-            (user_identity, raw_refresh_token, access_token, is_new_user)
+            (user_identity, raw_refresh_token, access_token, is_new_user, fallback_frontend_url)
         """
+        project = await self._project_query_repo.get_by_id(uow.session, project_id)
+        fallback_frontend_url = project.frontend_url if project else None
+
         user_info = await self._oauth_service.exchange_code_for_user_info(
             provider, project_id, request, uow.session
         )
@@ -171,7 +176,7 @@ class ProjectUserOAuthCallbackUseCase[SessionType, RequestType]:
                 combined_claims.update(custom_claims)
             access_token = self._access_token.create(user, extra_claims=combined_claims)
 
-            return user, refresh_token, access_token, False
+            return user, refresh_token, access_token, False, fallback_frontend_url
         # Step 2: Check if a user with this email already exists (account linking)
         user = await self._user_query_repo.find_by_email(
             uow.session, email, project_id=project_id
@@ -209,7 +214,7 @@ class ProjectUserOAuthCallbackUseCase[SessionType, RequestType]:
                 user, extra_claims=combined_claims_email
             )
 
-            return user, refresh_token, access_token, False
+            return user, refresh_token, access_token, False, fallback_frontend_url
         # Step 3: Create brand new user
         new_user = await self._user_command_repo.create_user_with_oauth(
             session=uow.session,
@@ -237,7 +242,7 @@ class ProjectUserOAuthCallbackUseCase[SessionType, RequestType]:
         if custom_claims:
             combined_claims_new.update(custom_claims)
         private_key_override = (
-            await self._project_repo.get_private_key(uow.session, project_id)
+            await self._project_query_repo.get_private_key(uow.session, project_id)
             if project_id
             else None
         )
@@ -249,4 +254,4 @@ class ProjectUserOAuthCallbackUseCase[SessionType, RequestType]:
 
         await self._email_sender.send_welcome_email(new_user.email, new_user.name)
 
-        return new_user, refresh_token, access_token, True
+        return new_user, refresh_token, access_token, True, fallback_frontend_url
