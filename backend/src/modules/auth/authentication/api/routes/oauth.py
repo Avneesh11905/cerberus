@@ -172,7 +172,6 @@ async def login(
     Resolves the tenant project in two ways (checked in order):
     1. Session cookie set by a prior POST /auth/oauth/preflight/{provider} call
        (preferred — API key never appears in the URL).
-    2. `api_key` query parameter (legacy — kept for backwards compatibility).
     """
     project_id = None
     # 1. Preferred path: project context was pre-established by the preflight endpoint
