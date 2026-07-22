@@ -1,5 +1,6 @@
 import uuid
-from locust import FastHttpUser, task, between, events
+
+from locust import FastHttpUser, between, events, task
 
 
 class LoadTestUser(FastHttpUser):

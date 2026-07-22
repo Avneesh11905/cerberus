@@ -1,6 +1,7 @@
+import time
+
 import pytest
 from httpx import AsyncClient
-import time
 
 
 class FakeRateLimiter:
@@ -19,10 +20,10 @@ class FakeRateLimiter:
 
 @pytest.fixture
 def mock_rate_limiter(mocker):
-    from src.core.config import rate_limit_settings
+    from src.core.config import get_settings
     from src.core.container import app_container
 
-    mocker.patch.object(rate_limit_settings, "ENABLED", True)
+    mocker.patch.object(get_settings().rate_limit, "ENABLED", True)
 
     fake = FakeRateLimiter()
     mock_check = mocker.patch.object(
@@ -43,11 +44,11 @@ async def test_rate_limit_regular_route(client: AsyncClient, mock_rate_limiter):
     We'll hit /health 61 times (default limit is 60/minute).
     """
     for i in range(60):
-        resp = await client.get("/v1.0/health")
+        resp = await client.get("/health")
         assert resp.status_code == 200, f"Request {i} failed prematurely"
 
     # The 61st request should be blocked
-    resp = await client.get("/v1.0/health")
+    resp = await client.get("/health")
     assert resp.status_code == 429
     assert "X-RateLimit-Limit" in resp.headers
     assert "Retry-After" in resp.headers
@@ -61,12 +62,12 @@ async def test_rate_limit_auth_escalation(client: AsyncClient, mock_rate_limiter
     Without a CAPTCHA token, they will return a 400 from the Turnstile exception.
     """
     for i in range(10):
-        resp = await client.post("/v1.0/auth/login", json={})
+        resp = await client.post("/v1/auth/login", json={})
         assert resp.status_code == 422, f"Request {i} didn't hit validation error"
 
     # The 11th request exceeds the rate limit.
     resp = await client.post(
-        "/v1.0/auth/login", json={"email": "a@example.com", "password": "b"}
+        "/v1/auth/login", json={"email": "a@example.com", "password": "b"}
     )
 
     # Fastapi Exception handler translates TurnstileVerificationFailed to 403 Forbidden.
@@ -82,7 +83,7 @@ async def test_ip_extraction_and_spoofing(client: AsyncClient, mock_rate_limiter
     # X-Forwarded-For should take the FIRST IP in the comma-separated list
     headers = {"X-Forwarded-For": "203.0.113.195, 198.51.100.1, 10.0.0.1"}
 
-    resp = await client.get("/v1.0/health", headers=headers)
+    resp = await client.get("/health", headers=headers)
     assert resp.status_code == 200
 
     # Assert RateLimiterPort was called with the correct IP bucket
@@ -99,7 +100,7 @@ async def test_ip_extraction_and_spoofing(client: AsyncClient, mock_rate_limiter
     }
 
     mock_rate_limiter.reset_mock()
-    resp = await client.get("/v1.0/health", headers=headers)
+    resp = await client.get("/health", headers=headers)
 
     mock_rate_limiter.assert_called_once()
     args, kwargs = mock_rate_limiter.call_args

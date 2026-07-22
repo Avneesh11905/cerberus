@@ -1,7 +1,8 @@
-import pytest
 from unittest.mock import AsyncMock
 
-from src.shared.adapters.uow import SQLAlchemyUoWAdapter
+import pytest
+
+from src.shared.infrastructure.adapters.shared_uow import SQLAlchemyUoWAdapter
 
 
 @pytest.mark.asyncio
@@ -50,6 +51,6 @@ async def test_uow_session_accessed_outside_context():
     uow = SQLAlchemyUoWAdapter(session_factory=mock_session_factory)
 
     with pytest.raises(
-        RuntimeError, match="UoW.session accessed before entering the context manager."
+        RuntimeError, match="session accessed before entering context manager"
     ):
         _ = uow.session

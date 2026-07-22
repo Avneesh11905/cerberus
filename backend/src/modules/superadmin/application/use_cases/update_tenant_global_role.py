@@ -1,30 +1,36 @@
-from uuid import UUID
-from src.modules.superadmin.application.ports import TenantRepositoryPort
-from src.modules.superadmin.domain.entities import TenantEntity
+from src.modules.superadmin.application.commands.superadmin_commands import (
+    UpdateTenantGlobalRoleCommand,
+)
+from src.modules.superadmin.application.dtos.superadmin_dtos import (
+    UpdateTenantGlobalRoleDTO,
+)
+from src.modules.superadmin.application.ports.superadmin_unit_of_work import (
+    SuperAdminUoWPort,
+)
 from src.modules.superadmin.domain.exceptions import TenantNotFoundException
-from src.modules.auth.authorization.domain.enums import GlobalRole
 
 
-class UpdateTenantGlobalRoleUseCase[SessionType]:
-    def __init__(self, tenant_repository: TenantRepositoryPort):
-        self.tenant_repository = tenant_repository
+class UpdateTenantGlobalRoleUseCase:
+    def __init__(self, uow: SuperAdminUoWPort):
+        self.uow = uow
 
     async def execute(
-        self, session: SessionType, tenant_id: UUID, role: GlobalRole
-    ) -> TenantEntity:
-        from src.core.config import core_settings
+        self, command: UpdateTenantGlobalRoleCommand
+    ) -> UpdateTenantGlobalRoleDTO:
+        async with self.uow:
+            from src.core.config import get_settings
 
-        tenant = await self.tenant_repository.get_by_id(session, tenant_id)
-        if not tenant:
-            raise TenantNotFoundException()
+            tenant = await self.uow.tenant_repo.get_by_id(command.tenant_id)
+            if not tenant:
+                raise TenantNotFoundException()
 
-        if tenant.email == core_settings.SUPERADMIN_EMAIL:
-            from src.modules.superadmin.domain.exceptions import (
-                AbsoluteSuperadminImmutableException,
-            )
+            if tenant.email == get_settings().core.SUPERADMIN_EMAIL:
+                from src.modules.superadmin.domain.exceptions import (
+                    AbsoluteSuperadminImmutableException,
+                )
 
-            raise AbsoluteSuperadminImmutableException()
+                raise AbsoluteSuperadminImmutableException()
 
-        tenant.role = role
-        await self.tenant_repository.save(session, tenant)
-        return tenant
+            tenant.role = command.role
+            await self.uow.tenant_repo.save(tenant)
+            return UpdateTenantGlobalRoleDTO(tenant=tenant)

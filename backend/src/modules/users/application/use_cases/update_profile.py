@@ -1,38 +1,67 @@
-from typing import Optional
-from uuid import UUID
-from src.modules.users.application.ports import UserProfileRepositoryPort
-from src.modules.users.domain.exceptions import UserNotFoundException
+from src.modules.users.application.commands.user_commands import UpdateProfileCommand
+from src.modules.users.application.dtos.user_profile_dto import UserProfileDTO
+from src.modules.users.application.ports.users_unit_of_work import UserUoWPort
 from src.modules.users.domain.entities import UserProfile
+from src.modules.users.domain.exceptions import UserNotFoundException
 from src.shared.application.ports import CachePort
 
 
-class UpdateProfileUseCase[SessionType]:
-    def __init__(self, profile_repository: UserProfileRepositoryPort, cache: CachePort):
-        self.profile_repository = profile_repository
+class UpdateProfileUseCase:
+    def __init__(self, uow: UserUoWPort, cache: CachePort):
+        self.uow = uow
         self.cache = cache
 
     async def execute(
         self,
-        session: SessionType,
-        user_id: UUID,
-        name: Optional[str] = None,
-        picture: Optional[str] = None,
-        receive_updates: Optional[bool] = None,
-    ) -> UserProfile:
-        cache_key = f"user_profile:{user_id}"
-        cached_data = await self.cache.get_dict(cache_key)
-        if cached_data:
-            profile = UserProfile(**cached_data)
-        else:
-            fetched_profile = await self.profile_repository.get_profile(
-                session, user_id
+        command: UpdateProfileCommand,
+    ) -> UserProfileDTO:
+        async with self.uow:
+            cache_key = f"user_profile:{command.user_id}"
+            cached_data = await self.cache.get_dict(cache_key)
+            if cached_data:
+                from uuid import UUID
+
+                from src.shared.domain.value_objects import (
+                    EmailAddress,
+                    HttpsUrl,
+                    PersonName,
+                )
+
+                cached_data["id"] = UUID(cached_data["id"])
+                cached_data["email"] = EmailAddress(cached_data["email"]["value"])
+                if cached_data.get("name"):
+                    cached_data["name"] = PersonName(cached_data["name"]["value"])
+                if cached_data.get("picture"):
+                    cached_data["picture"] = HttpsUrl(cached_data["picture"]["value"])
+                if cached_data.get("project_id"):
+                    cached_data["project_id"] = UUID(cached_data["project_id"])
+                profile = UserProfile(**cached_data)
+            else:
+                fetched_profile = await self.uow.profile_repo.get_profile(
+                    command.user_id
+                )
+                if not fetched_profile:
+                    raise UserNotFoundException()
+                profile = fetched_profile
+
+            profile.update_info(
+                name=PersonName(command.name) if command.name else None,
+                picture=HttpsUrl(command.picture) if command.picture else None,
+                receive_updates=command.receive_updates,
             )
-            if not fetched_profile:
-                raise UserNotFoundException()
-            profile = fetched_profile
+            updated = await self.uow.profile_repo.save_profile(profile)
 
-        profile.update_info(name=name, picture=picture, receive_updates=receive_updates)
-        updated = await self.profile_repository.save_profile(session, profile)
+            await self.cache.delete_key(f"user_profile:{command.user_id}")
 
-        await self.cache.delete_key(f"user_profile:{user_id}")
-        return updated
+            return UserProfileDTO(
+                id=updated.id,
+                email=updated.email.value,
+                receive_updates=updated.receive_updates,
+                login_methods=updated.login_methods,
+                role=updated.role
+                if isinstance(updated.role, str)
+                else (updated.role.value if updated.role else None),
+                project_id=updated.project_id,
+                name=updated.name.value if updated.name else None,
+                picture=updated.picture.value if updated.picture else None,
+            )

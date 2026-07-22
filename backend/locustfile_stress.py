@@ -1,5 +1,6 @@
 import uuid
-from locust import FastHttpUser, task, between
+
+from locust import FastHttpUser, between, task
 
 
 class StressTestUser(FastHttpUser):

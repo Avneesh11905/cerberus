@@ -1,14 +1,16 @@
-import pytest
-from unittest.mock import Mock, AsyncMock
+from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
+
+import pytest
 from fastapi import Request
 
-from src.modules.auth.authentication.adapters.security.oauth_service import (
+from src.modules.authentication.domain.entities import OAuthUserInfo
+from src.modules.authentication.domain.exceptions import OAuthFailedException
+from src.modules.authentication.infrastructure.security.oauth_service import (
     OAuthServiceAdapter,
 )
-from src.modules.auth.authentication.domain.entities import OAuthUserInfo
-from src.modules.auth.authentication.domain.exceptions import OAuthFailedException
 from src.modules.projects.domain.entities import ProjectEntity
+from src.shared.domain.value_objects import EmailAddress
 
 
 @pytest.fixture
@@ -26,9 +28,7 @@ def mock_encryption():
 
 @pytest.fixture
 def oauth_adapter(mock_project_repo, mock_encryption):
-    return OAuthServiceAdapter(
-        project_query_repo=mock_project_repo, encryption_adapter=mock_encryption
-    )
+    return OAuthServiceAdapter(encryption_adapter=mock_encryption)
 
 
 @pytest.mark.asyncio
@@ -51,7 +51,7 @@ async def test_get_authorization_url_tenant(oauth_adapter):
         request=request,
         redirect_uri="http://localhost/callback",
         state="somestate",
-        session=AsyncMock(),
+        uow=AsyncMock(),
     )
 
     assert url == "https://accounts.google.com/o/oauth2/v2/auth?..."
@@ -72,17 +72,17 @@ async def test_exchange_code_tenant(oauth_adapter, monkeypatch):
     oauth_adapter._get_client = AsyncMock(return_value=mock_client)
 
     # Mock the parser from registry
-    from src.modules.auth.authentication.infrastructure.oauth import PARSERS
+    from src.modules.authentication.infrastructure.oauth import PARSERS
 
     mock_parser = AsyncMock(
         return_value=OAuthUserInfo(
-            sub="123", email="test@example.com", provider="google"
+            sub="123", email=EmailAddress("test@example.com"), provider="google"
         )
     )
     monkeypatch.setitem(PARSERS, "google", mock_parser)
 
     user_info = await oauth_adapter.exchange_code_for_user_info(
-        provider="google", project_id=None, request=request, session=AsyncMock()
+        provider="google", project_id=None, request=request, uow=AsyncMock()
     )
 
     assert user_info.email == "test@example.com"
@@ -94,6 +94,8 @@ async def test_exchange_code_tenant(oauth_adapter, monkeypatch):
 async def test_get_client_project_dynamic(
     oauth_adapter, mock_project_repo, mock_encryption
 ):
+    uow_mock = AsyncMock()
+    uow_mock.project_query_repo = mock_project_repo
     project_id = uuid4()
     from datetime import datetime, timezone
 
@@ -115,9 +117,9 @@ async def test_get_client_project_dynamic(
     )
     mock_project_repo.get_by_id.return_value = project
 
-    from src.modules.auth.authentication.infrastructure.oauth.registry import (
-        oauth_registry,
+    from src.modules.authentication.infrastructure.oauth.registry import (
         ProviderMetadata,
+        oauth_registry,
     )
 
     oauth_registry.metadata["google"] = ProviderMetadata(
@@ -129,7 +131,7 @@ async def test_get_client_project_dynamic(
     )
 
     # Get dynamic client
-    client = await oauth_adapter._get_client("google", project_id, AsyncMock())
+    client = await oauth_adapter._get_client("google", project_id, uow_mock)
 
     mock_encryption.decrypt.assert_called_once_with("encrypted-secret")
     assert client.client_id == "test-client-id"
@@ -139,6 +141,8 @@ async def test_get_client_project_dynamic(
 
 @pytest.mark.asyncio
 async def test_get_client_project_not_enabled(oauth_adapter, mock_project_repo):
+    uow_mock = AsyncMock()
+    uow_mock.project_query_repo = mock_project_repo
     project_id = uuid4()
     from datetime import datetime, timezone
 
@@ -163,4 +167,4 @@ async def test_get_client_project_not_enabled(oauth_adapter, mock_project_repo):
     with pytest.raises(
         OAuthFailedException, match="OAuth provider not enabled or configured"
     ):
-        await oauth_adapter._get_client("google", project_id, AsyncMock())
+        await oauth_adapter._get_client("google", project_id, uow_mock)

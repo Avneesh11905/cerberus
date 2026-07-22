@@ -1,13 +1,14 @@
-import pytest
 from unittest.mock import AsyncMock
+
+import pytest
 from fastapi.responses import Response
 
-from src.shared.api.utils import (
-    delete_refresh_token_cookie,
-    create_exchange_code,
+from src.modules.authentication.presentation.api.utils import (
     build_auth_redirect_async,
-    origin_from_url,
+    create_exchange_code,
+    delete_refresh_token_cookie,
 )
+from src.shared.presentation.api.utils import origin_from_url
 
 
 def test_delete_refresh_token_cookie():

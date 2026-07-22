@@ -1,10 +1,15 @@
-from src.modules.superadmin.application.ports import SystemAnalyticsRepositoryPort
+from src.modules.superadmin.application.ports.superadmin_unit_of_work import (
+    SuperAdminUoWPort,
+)
 from src.modules.superadmin.domain.entities import SystemAnalyticsEntity
 
 
-class GetSystemAnalyticsUseCase[SessionType]:
-    def __init__(self, analytics_repository: SystemAnalyticsRepositoryPort):
-        self.analytics_repository = analytics_repository
+class GetSystemAnalyticsUseCase:
+    def __init__(self, uow: SuperAdminUoWPort):
+        self.uow = uow
 
-    async def execute(self, session: SessionType) -> SystemAnalyticsEntity:
-        return await self.analytics_repository.get_global_analytics(session)
+    async def execute(
+        self,
+    ) -> SystemAnalyticsEntity:
+        async with self.uow:
+            return await self.uow.analytics_repo.get_global_analytics()

@@ -1,5 +1,6 @@
 import pytest
-from src.shared.adapters.rsa_key import RsaKeyAdapter
+
+from src.shared.infrastructure.adapters.rsa_key import RsaKeyAdapter
 
 
 @pytest.mark.asyncio

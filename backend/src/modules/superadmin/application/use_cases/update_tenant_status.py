@@ -1,40 +1,42 @@
-from uuid import UUID
-from src.modules.auth.authentication.application.ports import RefreshTokenRepositoryPort
-from src.modules.superadmin.application.ports import TenantRepositoryPort
-from src.modules.superadmin.domain.entities import TenantEntity
+from src.modules.superadmin.application.commands.superadmin_commands import (
+    UpdateTenantStatusCommand,
+)
+from src.modules.superadmin.application.dtos.superadmin_dtos import (
+    UpdateTenantStatusDTO,
+)
+from src.modules.superadmin.application.ports.superadmin_unit_of_work import (
+    SuperAdminUoWPort,
+)
 from src.modules.superadmin.domain.exceptions import TenantNotFoundException
-from src.shared.application.ports import CachePort, UoWPort
+from src.shared.application.ports import CachePort
 
 
-class UpdateTenantStatusUseCase[SessionType]:
-    def __init__(
-        self,
-        tenant_repository: TenantRepositoryPort,
-        refresh_repo: RefreshTokenRepositoryPort | None = None,
-        cache: CachePort | None = None,
-    ):
-        self.tenant_repository = tenant_repository
-        self.refresh_repo = refresh_repo
+class UpdateTenantStatusUseCase:
+    def __init__(self, uow: SuperAdminUoWPort, cache: CachePort | None = None):
+        self.uow = uow
         self.cache = cache
 
     async def execute(
-        self, uow: UoWPort[SessionType], tenant_id: UUID, is_active: bool
-    ) -> TenantEntity:
-        tenant = await self.tenant_repository.get_by_id(uow.session, tenant_id)
-        if not tenant:
-            raise TenantNotFoundException()
-        tenant.is_active = is_active
-        await self.tenant_repository.save(uow.session, tenant)
+        self, command: UpdateTenantStatusCommand
+    ) -> UpdateTenantStatusDTO:
+        async with self.uow:
+            tenant = await self.uow.tenant_repo.get_by_id(command.tenant_id)
+            if not tenant:
+                raise TenantNotFoundException()
+            tenant.is_active = command.is_active
+            await self.uow.tenant_repo.save(tenant)
 
-        if not is_active:
-            if self.refresh_repo:
-                await self.refresh_repo.revoke_all_for_user(uow.session, tenant_id)
-            if self.cache:
-                await self.cache.set_string(
-                    f"disabled_user:{tenant_id}", "1", ttl=86400 * 30
-                )
-        else:
-            if self.cache:
-                await self.cache.delete_key(f"disabled_user:{tenant_id}")
+            if not command.is_active:
+                if self.uow.refresh_token_repo:
+                    await self.uow.refresh_token_repo.revoke_all_for_user(
+                        command.tenant_id
+                    )
+                if self.cache:
+                    await self.cache.set_string(
+                        f"disabled_user:{command.tenant_id}", "1", ttl=86400 * 30
+                    )
+            else:
+                if self.cache:
+                    await self.cache.delete_key(f"disabled_user:{command.tenant_id}")
 
-        return tenant
+            return UpdateTenantStatusDTO(tenant=tenant)

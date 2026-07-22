@@ -1,5 +1,6 @@
 import pytest
-from src.modules.auth.authentication.adapters.security.password_hasher import (
+
+from src.modules.authentication.infrastructure.security.password_hasher import (
     Argon2PasswordHasherAdapter,
 )
 

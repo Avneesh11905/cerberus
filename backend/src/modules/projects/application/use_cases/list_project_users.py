@@ -1,37 +1,29 @@
-from typing import Sequence
-from uuid import UUID
-
-from src.modules.projects.application.ports import (
-    ProjectQueryRepositoryPort,
-    ProjectUserRepositoryPort,
+from src.modules.projects.application.dtos.project_dtos import ListProjectUsersDTO
+from src.modules.projects.application.ports.projects_unit_of_work import ProjectUoWPort
+from src.modules.projects.application.queries.project_queries import (
+    ListProjectUsersQuery,
 )
-from src.modules.users.domain.entities import UserProfile
+
 from .base_project_user import BaseProjectUserUseCase
 
 
-class ListProjectUsersUseCase[SessionType](BaseProjectUserUseCase[SessionType]):
-    def __init__(
-        self,
-        project_query_repository: ProjectQueryRepositoryPort,
-        project_user_repository: ProjectUserRepositoryPort,
-    ):
-        super().__init__(project_query_repository)
-        self.project_user_repository = project_user_repository
+class ListProjectUsersUseCase(BaseProjectUserUseCase):
+    def __init__(self, uow: ProjectUoWPort):
+        self.uow = uow
+        super().__init__()
 
-    async def execute(
-        self,
-        session: SessionType,
-        project_id: UUID,
-        tenant_id: UUID | None,
-        skip: int = 0,
-        limit: int = 100,
-        search: str | None = None,
-    ) -> tuple[Sequence[UserProfile], int]:
-        await self._verify_project_ownership(session, project_id, tenant_id)
-        users = await self.project_user_repository.list_project_users(
-            session, project_id, skip=skip, limit=limit, search=search
-        )
-        total = await self.project_user_repository.count_project_users(
-            session, project_id, search=search
-        )
-        return users, total
+    async def execute(self, query: ListProjectUsersQuery) -> ListProjectUsersDTO:
+        async with self.uow:
+            await self._verify_project_ownership(
+                self.uow, query.project_id, query.tenant_id
+            )
+            users = await self.uow.project_user_repo.list_project_users(
+                query.project_id,
+                skip=query.skip,
+                limit=query.limit,
+                search=query.search,
+            )
+            total = await self.uow.project_user_repo.count_project_users(
+                query.project_id, search=query.search
+            )
+            return ListProjectUsersDTO(users=users, total=total)

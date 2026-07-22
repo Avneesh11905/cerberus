@@ -1,16 +1,16 @@
-from celery import Celery  # type: ignore
-from celery.schedules import crontab  # type: ignore
+from celery import Celery
+from celery.schedules import crontab
 
-from src.core.config import database_settings
+from src.core.config import get_settings
 
 # Initialize Celery
 celery_app = Celery(
     "cerberus",
-    broker=database_settings.CELERY_BROKER_URL,
-    backend=database_settings.CELERY_RESULT_URL,
+    broker=get_settings().database.CELERY_BROKER_URL,
+    backend=get_settings().database.CELERY_RESULT_URL,
     include=[
-        "src.modules.auth.authentication.infrastructure.tasks",
-        "src.shared.infrastructure.tasks",
+        "src.modules.authentication.infrastructure.tasks",
+        "src.modules.superadmin.infrastructure.tasks",
         "src.modules.analytics.infrastructure.tasks",
     ],
 )

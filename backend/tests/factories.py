@@ -1,5 +1,6 @@
 import factory
 from factory.alchemy import SQLAlchemyModelFactory
+
 from src.core.models import SystemLog
 from src.modules.users.infrastructure.models import User
 

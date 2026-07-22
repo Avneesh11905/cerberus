@@ -1,15 +1,19 @@
-from uuid import UUID
+from src.modules.projects.application.dtos.project_dtos import GetProjectDTO
+from src.modules.projects.application.ports.projects_unit_of_work import ProjectUoWPort
+from src.modules.projects.application.queries.project_queries import GetProjectQuery
 
-from src.modules.projects.application.ports import ProjectQueryRepositoryPort
-from src.modules.projects.domain.entities import ProjectEntity
 from .base_project import BaseProjectUseCase
 
 
-class GetProjectUseCase[SessionType](BaseProjectUseCase[SessionType]):
-    def __init__(self, query_repository: ProjectQueryRepositoryPort):
-        super().__init__(query_repository)
+class GetProjectUseCase(BaseProjectUseCase):
+    def __init__(self, uow: ProjectUoWPort):
+        self.uow = uow
+        super().__init__()
 
-    async def execute(
-        self, session: SessionType, project_id: UUID, user_id: UUID
-    ) -> ProjectEntity:
-        return await self._get_project_or_404(session, project_id, user_id)
+    async def execute(self, query: GetProjectQuery) -> GetProjectDTO:
+        async with self.uow:
+            return GetProjectDTO(
+                project=await self._get_project_or_404(
+                    self.uow, query.project_id, query.user_id
+                )
+            )

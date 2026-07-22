@@ -1,13 +1,16 @@
-import pytest
-from uuid import uuid4
 from datetime import datetime, timedelta, timezone
+from uuid import uuid4
+
+import pytest
 import time_machine
-from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
-from src.modules.auth.authentication.adapters.security.access_token import (
+from cryptography.hazmat.primitives.asymmetric import rsa
+
+from src.modules.authentication.domain.entities import UserIdentity
+from src.modules.authentication.infrastructure.security.access_token import (
     JWTAccessTokenAdapter,
 )
-from src.modules.auth.authentication.domain.entities import UserIdentity
+from src.shared.domain.value_objects import EmailAddress
 
 
 def generate_keys():
@@ -43,7 +46,7 @@ def jwt_adapter(keys):
 def test_jwt_creation_and_verification(jwt_adapter):
     user = UserIdentity(
         id=uuid4(),
-        email="test@example.com",
+        email=EmailAddress("test@example.com"),
         is_verified=True,
         role="TENANT",
     )
@@ -62,7 +65,7 @@ def test_jwt_creation_and_verification(jwt_adapter):
 def test_jwt_expiry(jwt_adapter):
     user = UserIdentity(
         id=uuid4(),
-        email="test@example.com",
+        email=EmailAddress("test@example.com"),
         is_verified=True,
     )
 
@@ -85,7 +88,7 @@ def test_jwt_expiry(jwt_adapter):
 def test_jwt_invalid_signature(jwt_adapter, keys):
     user = UserIdentity(
         id=uuid4(),
-        email="test@example.com",
+        email=EmailAddress("test@example.com"),
         is_verified=True,
     )
     token = jwt_adapter.create(user)

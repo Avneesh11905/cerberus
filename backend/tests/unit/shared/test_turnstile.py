@@ -1,10 +1,10 @@
+import httpx
 import pytest
 import respx
-import httpx
 from httpx import Response
 
 from src.core.config.security import TurnstileSettings
-from src.shared.adapters.turnstile import CloudflareTurnstileAdapter
+from src.shared.infrastructure.adapters.turnstile import CloudflareTurnstileAdapter
 
 
 @pytest.mark.asyncio

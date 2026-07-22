@@ -1,4 +1,5 @@
 import pytest
+
 from src.core.config.app import URLSettings
 from src.core.config.security import SecuritySettings
 

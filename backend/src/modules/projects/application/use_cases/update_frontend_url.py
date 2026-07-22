@@ -1,31 +1,29 @@
 from datetime import datetime, timezone
-from uuid import UUID
 
-from src.modules.projects.application.ports import (
-    ProjectCommandRepositoryPort,
-    ProjectQueryRepositoryPort,
+from src.modules.projects.application.commands.project_commands import (
+    UpdateFrontendUrlCommand,
 )
-from src.modules.projects.domain.entities import ProjectEntity
+from src.modules.projects.application.dtos.project_dtos import UpdateFrontendUrlDTO
+from src.modules.projects.application.ports.projects_unit_of_work import ProjectUoWPort
+from src.shared.domain.value_objects import HttpsUrl
+
 from .base_project import BaseProjectUseCase
 
 
-class UpdateFrontendUrlUseCase[SessionType](BaseProjectUseCase[SessionType]):
-    def __init__(
-        self,
-        query_repository: ProjectQueryRepositoryPort,
-        command_repository: ProjectCommandRepositoryPort,
-    ):
-        super().__init__(query_repository)
-        self.command_repository = command_repository
+class UpdateFrontendUrlUseCase(BaseProjectUseCase):
+    def __init__(self, uow: ProjectUoWPort):
+        self.uow = uow
+        super().__init__()
 
-    async def execute(
-        self,
-        session: SessionType,
-        project_id: UUID,
-        user_id: UUID,
-        frontend_url: str | None,
-    ) -> ProjectEntity:
-        project = await self._get_project_or_404(session, project_id, user_id)
-        project.frontend_url = frontend_url
-        project.updated_at = datetime.now(timezone.utc)
-        return await self.command_repository.save(session, project)
+    async def execute(self, command: UpdateFrontendUrlCommand) -> UpdateFrontendUrlDTO:
+        async with self.uow:
+            project = await self._get_project_or_404(
+                self.uow, command.project_id, command.user_id
+            )
+            project.frontend_url = (
+                HttpsUrl(command.frontend_url) if command.frontend_url else None
+            )
+            project.updated_at = datetime.now(timezone.utc)
+            return UpdateFrontendUrlDTO(
+                project=await self.uow.project_command_repo.save(project)
+            )

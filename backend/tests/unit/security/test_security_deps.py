@@ -1,11 +1,15 @@
-import pytest
-from unittest.mock import Mock
-from fastapi import Request
 import hashlib
+from unittest.mock import Mock
+
+import pytest
+from fastapi import Request
 from itsdangerous import URLSafeSerializer
-from src.core.config import security_settings
-from src.modules.auth.authentication.api.dependencies.security import verify_csrf
-from src.modules.auth.authentication.domain.exceptions import CSRFValidationException
+
+from src.core.config import get_settings
+from src.modules.authentication.domain.exceptions import CSRFValidationException
+from src.modules.authentication.presentation.api.dependencies.security import (
+    verify_csrf,
+)
 
 
 def test_verify_csrf_success():
@@ -13,7 +17,9 @@ def test_verify_csrf_success():
     refresh_token = "some-refresh-token"
     refresh_token_hash = hashlib.sha256(refresh_token.encode()).hexdigest()
 
-    csrf_signer = URLSafeSerializer(security_settings.SESSION_SECRET, salt="csrf-token")
+    csrf_signer = URLSafeSerializer(
+        get_settings().security.SESSION_SECRET, salt="csrf-token"
+    )
     valid_csrf = csrf_signer.dumps(refresh_token_hash)
 
     request = Mock(spec=Request)
@@ -94,7 +100,9 @@ def test_verify_csrf_tampered_refresh_token():
     refresh_token = "some-refresh-token"
     refresh_token_hash = hashlib.sha256(refresh_token.encode()).hexdigest()
 
-    csrf_signer = URLSafeSerializer(security_settings.SESSION_SECRET, salt="csrf-token")
+    csrf_signer = URLSafeSerializer(
+        get_settings().security.SESSION_SECRET, salt="csrf-token"
+    )
     valid_csrf = csrf_signer.dumps(refresh_token_hash)
 
     request = Mock(spec=Request)

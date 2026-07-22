@@ -1,14 +1,19 @@
-from datetime import date
-from uuid import UUID
-
-from src.modules.analytics.application.ports import (
-    AnalyticsRepositoryPort,
+from src.modules.analytics.application.dtos.metrics_dtos import TenantMetricsDTO
+from src.modules.analytics.application.ports.analytics_unit_of_work import (
+    AnalyticsUoWPort,
+)
+from src.modules.analytics.application.queries.metrics_queries import (
+    GetTenantMetricsQuery,
 )
 
 
 class GetTenantMetricsUseCase:
-    def __init__(self, repository: AnalyticsRepositoryPort):
-        self.repository = repository
+    def __init__(self, uow: AnalyticsUoWPort):
+        self.uow = uow
 
-    async def execute(self, tenant_id: UUID, start_date: date, end_date: date) -> list:
-        return await self.repository.get_tenant_metrics(tenant_id, start_date, end_date)
+    async def execute(self, query: GetTenantMetricsQuery) -> TenantMetricsDTO:
+        async with self.uow:
+            data = await self.uow.analytics_repo.get_tenant_metrics(
+                query.tenant_id, query.start_date, query.end_date
+            )
+            return TenantMetricsDTO(data=data)

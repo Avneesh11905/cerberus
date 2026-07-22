@@ -1,23 +1,19 @@
-from uuid import UUID
-
-from src.modules.projects.application.ports import (
-    ProjectCommandRepositoryPort,
-    ProjectQueryRepositoryPort,
+from src.modules.projects.application.commands.project_commands import (
+    DeleteProjectCommand,
 )
+from src.modules.projects.application.ports.projects_unit_of_work import ProjectUoWPort
+
 from .base_project import BaseProjectUseCase
 
 
-class DeleteProjectUseCase[SessionType](BaseProjectUseCase[SessionType]):
-    def __init__(
-        self,
-        query_repository: ProjectQueryRepositoryPort,
-        command_repository: ProjectCommandRepositoryPort,
-    ):
-        super().__init__(query_repository)
-        self.command_repository = command_repository
+class DeleteProjectUseCase(BaseProjectUseCase):
+    def __init__(self, uow: ProjectUoWPort):
+        self.uow = uow
+        super().__init__()
 
-    async def execute(
-        self, session: SessionType, project_id: UUID, user_id: UUID
-    ) -> None:
-        project = await self._get_project_or_404(session, project_id, user_id)
-        await self.command_repository.delete(session, project.id)
+    async def execute(self, command: DeleteProjectCommand) -> None:
+        async with self.uow:
+            project = await self._get_project_or_404(
+                self.uow, command.project_id, command.user_id
+            )
+            await self.uow.project_command_repo.delete(project.id)

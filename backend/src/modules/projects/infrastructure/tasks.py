@@ -5,7 +5,7 @@ from sqlalchemy import select
 
 from src.core.database import AsyncSessionLocal
 from src.modules.projects.infrastructure.models import Project
-from src.shared.adapters import AsyncSQLLogger
+from src.shared.infrastructure.adapters import AsyncSQLLogger
 
 logger = AsyncSQLLogger("ProjectConfigSyncTask")
 _sync_task: asyncio.Task | None = None

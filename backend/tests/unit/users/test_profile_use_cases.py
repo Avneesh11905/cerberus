@@ -1,12 +1,28 @@
-import pytest
-from unittest.mock import AsyncMock, patch
-from uuid import uuid4
+import dataclasses
+import json
 from datetime import datetime, timezone
+from unittest.mock import AsyncMock
+from uuid import uuid4
 
-from src.modules.users.application.use_cases.update_profile import UpdateProfileUseCase
+import pytest
+
+from src.modules.users.application.commands.user_commands import (
+    DeleteAccountCommand,
+    UpdateProfileCommand,
+)
 from src.modules.users.application.use_cases.delete_account import DeleteAccountUseCase
-from src.modules.users.domain.exceptions import UserNotFoundException
+from src.modules.users.application.use_cases.update_profile import UpdateProfileUseCase
 from src.modules.users.domain.entities import UserProfile
+from src.modules.users.domain.exceptions import UserNotFoundException
+from src.shared.domain.value_objects import EmailAddress
+
+
+@pytest.fixture
+def mock_uow(mock_profile_repo):
+    uow = AsyncMock()
+    uow.profile_repo = mock_profile_repo
+    uow.user_command_repo = mock_profile_repo  # just use the same mock for both
+    return uow
 
 
 @pytest.fixture
@@ -23,27 +39,33 @@ def mock_cache():
 def dummy_profile():
     return UserProfile(
         id=uuid4(),
-        email="test@example.com",
+        email=EmailAddress("test@example.com"),
         receive_updates=True,
     )
 
 
 @pytest.mark.asyncio
-async def test_update_profile_cache_hit(mock_profile_repo, mock_cache, dummy_profile):
-    mock_cache.get_dict.return_value = dummy_profile.model_dump(mode="json")
+async def test_update_profile_cache_hit(
+    mock_profile_repo, mock_cache, dummy_profile, mock_uow
+):
+    mock_cache.get_dict.return_value = json.loads(
+        json.dumps(dataclasses.asdict(dummy_profile), default=str)
+    )
 
-    async def return_profile(session, profile):
+    async def return_profile(profile):
         return profile
 
     mock_profile_repo.save_profile.side_effect = return_profile
 
-    use_case: UpdateProfileUseCase = UpdateProfileUseCase(mock_profile_repo, mock_cache)
-    result = await use_case.execute(
-        session=None,
+    use_case: UpdateProfileUseCase = UpdateProfileUseCase(
+        uow=mock_uow, cache=mock_cache
+    )
+    command = UpdateProfileCommand(
         user_id=dummy_profile.id,
         name="New Name",
         picture="https://example.com/pic.jpg",
     )
+    result = await use_case.execute(command=command)
 
     assert result.name == "New Name"
     assert result.picture == "https://example.com/pic.jpg"
@@ -53,62 +75,74 @@ async def test_update_profile_cache_hit(mock_profile_repo, mock_cache, dummy_pro
 
 
 @pytest.mark.asyncio
-async def test_update_profile_db_fallback(mock_profile_repo, mock_cache, dummy_profile):
+async def test_update_profile_db_fallback(
+    mock_profile_repo, mock_cache, dummy_profile, mock_uow
+):
     mock_cache.get_dict.return_value = None
     mock_profile_repo.get_profile.return_value = dummy_profile
     mock_profile_repo.save_profile.return_value = dummy_profile
 
-    use_case: UpdateProfileUseCase = UpdateProfileUseCase(mock_profile_repo, mock_cache)
-    result = await use_case.execute(
-        session=None,
+    use_case: UpdateProfileUseCase = UpdateProfileUseCase(
+        uow=mock_uow, cache=mock_cache
+    )
+    command = UpdateProfileCommand(
         user_id=dummy_profile.id,
         receive_updates=False,
     )
+    result = await use_case.execute(command=command)
 
     assert result.receive_updates is False
-    mock_profile_repo.get_profile.assert_called_once_with(None, dummy_profile.id)
+    mock_profile_repo.get_profile.assert_called_once_with(dummy_profile.id)
 
 
 @pytest.mark.asyncio
-async def test_update_profile_not_found(mock_profile_repo, mock_cache):
+async def test_update_profile_not_found(mock_profile_repo, mock_cache, mock_uow):
     mock_cache.get_dict.return_value = None
     mock_profile_repo.get_profile.return_value = None
 
-    use_case: UpdateProfileUseCase = UpdateProfileUseCase(mock_profile_repo, mock_cache)
+    use_case: UpdateProfileUseCase = UpdateProfileUseCase(
+        uow=mock_uow, cache=mock_cache
+    )
     with pytest.raises(UserNotFoundException):
-        await use_case.execute(session=None, user_id=uuid4())
+        command = UpdateProfileCommand(user_id=uuid4())
+        await use_case.execute(command=command)
 
 
 @pytest.mark.asyncio
-async def test_delete_account_success(mock_profile_repo, mock_cache):
-    use_case: DeleteAccountUseCase = DeleteAccountUseCase(mock_profile_repo, mock_cache)
+async def test_delete_account_success(mock_profile_repo, mock_cache, mock_uow):
+    use_case: DeleteAccountUseCase = DeleteAccountUseCase(
+        uow=mock_uow, cache=mock_cache
+    )
     user_id = uuid4()
 
-    await use_case.execute(session=None, user_id=user_id, jwt_jti=None, jwt_exp=None)
+    command = DeleteAccountCommand(user_id=user_id, jwt_jti=None, jwt_exp=None)
+    await use_case.execute(command=command)
 
-    mock_profile_repo.delete_user.assert_called_once_with(None, user_id)
+    mock_profile_repo.delete_user.assert_called_once_with(user_id)
     mock_cache.delete_key.assert_called_once_with(f"user_profile:{user_id}")
     mock_cache.set_string.assert_not_called()
 
 
 @pytest.mark.asyncio
-@patch("src.modules.users.application.use_cases.delete_account.token_settings")
 async def test_delete_account_blacklist_jwt(
-    mock_token_settings, mock_profile_repo, mock_cache
+    mocker, mock_profile_repo, mock_cache, mock_uow
 ):
-    mock_token_settings.ACCESS_TOKEN_LIFETIME_MINUTES = 15
-    use_case: DeleteAccountUseCase = DeleteAccountUseCase(mock_profile_repo, mock_cache)
+    from src.core.config import get_settings
+
+    mocker.patch.object(get_settings().token, "ACCESS_TOKEN_LIFETIME_MINUTES", 15)
+    use_case: DeleteAccountUseCase = DeleteAccountUseCase(
+        uow=mock_uow, cache=mock_cache
+    )
     user_id = uuid4()
 
     # Simulate a token expiring in 10 minutes
     now = int(datetime.now(timezone.utc).timestamp())
     exp = now + 600
 
-    await use_case.execute(
-        session=None, user_id=user_id, jwt_jti="dummy-jti", jwt_exp=exp
-    )
+    command = DeleteAccountCommand(user_id=user_id, jwt_jti="dummy-jti", jwt_exp=exp)
+    await use_case.execute(command=command)
 
-    mock_profile_repo.delete_user.assert_called_once_with(None, user_id)
+    mock_profile_repo.delete_user.assert_called_once_with(user_id)
     # The TTL should be approximately 600 seconds
     call_args = mock_cache.set_string.call_args[0]
     assert call_args[0] == "blacklist:dummy-jti"
@@ -117,17 +151,18 @@ async def test_delete_account_blacklist_jwt(
 
 
 @pytest.mark.asyncio
-async def test_delete_account_expired_jwt(mock_profile_repo, mock_cache):
-    use_case: DeleteAccountUseCase = DeleteAccountUseCase(mock_profile_repo, mock_cache)
+async def test_delete_account_expired_jwt(mock_profile_repo, mock_cache, mock_uow):
+    use_case: DeleteAccountUseCase = DeleteAccountUseCase(
+        uow=mock_uow, cache=mock_cache
+    )
     user_id = uuid4()
 
     # Simulate a token that already expired
     now = int(datetime.now(timezone.utc).timestamp())
     exp = now - 600
 
-    await use_case.execute(
-        session=None, user_id=user_id, jwt_jti="dummy-jti", jwt_exp=exp
-    )
+    command = DeleteAccountCommand(user_id=user_id, jwt_jti="dummy-jti", jwt_exp=exp)
+    await use_case.execute(command=command)
 
     # Because ttl <= 0, we shouldn't blacklist it
     mock_cache.set_string.assert_not_called()

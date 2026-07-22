@@ -1,5 +1,6 @@
-import pytest
 import re
+
+import pytest
 from httpx import AsyncClient
 
 
@@ -51,7 +52,7 @@ async def test_registration_to_login_journey(
 
     my_celery_app.conf.task_always_eager = True
 
-    resp = await client.post("/v1.0/auth/register", json=reg_data)
+    resp = await client.post("/v1/auth/register", json=reg_data)
     assert resp.status_code == 201, resp.json()
 
     # 2. OTP Extraction
@@ -67,12 +68,12 @@ async def test_registration_to_login_journey(
 
     # 3. OTP Verification
     verify_data = {"email": "e2e_journey@example.com", "otp": otp}
-    resp = await client.post("/v1.0/auth/verify-email", json=verify_data)
+    resp = await client.post("/v1/auth/verify-email", json=verify_data)
     assert resp.status_code == 200, resp.json()
 
     # 4. Login
     login_data = {"email": "e2e_journey@example.com", "password": "StrongPassword123!"}
-    resp = await client.post("/v1.0/auth/login", json=login_data)
+    resp = await client.post("/v1/auth/login", json=login_data)
     assert resp.status_code == 200, resp.json()
 
     tokens = resp.json()
@@ -80,7 +81,7 @@ async def test_registration_to_login_journey(
 
     # 5. Protected Route Access
     headers = {"Authorization": f"Bearer {access_token}"}
-    resp = await client.get("/v1.0/users/me", headers=headers)
+    resp = await client.get("/v1/users/me", headers=headers)
     assert resp.status_code == 200, resp.json()
     me_data = resp.json()
     assert me_data["email"] == "e2e_journey@example.com"

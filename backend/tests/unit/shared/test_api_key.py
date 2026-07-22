@@ -1,6 +1,6 @@
 from uuid import uuid4
 
-from src.shared.adapters.api_key import ApiKeyAdapter
+from src.shared.infrastructure.adapters.api_key import ApiKeyAdapter
 
 
 def test_api_key_generation_and_hashing():

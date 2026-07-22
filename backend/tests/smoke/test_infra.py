@@ -1,6 +1,6 @@
 import pytest
 
-from src.core.config import database_settings
+from src.core.config import get_settings
 
 
 @pytest.mark.smoke
@@ -14,5 +14,5 @@ def test_infra_containers_are_up(infra_containers):
     assert infra_containers["redis_base"] is not None
 
     # Assert that pydantic settings were patched
-    assert database_settings.PGSQL_URL == infra_containers["pg_url_asyncpg"]
-    assert database_settings.CACHE_URL == f"{infra_containers['redis_base']}/0"
+    assert get_settings().database.PGSQL_URL == infra_containers["pg_url_asyncpg"]
+    assert get_settings().database.CACHE_URL == f"{infra_containers['redis_base']}/0"

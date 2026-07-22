@@ -1,11 +1,12 @@
-import pytest
-from unittest.mock import MagicMock
 from datetime import datetime, timedelta, timezone
-from sqlalchemy import select, func
+from unittest.mock import MagicMock
+
+import pytest
+from sqlalchemy import func, select
 
 from src.core.celery_app import celery_app
-from src.shared.adapters.task_runner import CeleryTaskRunnerAdapter
 from src.core.models import SystemLog
+from src.shared.infrastructure.adapters.task_runner import CeleryTaskRunnerAdapter
 
 
 @pytest.mark.asyncio
@@ -52,11 +53,11 @@ async def test_celery_app_config():
 
 @pytest.mark.asyncio
 async def test_clean_old_system_logs(db_session, infra_containers, monkeypatch):
-    from src.shared.infrastructure import tasks as tasks_module
-    from src.core.config import log_settings
-
     # Patch AsyncSessionLocal to just return an async context manager yielding db_session
     from contextlib import asynccontextmanager
+
+    from src.core.config import get_settings
+    from src.modules.superadmin.infrastructure import tasks as tasks_module
 
     @asynccontextmanager
     async def get_test_session():
@@ -66,7 +67,7 @@ async def test_clean_old_system_logs(db_session, infra_containers, monkeypatch):
 
     # Insert one old log and one new log
     old_date = datetime.now(timezone.utc) - timedelta(
-        days=log_settings.RETENTION_DAYS + 5
+        days=get_settings().log.RETENTION_DAYS + 5
     )
     new_date = datetime.now(timezone.utc)
 
@@ -104,10 +105,10 @@ async def test_clean_old_system_logs(db_session, infra_containers, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_insert_log_batch_task(db_session, infra_containers, monkeypatch):
-    from src.shared.infrastructure import tasks as tasks_module
-
     # Patch AsyncSessionLocal to use db_session
     from contextlib import asynccontextmanager
+
+    from src.modules.superadmin.infrastructure import tasks as tasks_module
 
     @asynccontextmanager
     async def get_test_session():

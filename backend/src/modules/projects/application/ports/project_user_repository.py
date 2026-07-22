@@ -9,10 +9,9 @@ from uuid import UUID
 from src.modules.users.domain.entities import UserProfile
 
 
-class ProjectUserRepositoryPort[SessionType](Protocol):
+class ProjectUserRepositoryPort(Protocol):
     async def list_project_users(
         self,
-        session: SessionType,
         project_id: UUID,
         skip: int = 0,
         limit: int = 100,
@@ -22,25 +21,25 @@ class ProjectUserRepositoryPort[SessionType](Protocol):
         ...
 
     async def count_project_users(
-        self, session: SessionType, project_id: UUID, search: str | None = None
+        self, project_id: UUID, search: str | None = None
     ) -> int:
         """Count the total number of users for a specific project matching the search."""
         ...
 
     async def update_user_status(
-        self, session: SessionType, project_id: UUID, user_id: UUID, is_active: bool
+        self, project_id: UUID, user_id: UUID, is_active: bool
     ) -> UserProfile | None:
         """Update the active status of a user within a project."""
         ...
 
     async def update_tenant_user_status(
-        self, session: SessionType, tenant_id: UUID, email: str, is_active: bool
+        self, tenant_id: UUID, email: str, is_active: bool
     ) -> Sequence[UserProfile]:
         """Update the active status of a user across all projects owned by a tenant."""
         ...
 
     async def update_user_claims(
-        self, session: SessionType, project_id: UUID, user_id: UUID, overrides: dict
+        self, project_id: UUID, user_id: UUID, overrides: dict
     ) -> UserProfile | None:
         """Update custom claims for a user in a project."""
         ...

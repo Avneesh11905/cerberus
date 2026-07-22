@@ -1,13 +1,5 @@
-from typing import TYPE_CHECKING, Optional
-
-if TYPE_CHECKING:
-    from src.modules.auth.authentication.infrastructure.models import (
-        OAuthAccount,
-        Password,
-    )
-    from src.modules.projects.infrastructure.models import Project
-
 from datetime import datetime, timezone
+from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
 from sqlalchemy import (
@@ -24,6 +16,13 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid6 import uuid7
 
 from src.core.database import Base
+
+if TYPE_CHECKING:
+    from src.modules.authentication.infrastructure.models import (
+        OAuthAccount,
+        Password,
+    )
+    from src.modules.projects.infrastructure.models import Project
 
 
 class User(Base):

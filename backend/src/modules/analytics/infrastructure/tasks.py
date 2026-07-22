@@ -33,10 +33,11 @@ def record_analytics_event(
     )
 
     async def _save():
-        from src.core.container import app_container
+        from src.shared.infrastructure.adapters import SQLAlchemyUoWAdapter
 
-        repo = app_container.analytics_repo
-        await repo.save_event(event)
+        async with SQLAlchemyUoWAdapter() as uow:
+            repo = uow.analytics_repo
+            await repo.save_event(event)
 
     try:
         loop = asyncio.get_running_loop()

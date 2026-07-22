@@ -1,10 +1,5 @@
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from src.modules.superadmin.infrastructure.models import Tenant
-    from src.modules.users.infrastructure.models import User
-
 from datetime import datetime, timezone
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import (
@@ -20,6 +15,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid6 import uuid7
 
 from src.core.database import Base
+
+if TYPE_CHECKING:
+    from src.modules.superadmin.infrastructure.models import Tenant
+    from src.modules.users.infrastructure.models import User
 
 
 class Project(Base):

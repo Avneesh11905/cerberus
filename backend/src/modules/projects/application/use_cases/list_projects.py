@@ -1,16 +1,19 @@
-from typing import Sequence
-from uuid import UUID
+from src.modules.projects.application.dtos.project_dtos import ListProjectsDTO
+from src.modules.projects.application.ports.projects_unit_of_work import ProjectUoWPort
+from src.modules.projects.application.queries.project_queries import ListProjectsQuery
 
-from src.modules.projects.application.ports import ProjectQueryRepositoryPort
-from src.modules.projects.domain.entities import ProjectEntity
 from .base_project import BaseProjectUseCase
 
 
-class ListProjectsUseCase[SessionType](BaseProjectUseCase[SessionType]):
-    def __init__(self, query_repository: ProjectQueryRepositoryPort):
-        super().__init__(query_repository)
+class ListProjectsUseCase(BaseProjectUseCase):
+    def __init__(self, uow: ProjectUoWPort):
+        self.uow = uow
+        super().__init__()
 
-    async def execute(
-        self, session: SessionType, user_id: UUID
-    ) -> Sequence[ProjectEntity]:
-        return await self.query_repository.get_all_for_tenant(session, user_id)
+    async def execute(self, query: ListProjectsQuery) -> ListProjectsDTO:
+        async with self.uow:
+            return ListProjectsDTO(
+                projects=await self.uow.project_query_repo.get_all_for_tenant(
+                    query.user_id
+                )
+            )

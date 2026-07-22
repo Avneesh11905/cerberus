@@ -1,3 +1,7 @@
+from functools import lru_cache
+
+from pydantic_settings import BaseSettings
+
 from .app import CookieSettings, CoreSettings, LogSettings, URLSettings
 from .auth import (
     AccountSettings,
@@ -5,21 +9,31 @@ from .auth import (
     TokenSettings,
     VerificationSettings,
 )
-from .database import DatabaseSettings
-from .email import EmailSettings
-from .oauth import OAuthSettings
+from .database import DatabaseSettings as DatabaseSettings
+from .email import EmailSettings as EmailSettings
+from .oauth import OAuthSettings as OAuthSettings
 from .security import SecuritySettings, TurnstileSettings
 
-url_settings = URLSettings()  # type: ignore
-core_settings = CoreSettings()  # type: ignore
-oauth_settings = OAuthSettings()  # type: ignore
-database_settings = DatabaseSettings()  # type: ignore
-email_settings = EmailSettings()  # type: ignore
-token_settings = TokenSettings()  # type: ignore
-rate_limit_settings = RateLimitSettings()  # type: ignore
-verification_settings = VerificationSettings()  # type: ignore
-log_settings = LogSettings()  # type: ignore
-security_settings = SecuritySettings()  # type: ignore
-turnstile_settings = TurnstileSettings()  # type: ignore
-account_settings = AccountSettings()  # type: ignore
-cookie_settings = CookieSettings(env=core_settings.ENV)
+
+class AppConfig(BaseSettings):
+    url: URLSettings = URLSettings()
+    core: CoreSettings = CoreSettings()
+    oauth: OAuthSettings = OAuthSettings()
+    database: DatabaseSettings = DatabaseSettings()  # type: ignore
+    email: EmailSettings = EmailSettings()  # type: ignore
+    token: TokenSettings = TokenSettings()
+    rate_limit: RateLimitSettings = RateLimitSettings()
+    verification: VerificationSettings = VerificationSettings()
+    log: LogSettings = LogSettings()
+    security: SecuritySettings = SecuritySettings()  # type: ignore
+    turnstile: TurnstileSettings = TurnstileSettings()
+    account: AccountSettings = AccountSettings()
+
+    @property
+    def cookie(self) -> CookieSettings:
+        return CookieSettings(env=self.core.ENV)
+
+
+@lru_cache()
+def get_settings() -> AppConfig:
+    return AppConfig()

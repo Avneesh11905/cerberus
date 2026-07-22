@@ -1,11 +1,19 @@
-import pytest
 import uuid
+
+import pytest
 from httpx import AsyncClient
 
-from src.modules.auth.authentication.api.dependencies.project import (
+from src.modules.authentication.presentation.api.dependencies.project import (
     get_required_project_id,
 )
+from src.modules.projects.application.dtos.project_dtos import (
+    GetUserClaimsDTO,
+    ListProjectUsersDTO,
+    SetProjectUserActiveStatusDTO,
+    UpdateUserClaimsDTO,
+)
 from src.modules.users.domain.entities import UserProfile
+from src.shared.domain.value_objects import EmailAddress
 
 
 @pytest.fixture
@@ -31,16 +39,16 @@ async def test_list_project_users_m2m_success(
     mock_users = [
         UserProfile(
             id=mock_user_id,
-            email="test@example.com",
+            email=EmailAddress("test@example.com"),
             receive_updates=False,
             project_id=override_project_id_dep,
             is_active=True,
         )
     ]
-    mock_execute.return_value = (mock_users, 1)
+    mock_execute.return_value = ListProjectUsersDTO(users=mock_users, total=1)
 
     response = await client.get(
-        "/v1.0/projects/server/users",
+        "/v1/projects/server/users",
         params={"page": 1, "size": 50, "search": "test"},
     )
 
@@ -54,11 +62,12 @@ async def test_list_project_users_m2m_success(
 
     mock_execute.assert_called_once()
     args, kwargs = mock_execute.call_args
-    assert args[1] == override_project_id_dep
-    assert args[2] is None  # tenant_id
-    assert kwargs["skip"] == 0
-    assert kwargs["limit"] == 50
-    assert kwargs["search"] == "test"
+    query = args[0]
+    assert query.project_id == override_project_id_dep
+    assert query.tenant_id is None
+    assert query.skip == 0
+    assert query.limit == 50
+    assert query.search == "test"
 
 
 @pytest.mark.asyncio
@@ -72,15 +81,15 @@ async def test_set_project_user_status_m2m_success(
     target_user_id = uuid.uuid4()
     mock_updated_user = UserProfile(
         id=target_user_id,
-        email="test@example.com",
+        email=EmailAddress("test@example.com"),
         receive_updates=False,
         project_id=override_project_id_dep,
         is_active=False,
     )
-    mock_execute.return_value = mock_updated_user
+    mock_execute.return_value = SetProjectUserActiveStatusDTO(user=mock_updated_user)
 
     response = await client.put(
-        f"/v1.0/projects/server/users/{target_user_id}/status",
+        f"/v1/projects/server/users/{target_user_id}/status",
         json={"is_active": False},
     )
 
@@ -91,11 +100,12 @@ async def test_set_project_user_status_m2m_success(
     assert data["is_active"] is False
 
     mock_execute.assert_called_once()
-    args, _ = mock_execute.call_args
-    assert args[1] == override_project_id_dep
-    assert args[2] is None  # tenant_id
-    assert args[3] == target_user_id
-    assert args[4] is False
+    args, kwargs = mock_execute.call_args
+    command = args[0]
+    assert command.project_id == override_project_id_dep
+    assert command.tenant_id is None
+    assert command.user_id == target_user_id
+    assert command.is_active is False
 
 
 @pytest.mark.asyncio
@@ -107,14 +117,16 @@ async def test_get_user_claims_m2m_success(
     )
 
     target_user_id = uuid.uuid4()
-    mock_execute.return_value = {
-        "default_claims": {"role": "user"},
-        "user_overrides": {"role": "admin"},
-        "effective_claims": {"role": "admin"},
-    }
+    mock_execute.return_value = GetUserClaimsDTO(
+        claims={
+            "default_claims": {"role": "user"},
+            "user_overrides": {"role": "admin"},
+            "effective_claims": {"role": "admin"},
+        }
+    )
 
     response = await client.get(
-        f"/v1.0/projects/server/users/{target_user_id}/claims",
+        f"/v1/projects/server/users/{target_user_id}/claims",
     )
 
     assert response.status_code == 200
@@ -125,10 +137,11 @@ async def test_get_user_claims_m2m_success(
     assert data["effective_claims"] == {"role": "admin"}
 
     mock_execute.assert_called_once()
-    args, _ = mock_execute.call_args
-    assert args[1] == override_project_id_dep
-    assert args[2] is None  # tenant_id
-    assert args[3] == target_user_id
+    args, kwargs = mock_execute.call_args
+    query = args[0]
+    assert query.project_id == override_project_id_dep
+    assert query.tenant_id is None
+    assert query.user_id == target_user_id
 
 
 @pytest.mark.asyncio
@@ -142,16 +155,16 @@ async def test_update_user_claims_m2m_success(
     target_user_id = uuid.uuid4()
     mock_updated_user = UserProfile(
         id=target_user_id,
-        email="test@example.com",
+        email=EmailAddress("test@example.com"),
         receive_updates=False,
         project_id=override_project_id_dep,
         is_active=True,
         custom_claims={"plan": "premium"},
     )
-    mock_execute.return_value = mock_updated_user
+    mock_execute.return_value = UpdateUserClaimsDTO(user=mock_updated_user)
 
     response = await client.patch(
-        f"/v1.0/projects/server/users/{target_user_id}/claims",
+        f"/v1/projects/server/users/{target_user_id}/claims",
         json={"overrides": {"plan": "premium"}},
     )
 
@@ -162,30 +175,31 @@ async def test_update_user_claims_m2m_success(
     assert data["effective_claims"] == {"plan": "premium"}
 
     mock_execute.assert_called_once()
-    args, _ = mock_execute.call_args
-    assert args[1] == override_project_id_dep
-    assert args[2] is None  # tenant_id
-    assert args[3] == target_user_id
-    assert args[4] == {"plan": "premium"}
+    args, kwargs = mock_execute.call_args
+    command = args[0]
+    assert command.project_id == override_project_id_dep
+    assert command.tenant_id is None
+    assert command.user_id == target_user_id
+    assert command.overrides == {"plan": "premium"}
 
 
 @pytest.mark.asyncio
 async def test_project_server_endpoints_unauthenticated(client: AsyncClient):
     # Do not override project_id dependency so it fails authentication naturally
-    response = await client.get("/v1.0/projects/server/users")
+    response = await client.get("/v1/projects/server/users")
     assert response.status_code == 401
 
     uid = uuid.uuid4()
     response2 = await client.put(
-        f"/v1.0/projects/server/users/{uid}/status", json={"is_active": False}
+        f"/v1/projects/server/users/{uid}/status", json={"is_active": False}
     )
     assert response2.status_code == 401
 
-    response3 = await client.get(f"/v1.0/projects/server/users/{uid}/claims")
+    response3 = await client.get(f"/v1/projects/server/users/{uid}/claims")
     assert response3.status_code == 401
 
     response4 = await client.patch(
-        f"/v1.0/projects/server/users/{uid}/claims", json={"overrides": {}}
+        f"/v1/projects/server/users/{uid}/claims", json={"overrides": {}}
     )
     assert response4.status_code == 401
 
@@ -195,12 +209,12 @@ async def test_project_server_endpoints_validation_error(
     client: AsyncClient, override_project_id_dep
 ):
     # Missing required body
-    response = await client.put("/v1.0/projects/server/users/invalid-uuid/status")
+    response = await client.put("/v1/projects/server/users/invalid-uuid/status")
     assert response.status_code == 422
 
     uid = uuid.uuid4()
     # Invalid overrides field type
     response2 = await client.patch(
-        f"/v1.0/projects/server/users/{uid}/claims", json={"overrides": "not-a-dict"}
+        f"/v1/projects/server/users/{uid}/claims", json={"overrides": "not-a-dict"}
     )
     assert response2.status_code == 422

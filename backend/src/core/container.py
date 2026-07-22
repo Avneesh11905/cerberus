@@ -3,68 +3,49 @@ Shared Infrastructure Container
 Instantiates cross-cutting infrastructure adapters exactly once.
 """
 
-from pathlib import Path
-from redis.asyncio import Redis
 import os
+from pathlib import Path
 
-from src.core.config import (
-    core_settings,
-    database_settings,
-    email_settings,
-    security_settings,
-    token_settings,
-    turnstile_settings,
-    url_settings,
+from redis.asyncio import Redis
+
+from src.core.config import AppConfig, get_settings
+from src.modules.authentication.infrastructure.external.email_sender import (
+    AuthEmailSenderAdapter,
 )
-
-from sqlalchemy.ext.asyncio import AsyncSession
-from src.core.database import AsyncSessionLocal
-from src.modules.analytics.adapters import SQLAnalyticsRepositoryAdapter
-from src.modules.users.adapters import SQLUserProfileRepositoryAdapter
-from src.modules.auth.authorization.infrastructure.project_claims_provider import (
+from src.modules.authentication.infrastructure.project_claims_provider import (
     ProjectClaimsProviderAdapter,
 )
-from src.modules.auth.authorization.application.services.role_provisioning import (
-    RoleProvisioningService,
-)
-from src.modules.auth.authentication.adapters import (
-    Argon2PasswordHasherAdapter,
-    AuthEmailSenderAdapter,
-    DBRefreshTokenRepositoryAdapter,
+from src.modules.authentication.infrastructure.security.access_token import (
     JWTAccessTokenAdapter,
-    SQLUserQueryRepositoryAdapter,
-    SQLUserCommandRepositoryAdapter,
-    SQLUserMaintenanceRepositoryAdapter,
+)
+from src.modules.authentication.infrastructure.security.oauth_service import (
     OAuthServiceAdapter,
 )
-from src.modules.projects.adapters import (
-    SQLProjectCommandRepositoryAdapter,
-    SQLProjectQueryRepositoryAdapter,
-    SQLProjectUserRepositoryAdapter,
+from src.modules.authentication.infrastructure.security.password_hasher import (
+    Argon2PasswordHasherAdapter,
 )
-from src.modules.superadmin.adapters import (
-    SQLSystemAnalyticsRepositoryAdapter,
-    SQLSystemLogRepositoryAdapter,
-    SQLTenantRepositoryAdapter,
+from src.modules.authorization.application.services.role_provisioning import (
+    RoleProvisioningService,
 )
 from src.shared.application.ports import SharedEmailClientPort
-from src.shared.adapters import (
-    CeleryAnalyticsAdapter,
+from src.shared.infrastructure.adapters import (
     ApiKeyAdapter,
-    RedisCacheAdapter,
-    ResendEmailClientAdapter,
-    FernetEncryptionAdapter,
     AsyncSQLLogger,
-    RedisRateLimiterAdapter,
-    RsaKeyAdapter,
+    CeleryAnalyticsAdapter,
     CeleryTaskRunnerAdapter,
     CloudflareTurnstileAdapter,
+    FernetEncryptionAdapter,
+    RedisCacheAdapter,
+    RedisRateLimiterAdapter,
+    ResendEmailClientAdapter,
+    RsaKeyAdapter,
     SMTPEmailClientAdapter,
 )
 
 
 class AppContainer:
-    def __init__(self):
+    def __init__(self, config: AppConfig):
+        self.config = config
         # =====================================================================
         # 1. TASK RUNNER
         # =====================================================================
@@ -74,7 +55,7 @@ class AppContainer:
         # 2. CACHE ADAPTER
         # =====================================================================
         redis_client = Redis.from_url(
-            database_settings.CACHE_URL, decode_responses=True
+            self.config.database.CACHE_URL, decode_responses=True
         )
         self.cache_adapter = RedisCacheAdapter(client=redis_client)
 
@@ -82,25 +63,25 @@ class AppContainer:
         # 3. EMAIL CLIENT
         # =====================================================================
         self.email_client: SharedEmailClientPort
-        if core_settings.ENV == "test":
+        if self.config.core.ENV == "test":
             self.email_client = SMTPEmailClientAdapter(
                 smtp_host=os.environ.get("SMTP_HOST", "localhost"),
                 smtp_port=int(os.environ.get("SMTP_PORT", 1025)),
-                from_email=email_settings.FROM,
-                reply_to=email_settings.REPLY_TO,
+                from_email=self.config.email.FROM,
+                reply_to=self.config.email.REPLY_TO,
             )
         else:
             self.email_client = ResendEmailClientAdapter(
-                api_key=email_settings.API_KEY,
-                from_email=email_settings.FROM,
-                reply_to=email_settings.REPLY_TO,
+                api_key=self.config.email.API_KEY,
+                from_email=self.config.email.FROM,
+                reply_to=self.config.email.REPLY_TO,
             )
 
         # =====================================================================
         # 4. ENCRYPTION ADAPTER
         # =====================================================================
         self.encryption_adapter = FernetEncryptionAdapter(
-            key=security_settings.ENCRYPTION_KEY
+            key=self.config.security.ENCRYPTION_KEY
         )
 
         # =====================================================================
@@ -115,8 +96,8 @@ class AppContainer:
         self.analytics_adapter = CeleryAnalyticsAdapter()
         self.rate_limiter = RedisRateLimiterAdapter(cache=self.cache_adapter)
         self.turnstile_adapter = CloudflareTurnstileAdapter(
-            settings=turnstile_settings,
-            is_development=core_settings.ENV == "development",
+            settings=self.config.turnstile,
+            is_development=self.config.core.ENV == "development",
         )
 
         # =====================================================================
@@ -126,73 +107,41 @@ class AppContainer:
         # Authentication
 
         self.access_token_adapter = JWTAccessTokenAdapter(
-            private_key=security_settings.JWT_PRIVATE_KEY,
-            public_key=security_settings.JWT_PUBLIC_KEY,
-            lifetime_minutes=token_settings.ACCESS_TOKEN_LIFETIME_MINUTES,
-        )
-
-        self.refresh_token_repo = DBRefreshTokenRepositoryAdapter(
-            lifetime_days=token_settings.REFRESH_TOKEN_LIFETIME_DAYS,
-            cache=self.cache_adapter,
+            private_key=self.config.security.JWT_PRIVATE_KEY,
+            public_key=self.config.security.JWT_PUBLIC_KEY,
+            lifetime_minutes=self.config.token.ACCESS_TOKEN_LIFETIME_MINUTES,
         )
 
         self.auth_email_sender = AuthEmailSenderAdapter(
             email_client=self.email_client,
-            from_email=email_settings.FROM,
-            templates_dir=Path(__file__).parent.parent
-            / "shared"
-            / "templates"
-            / "emails",
+            from_email=self.config.email.FROM,
+            templates_dir=Path(__file__).parent.parent / "templates" / "emails",
             logger=AsyncSQLLogger("EmailSender"),
             proj_name="Cerberus",
-            template_name=email_settings.TEMPLATE_NAME,
-            frontend_url=url_settings.FRONTEND_URL,
+            template_name=self.config.email.TEMPLATE_NAME,
+            frontend_url=self.config.url.FRONTEND_URL,
             task_runner=self.task_runner,
         )
 
-        self.user_query_repo = SQLUserQueryRepositoryAdapter()
-        self.user_command_repo = SQLUserCommandRepositoryAdapter()
-        self.user_maintenance_repo = SQLUserMaintenanceRepositoryAdapter()
         self.password_hasher = Argon2PasswordHasherAdapter()
 
-        self.role_provisioning: RoleProvisioningService[AsyncSession] = (
-            RoleProvisioningService()
-        )
+        self.role_provisioning: RoleProvisioningService = RoleProvisioningService()
 
         # Projects CQRS
-        self.project_query_repo = SQLProjectQueryRepositoryAdapter(
-            encryption_adapter=self.encryption_adapter
-        )
-        self.project_command_repo = SQLProjectCommandRepositoryAdapter(
-            encryption_adapter=self.encryption_adapter
-        )
-        self.project_user_repo = SQLProjectUserRepositoryAdapter()
 
         self.claims_provider = ProjectClaimsProviderAdapter(
             cache=self.cache_adapter,
-            user_query_repo=self.user_query_repo,
-            project_query_repo=self.project_query_repo,
         )
 
         self.oauth_service = OAuthServiceAdapter(
-            project_query_repo=self.project_query_repo,
             encryption_adapter=self.encryption_adapter,
         )
 
         # Superadmin
-        self.superadmin_tenant_repo = SQLTenantRepositoryAdapter()
-        self.superadmin_log_repo = SQLSystemLogRepositoryAdapter()
-        self.superadmin_analytics_repo = SQLSystemAnalyticsRepositoryAdapter()
 
         # Users
-        self.user_profile_repo = SQLUserProfileRepositoryAdapter(
-            refresh_repo=self.refresh_token_repo
-        )
 
         # Analytics
-        self.analytics_repo = SQLAnalyticsRepositoryAdapter(
-            session_factory=AsyncSessionLocal
-        )
 
 
-app_container = AppContainer()
+app_container = AppContainer(get_settings())

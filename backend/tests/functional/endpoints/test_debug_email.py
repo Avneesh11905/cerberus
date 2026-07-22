@@ -2,12 +2,12 @@ import pytest
 from httpx import AsyncClient
 
 
-# Patch the dev_enabled dependency check via fixture or we can patch core_settings directly
+# Patch the dev_enabled dependency check via fixture or we can patch get_settings().core directly
 @pytest.fixture
 def mock_dev_env(mocker):
-    from src.core.config import core_settings
+    from src.core.config import get_settings
 
-    mocker.patch.object(core_settings, "ENV", "development")
+    mocker.patch.object(get_settings().core, "ENV", "development")
 
 
 @pytest.mark.asyncio
@@ -43,9 +43,9 @@ async def test_debug_email_not_found(client: AsyncClient, mock_dev_env):
 
 @pytest.mark.asyncio
 async def test_debug_email_production_disabled(client: AsyncClient, mocker):
-    from src.core.config import core_settings
+    from src.core.config import get_settings
 
-    mocker.patch.object(core_settings, "ENV", "production")
+    mocker.patch.object(get_settings().core, "ENV", "production")
 
     response = await client.get("/dev/email/preview/")
     assert response.status_code == 404

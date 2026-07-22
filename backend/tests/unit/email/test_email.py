@@ -1,12 +1,15 @@
-import pytest
 from pathlib import Path
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
-from src.shared.adapters.email_client import (
-    SMTPEmailClientAdapter,
-    ResendEmailClientAdapter,
+import pytest
+
+from src.modules.authentication.infrastructure.external.email_sender import (
+    AuthEmailSenderAdapter,
 )
-from src.modules.auth.authentication.adapters.email_sender import AuthEmailSenderAdapter
+from src.shared.infrastructure.adapters.email_client import (
+    ResendEmailClientAdapter,
+    SMTPEmailClientAdapter,
+)
 
 
 @pytest.fixture
@@ -32,19 +35,17 @@ def mock_email_client():
 
 @pytest.fixture
 def templates_dir():
-    # The templates should be loaded from src/shared/templates/emails
+    # The templates should be loaded from src/templates/emails
     base_dir = (
-        Path(__file__).parent.parent.parent.parent
-        / "src"
-        / "shared"
-        / "templates"
-        / "emails"
+        Path(__file__).parent.parent.parent.parent / "src" / "templates" / "emails"
     )
     return base_dir
 
 
 def test_smtp_email_client_adapter(mocker):
-    smtp_mock = mocker.patch("src.shared.adapters.email_client.smtplib.SMTP")
+    smtp_mock = mocker.patch(
+        "src.shared.infrastructure.adapters.email_client.smtplib.SMTP"
+    )
     server_mock = MagicMock()
     smtp_mock.return_value.__enter__.return_value = server_mock
 
@@ -67,7 +68,9 @@ def test_smtp_email_client_adapter(mocker):
 
 
 def test_resend_email_client_adapter(mocker):
-    resend_mock = mocker.patch("src.shared.adapters.email_client.resend.Emails.send")
+    resend_mock = mocker.patch(
+        "src.shared.infrastructure.adapters.email_client.resend.Emails.send"
+    )
 
     adapter = ResendEmailClientAdapter(
         api_key="re_test123",
@@ -92,7 +95,7 @@ def test_resend_email_client_adapter(mocker):
 async def test_auth_email_sender_welcome(
     mock_email_client, mock_logger, mock_task_runner, templates_dir
 ):
-    from src.modules.auth.authentication.infrastructure.tasks import dispatch_email_task
+    from src.modules.authentication.infrastructure.tasks import dispatch_email_task
 
     sender = AuthEmailSenderAdapter(
         email_client=mock_email_client,

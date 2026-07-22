@@ -1,8 +1,8 @@
-from src.modules.auth.authentication.application.utils import (
-    hash_otp,
-    verify_otp_hash,
+from src.modules.authentication.application.utils import (
     anonymize_email,
     format_device_info,
+    hash_otp,
+    verify_otp_hash,
 )
 
 

@@ -29,7 +29,7 @@ env:
   FRONTEND_IMAGE_NAME: avneesh11905/cerberus-vite
 
 jobs:
-  # ── Path filter ─────────────────────────────────────────────────────────────
+  # â”€â”€ Path filter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   changes:
     runs-on: ubuntu-latest
     outputs:
@@ -56,7 +56,7 @@ jobs:
               - 'backend/alembic/env.py'
               - 'backend/alembic.ini'
 
-  # ── Backend CI ──────────────────────────────────────────────────────────────
+  # â”€â”€ Backend CI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   python-ci:
     needs: changes
     if: needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch'
@@ -114,15 +114,18 @@ jobs:
       - name: Run Migrations (alembic)
         run: uv run alembic upgrade head
 
+      - name: Architecture Validation (pytest-archon)
+        run: uv run pytest tests/test_architecture.py
+
       - name: Run tests (pytest)
         env:
           CERBERUS_ENVIRONMENT: test
-        run: uv run pytest --cov
+        run: uv run pytest tests/ --ignore=tests/test_architecture.py --cov
 
       - name: Security Scan (bandit)
         run: uv run bandit -c pyproject.toml -r src/
 
-  # ── Frontend CI ─────────────────────────────────────────────────────────────
+  # â”€â”€ Frontend CI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   node-ci:
     needs: changes
     if: needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch'
@@ -156,7 +159,7 @@ jobs:
       - name: Run tests (vitest)
         run: npm run test
 
-  # ── Backend Docker build & push ──────────────────────────────────────────────
+  # â”€â”€ Backend Docker build & push â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   backend-build:
     needs: [changes, python-ci]
     # Run on main if backend changed AND CI passed (or was skipped via workflow_dispatch)
@@ -196,7 +199,7 @@ jobs:
           cache-from: type=registry,ref=${{ env.BACKEND_IMAGE_NAME }}:buildcache
           cache-to: type=registry,ref=${{ env.BACKEND_IMAGE_NAME }}:buildcache,mode=max
 
-  # ── Frontend Docker build & push ─────────────────────────────────────────────
+  # â”€â”€ Frontend Docker build & push â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   frontend-build:
     needs: [changes, node-ci]
     # Run on main if frontend changed AND CI passed (or was skipped via workflow_dispatch)
@@ -238,7 +241,7 @@ jobs:
           cache-from: type=registry,ref=${{ env.FRONTEND_IMAGE_NAME }}:buildcache
           cache-to: type=registry,ref=${{ env.FRONTEND_IMAGE_NAME }}:buildcache,mode=max
 
-  # ── Deploy ───────────────────────────────────────────────────────────────────
+  # â”€â”€ Deploy â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   deploy:
     needs: [changes, backend-build, frontend-build]
     # Deploy only when on main AND at least one build succeeded (the other may be skipped)
@@ -263,7 +266,7 @@ jobs:
         if: needs.changes.outputs.alembic == 'true' || github.event_name == 'workflow_dispatch'
         working-directory: /home/avneesh/cerberus/v1.0
         run: |
-          echo "Schema changes detected — running Alembic migrations..."
+          echo "Schema changes detected â€” running Alembic migrations..."
           docker compose up -d cerb-postgres
           # Wait until postgres healthcheck passes before migrating
           until docker compose ps cerb-postgres | grep -q '(healthy)'; do
@@ -271,7 +274,7 @@ jobs:
             sleep 3
           done
           docker compose --profile migrate run --rm cerb-migrate
-          echo "Migrations complete — container auto-deleted."
+          echo "Migrations complete â€” container auto-deleted."
 
       - name: Start / update application stack
         working-directory: /home/avneesh/cerberus/v1.0

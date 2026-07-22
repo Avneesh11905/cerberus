@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.pool import NullPool
 
-from src.core.config import database_settings
+from src.core.config import get_settings
 
 
 class Base(DeclarativeBase):
@@ -20,14 +20,14 @@ is_celery = "celery" in sys.argv[0] or "celery" in sys.modules
 
 if is_celery:
     engine = create_async_engine(
-        database_settings.PGSQL_URL,
+        get_settings().database.PGSQL_URL,
         echo=False,
         future=True,
         poolclass=NullPool,
     )
 else:
     engine = create_async_engine(
-        database_settings.PGSQL_URL,
+        get_settings().database.PGSQL_URL,
         echo=False,
         future=True,
         pool_size=20,

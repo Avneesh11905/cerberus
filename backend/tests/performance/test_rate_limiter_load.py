@@ -1,14 +1,15 @@
 import asyncio
+
 import pytest
 from httpx import AsyncClient
 
 
 @pytest.fixture
 def enable_rate_limit(mocker):
-    from src.core.config import rate_limit_settings
+    from src.core.config import get_settings
 
-    # The middleware reads rate_limit_settings.ENABLED on every request
-    mocker.patch.object(rate_limit_settings, "ENABLED", True)
+    # The middleware reads get_settings().rate_limit.ENABLED on every request
+    mocker.patch.object(get_settings().rate_limit, "ENABLED", True)
 
 
 @pytest.mark.asyncio
@@ -22,7 +23,7 @@ async def test_rate_limiter_concurrency(client: AsyncClient, enable_rate_limit):
     allowed_requests = 60
 
     async def make_request():
-        return await client.get("/v1.0/health")
+        return await client.get("/health")
 
     # Fire all requests concurrently
     responses = await asyncio.gather(*[make_request() for _ in range(total_requests)])
