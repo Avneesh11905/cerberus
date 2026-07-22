@@ -40,6 +40,8 @@ from src.shared.infrastructure.adapters import (
     ResendEmailClientAdapter,
     RsaKeyAdapter,
     SMTPEmailClientAdapter,
+    RedisEventPublisherAdapter,
+    RedisEventSubscriberAdapter,
 )
 
 
@@ -58,6 +60,12 @@ class AppContainer:
             self.config.database.CACHE_URL, decode_responses=True
         )
         self.cache_adapter = RedisCacheAdapter(client=redis_client)
+        self.event_publisher_adapter = RedisEventPublisherAdapter(
+            redis_client=redis_client
+        )
+        self.event_subscriber_adapter = RedisEventSubscriberAdapter(
+            redis_client=redis_client
+        )
 
         # =====================================================================
         # 3. EMAIL CLIENT

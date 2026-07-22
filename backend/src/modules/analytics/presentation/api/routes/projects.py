@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Path, Query
+from fastapi import APIRouter, Path, Query
 
 from src.modules.analytics.application.queries.metrics_queries import (
     GetProjectMetricsQuery,
@@ -12,7 +12,7 @@ from src.modules.analytics.presentation.api.schemas import (
 )
 from src.modules.analytics.wiring import (
     GetProjectMetricsUseCaseDeps,
-    verify_project_ownership,
+    VerifyProjectOwenershipDeps,
 )
 
 router = APIRouter()
@@ -22,7 +22,7 @@ router = APIRouter()
     "/projects/{project_id}",
     response_model=QueryAnalyticsResponse,
     summary="Get analytics for a specific project",
-    dependencies=[Depends(verify_project_ownership)],
+    dependencies=[VerifyProjectOwenershipDeps],
 )
 async def get_project_analytics(
     use_case: GetProjectMetricsUseCaseDeps,
