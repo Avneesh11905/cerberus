@@ -37,6 +37,7 @@ def get_create_project_use_case(
         uow=uow,
         api_key_adapter=app_container.api_key_adapter,
         rsa_key_adapter=app_container.rsa_key_adapter,
+        analytics=app_container.analytics_adapter,
     )
 
 
@@ -103,6 +104,7 @@ def get_rotate_api_key_use_case(
     return RotateApiKeyUseCase(
         uow=uow,
         api_key_adapter=app_container.api_key_adapter,
+        analytics=app_container.analytics_adapter,
     )
 
 
@@ -112,6 +114,7 @@ def get_rotate_jwt_secret_use_case(
     return RotateJwtSecretUseCase(
         uow=uow,
         rsa_key_adapter=app_container.rsa_key_adapter,
+        analytics=app_container.analytics_adapter,
     )
 
 

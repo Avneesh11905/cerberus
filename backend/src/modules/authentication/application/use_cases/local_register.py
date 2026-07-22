@@ -168,7 +168,11 @@ class LocalRegisterUseCase:
                 await self._rate_limiter.record_success(limit_key)
 
             # 6. Dispatch email
-            await self._email_sender.send_verification_email(command.email, otp)
+            await self._email_sender.send_verification_email(
+                command.email, 
+                otp,
+                project_id=command.project_id,
+            )
 
             await self._logger.info(
                 f"Pending registration cached for {anonymize_email(command.email)}. Verification OTP sent."

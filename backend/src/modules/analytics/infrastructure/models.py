@@ -36,6 +36,8 @@ class DailyProjectMetricModel(Base):
     login_failures = Column(Integer, default=0, nullable=False)
     registrations = Column(Integer, default=0, nullable=False)
     active_users = Column(Integer, default=0, nullable=False)
+    emails_sent = Column(Integer, default=0, nullable=False)
+    emails_failed = Column(Integer, default=0, nullable=False)
 
 
 class DailyTenantMetricModel(Base):
@@ -50,3 +52,18 @@ class DailyTenantMetricModel(Base):
     login_failures = Column(Integer, default=0, nullable=False)
     registrations = Column(Integer, default=0, nullable=False)
     active_users = Column(Integer, default=0, nullable=False)
+    emails_sent = Column(Integer, default=0, nullable=False)
+    emails_failed = Column(Integer, default=0, nullable=False)
+    projects_created = Column(Integer, default=0, nullable=False)
+
+
+class DailySystemMetricModel(Base):
+    __tablename__ = "daily_system_metrics"
+    __table_args__ = (UniqueConstraint("date", name="uq_system_date"),)
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    date = Column(Date, nullable=False, index=True)
+    tenants_onboarded = Column(Integer, default=0, nullable=False)
+    tenant_suspensions = Column(Integer, default=0, nullable=False)
+    api_key_rotations = Column(Integer, default=0, nullable=False)
+    jwt_key_rotations = Column(Integer, default=0, nullable=False)

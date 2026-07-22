@@ -79,6 +79,7 @@ class TenantOAuthCallbackUseCase[SessionType, RequestType]:
                 to_email=user.email.value,
                 ip_address=client_meta.ip_address or "Unknown IP",
                 device_info=device_info,
+                tenant_id=user.id,
             )
 
     def _resolve_role(self, email: str) -> GlobalRole:
@@ -115,7 +116,9 @@ class TenantOAuthCallbackUseCase[SessionType, RequestType]:
                     await self.uow.user_command_repo.undelete_user(user.id)
                     user.deleted_at = None
                     await self._email_sender.send_account_restored_email(
-                        user.email.value, user.name
+                        user.email.value, 
+                        user.name,
+                        tenant_id=user.id,
                     )
 
                 from src.modules.authorization.domain.enums import GlobalRole
@@ -150,7 +153,9 @@ class TenantOAuthCallbackUseCase[SessionType, RequestType]:
                     await self.uow.user_command_repo.undelete_user(user.id)
                     user.deleted_at = None
                     await self._email_sender.send_account_restored_email(
-                        user.email.value, user.name
+                        user.email.value, 
+                        user.name,
+                        tenant_id=user.id,
                     )
 
                 from src.modules.authorization.domain.enums import GlobalRole
@@ -211,6 +216,8 @@ class TenantOAuthCallbackUseCase[SessionType, RequestType]:
                 new_user, extra_claims=extra_claims
             )
             await self._email_sender.send_welcome_email(
-                new_user.email.value, new_user.name
+                new_user.email.value, 
+                new_user.name,
+                tenant_id=new_user.id,
             )
             return new_user, refresh_token, access_token, True

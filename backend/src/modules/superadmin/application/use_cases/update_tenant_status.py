@@ -8,13 +8,14 @@ from src.modules.superadmin.application.ports.superadmin_unit_of_work import (
     SuperAdminUoWPort,
 )
 from src.modules.superadmin.domain.exceptions import TenantNotFoundException
-from src.shared.application.ports import CachePort
+from src.shared.application.ports import CachePort, AnalyticsEventPort
 
 
 class UpdateTenantStatusUseCase:
-    def __init__(self, uow: SuperAdminUoWPort, cache: CachePort | None = None):
+    def __init__(self, uow: SuperAdminUoWPort, analytics: AnalyticsEventPort, cache: CachePort | None = None):
         self.uow = uow
         self.cache = cache
+        self.analytics = analytics
 
     async def execute(
         self, command: UpdateTenantStatusCommand
@@ -38,5 +39,11 @@ class UpdateTenantStatusUseCase:
             else:
                 if self.cache:
                     await self.cache.delete_key(f"disabled_user:{command.tenant_id}")
+                    
+            if not command.is_active:
+                self.analytics.record_event(
+                    event_type="TENANT_SUSPENDED",
+                    tenant_id=command.tenant_id,
+                )
 
             return UpdateTenantStatusDTO(tenant=tenant)

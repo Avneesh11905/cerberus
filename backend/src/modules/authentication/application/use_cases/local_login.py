@@ -202,7 +202,10 @@ class LocalLoginUseCase:
                 await self.uow.user_command_repo.undelete_user(user.id)
                 user.deleted_at = None
                 await self._email_sender.send_account_restored_email(
-                    user.email.value, user.name
+                    user.email.value, 
+                    user.name,
+                    tenant_id=user.id if not user.project_id else None,
+                    project_id=command.project_id,
                 )
                 await self._logger.info(
                     f"User {user.id} account restored on local login"
@@ -241,9 +244,11 @@ class LocalLoginUseCase:
                         format_device_info, command.client_meta.user_agent
                     )
                     await self._email_sender.send_login_detected_email(
-                        to_email=user.email.value,
-                        ip_address=command.client_meta.ip_address or "Unknown IP",
-                        device_info=device_info,
+                        user.email.value,
+                        command.client_meta.ip_address or "Unknown IP",
+                        command.client_meta.user_agent or "Unknown Device",
+                        tenant_id=user.id if not user.project_id else None,
+                        project_id=command.project_id,
                     )
 
             # Issue a long-lived refresh token. The API layer will wrap this in an HttpOnly cookie.

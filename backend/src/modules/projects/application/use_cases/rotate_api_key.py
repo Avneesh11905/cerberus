@@ -9,10 +9,15 @@ from src.modules.projects.application.ports.projects_unit_of_work import Project
 from .base_project import BaseProjectUseCase
 
 
+from src.shared.application.ports import AnalyticsEventPort
+from .base_project import BaseProjectUseCase
+
+
 class RotateApiKeyUseCase(BaseProjectUseCase):
-    def __init__(self, uow: ProjectUoWPort, api_key_adapter):
+    def __init__(self, uow: ProjectUoWPort, api_key_adapter, analytics: AnalyticsEventPort):
         self.uow = uow
         self.api_key_adapter = api_key_adapter
+        self.analytics = analytics
         super().__init__()
         self.api_key_adapter = api_key_adapter
 
@@ -25,4 +30,12 @@ class RotateApiKeyUseCase(BaseProjectUseCase):
             project.api_key_hash = self.api_key_adapter.hash(api_key_plaintext)
             project.updated_at = datetime.now(timezone.utc)
             await self.uow.project_command_repo.save(project)
+            
+            self.analytics.record_event(
+                event_type="API_KEY_ROTATED",
+                project_id=command.project_id,
+                tenant_id=project.tenant_id,
+                user_id=command.user_id,
+            )
+            
             return RotateApiKeyDTO(api_key_plaintext=api_key_plaintext)

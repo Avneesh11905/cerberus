@@ -98,6 +98,8 @@ class ProjectUserOAuthCallbackUseCase[SessionType, RequestType]:
                 to_email=user.email.value,
                 ip_address=client_meta.ip_address or "Unknown IP",
                 device_info=device_info,
+                tenant_id=None,
+                project_id=user.project_id,
             )
 
     async def execute(
@@ -140,7 +142,10 @@ class ProjectUserOAuthCallbackUseCase[SessionType, RequestType]:
                     await self.uow.user_command_repo.undelete_user(user.id)
                     user.deleted_at = None
                     await self._email_sender.send_account_restored_email(
-                        user.email.value, user.name
+                        user.email.value, 
+                        user.name,
+                        tenant_id=None,
+                        project_id=command.project_id,
                     )
 
                 await self._check_new_login(self.uow, user, command.client_meta)
@@ -174,7 +179,10 @@ class ProjectUserOAuthCallbackUseCase[SessionType, RequestType]:
                     await self.uow.user_command_repo.undelete_user(user.id)
                     user.deleted_at = None
                     await self._email_sender.send_account_restored_email(
-                        user.email.value, user.name
+                        user.email.value, 
+                        user.name,
+                        tenant_id=None,
+                        project_id=command.project_id,
                     )
 
                 await self.uow.user_command_repo.link_oauth_account(
@@ -238,7 +246,10 @@ class ProjectUserOAuthCallbackUseCase[SessionType, RequestType]:
             )
 
             await self._email_sender.send_welcome_email(
-                new_user.email.value, new_user.name
+                new_user.email.value, 
+                new_user.name,
+                tenant_id=None,
+                project_id=command.project_id,
             )
 
             return new_user, refresh_token, access_token, True, fallback_frontend_url

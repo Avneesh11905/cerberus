@@ -137,7 +137,11 @@ class LocalResendVerificationUseCase:
             attempt_key = f"otp_attempts:{scope}:{email_hash}"
             await self._cache.delete_key(attempt_key)
 
-            await self._email_sender.send_verification_email(command.email, otp)
+            await self._email_sender.send_verification_email(
+                command.email, 
+                otp,
+                project_id=command.project_id,
+            )
             await self._logger.info(
                 f"Resent verification OTP to pending user {command.email}"
             )

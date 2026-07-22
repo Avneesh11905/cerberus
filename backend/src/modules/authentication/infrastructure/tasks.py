@@ -75,7 +75,27 @@ def clean_unverified_and_deleted_users():
 
 
 @celery_app.task(name="dispatch_email_task")
-def dispatch_email_task(to_email: str, subject: str, html_content: str):
+def dispatch_email_task(
+    to_email: str, 
+    subject: str, 
+    html_content: str,
+    tenant_id: str | None = None,
+    project_id: str | None = None,
+):
+    from uuid import UUID
     from src.core.container import app_container
 
-    app_container.email_client.send_email(to_email, subject, html_content)
+    try:
+        app_container.email_client.send_email(to_email, subject, html_content)
+        app_container.analytics_adapter.record_event(
+            event_type="EMAIL_SENT",
+            tenant_id=UUID(tenant_id) if tenant_id else None,
+            project_id=UUID(project_id) if project_id else None,
+        )
+    except Exception as e:
+        app_container.analytics_adapter.record_event(
+            event_type="EMAIL_FAILED",
+            tenant_id=UUID(tenant_id) if tenant_id else None,
+            project_id=UUID(project_id) if project_id else None,
+        )
+        raise e

@@ -40,6 +40,7 @@ def get_update_tenant_status_use_case(
     return UpdateTenantStatusUseCase(
         uow=uow,
         cache=app_container.cache_adapter,
+        analytics=app_container.analytics_adapter,
     )
 
 

@@ -11,6 +11,8 @@ implementation in the container — this file never changes.
 
 import datetime
 from pathlib import Path
+from typing import Any
+from uuid import UUID
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
@@ -56,7 +58,13 @@ class AuthEmailSenderAdapter(EmailSenderPort):
         self._jinja_env.globals["now"] = datetime.datetime.now
 
     async def _render_and_dispatch(
-        self, to_email: str, subject: str, template_name: str, context: dict
+        self, 
+        to_email: str, 
+        subject: str, 
+        template_name: str, 
+        context: dict,
+        tenant_id: UUID | None = None,
+        project_id: UUID | None = None,
     ) -> None:
         from src.modules.authentication.infrastructure.tasks import (
             dispatch_email_task,
@@ -70,13 +78,21 @@ class AuthEmailSenderAdapter(EmailSenderPort):
                 to_email=to_email,
                 subject=subject,
                 html_content=html_content,
+                tenant_id=str(tenant_id) if tenant_id else None,
+                project_id=str(project_id) if project_id else None,
             )
         except Exception as e:
             await self._logger.error(
                 f"Failed to dispatch email '{subject}' to {to_email}: {e}"
             )
 
-    async def send_welcome_email(self, to_email: str, name: str | None) -> None:
+    async def send_welcome_email(
+        self, 
+        to_email: str, 
+        name: str | None,
+        tenant_id: UUID | None = None,
+        project_id: UUID | None = None,
+    ) -> None:
         display_name = name or "there"
         context = {
             "name": display_name,
@@ -89,9 +105,17 @@ class AuthEmailSenderAdapter(EmailSenderPort):
             subject=f"Welcome to {self._proj_name}!",
             template_name="onboarding/welcome.html",
             context=context,
+            tenant_id=tenant_id,
+            project_id=project_id,
         )
 
-    async def send_password_reset_email(self, to_email: str, reset_url: str) -> None:
+    async def send_password_reset_email(
+        self, 
+        to_email: str, 
+        reset_url: str,
+        tenant_id: UUID | None = None,
+        project_id: UUID | None = None,
+    ) -> None:
         context = {
             "reset_url": reset_url,
             "proj_name": self._proj_name,
@@ -102,9 +126,17 @@ class AuthEmailSenderAdapter(EmailSenderPort):
             subject=f"Password Reset - {self._proj_name}",
             template_name="security/password_reset.html",
             context=context,
+            tenant_id=tenant_id,
+            project_id=project_id,
         )
 
-    async def send_verification_email(self, to_email: str, otp: str) -> None:
+    async def send_verification_email(
+        self, 
+        to_email: str, 
+        otp: str,
+        tenant_id: UUID | None = None,
+        project_id: UUID | None = None,
+    ) -> None:
         context = {
             "otp": otp,
             "proj_name": self._proj_name,
@@ -115,10 +147,16 @@ class AuthEmailSenderAdapter(EmailSenderPort):
             subject=f"Verify your Email - {self._proj_name}",
             template_name="security/otp_verification.html",
             context=context,
+            tenant_id=tenant_id,
+            project_id=project_id,
         )
 
     async def send_account_restored_email(
-        self, to_email: str, name: str | None
+        self, 
+        to_email: str, 
+        name: str | None,
+        tenant_id: UUID | None = None,
+        project_id: UUID | None = None,
     ) -> None:
         display_name = name or "there"
         context = {
@@ -132,10 +170,17 @@ class AuthEmailSenderAdapter(EmailSenderPort):
             subject=f"Security Alert: Your {self._proj_name} account was restored",
             template_name="security/account_restored.html",
             context=context,
+            tenant_id=tenant_id,
+            project_id=project_id,
         )
 
     async def send_login_detected_email(
-        self, to_email: str, ip_address: str, device_info: str
+        self, 
+        to_email: str, 
+        ip_address: str, 
+        device_info: str,
+        tenant_id: UUID | None = None,
+        project_id: UUID | None = None,
     ) -> None:
         context = {
             "proj_name": self._proj_name,
@@ -152,4 +197,6 @@ class AuthEmailSenderAdapter(EmailSenderPort):
             subject=f"New Login Detected - {self._proj_name}",
             template_name="security/login_detected.html",
             context=context,
+            tenant_id=tenant_id,
+            project_id=project_id,
         )
