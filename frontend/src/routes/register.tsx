@@ -127,20 +127,18 @@ function RegisterPage() {
   }
 
   return (
-    <AuthLayout title="Create an Account" subtitle="Join Cerberus to manage your data" maxWidth="max-w-lg">
+    <AuthLayout title="Create an Account" subtitle="Join Cerberus to manage your data">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="name">Name</Label>
-            <Input id="name" type="text" placeholder="John Doe" {...register('name')} />
-            {errors.name && <p className="text-terracotta text-xs font-medium">{errors.name.message}</p>}
-          </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="name">Name</Label>
+          <Input id="name" type="text" placeholder="John Doe" {...register('name')} />
+          {errors.name && <p className="text-terracotta text-xs font-medium">{errors.name.message}</p>}
+        </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="you@example.com" {...register('email')} />
-            {errors.email && <p className="text-terracotta text-xs font-medium">{errors.email.message}</p>}
-          </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="email">Email</Label>
+          <Input id="email" type="email" placeholder="you@example.com" {...register('email')} />
+          {errors.email && <p className="text-terracotta text-xs font-medium">{errors.email.message}</p>}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

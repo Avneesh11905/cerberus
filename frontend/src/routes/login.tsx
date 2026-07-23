@@ -160,15 +160,11 @@ function LoginPage() {
           </div>
         )}
 
-        <div className="flex justify-center pt-2">
-          <div className="rounded-md border-2 border-taupe bg-white p-1 inline-block shadow-sm" >
-            <Turnstile 
-              siteKey={(import.meta.env.VITE_TURNSTILE_SITE_KEY || '').replace(/^["']|["']$/g, '').trim() || '1x00000000000000000000AA'} 
-              onSuccess={(token) => setTurnstileToken(token)}
-              options={{ theme: 'light' }}
-            />
-          </div>
-        </div>
+        <Turnstile 
+          siteKey={(import.meta.env.VITE_TURNSTILE_SITE_KEY || '').replace(/^["']|["']$/g, '').trim() || '1x00000000000000000000AA'} 
+          onSuccess={(token) => setTurnstileToken(token)}
+          options={{ size: 'invisible' }}
+        />
 
         <Button 
           type="submit" 

@@ -24,7 +24,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'Cerberus Dashboard',
+        title: 'Cerberus',
       },
     ],
     links: [
@@ -76,7 +76,7 @@ function RootComponent() {
   }, [])
 
   return (
-    <html lang="en">
+    <html lang="en" className="snap-y snap-proximity scroll-smooth">
       <head>
         <HeadContent />
       </head>

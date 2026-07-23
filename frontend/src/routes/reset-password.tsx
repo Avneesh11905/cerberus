@@ -10,7 +10,6 @@ import { AuthLayout } from '../components/layout/AuthLayout'
 import { Input } from '../components/ui/input'
 import { Button } from '../components/ui/button'
 import { Label } from '../components/ui/label'
-import { useAuthStore } from '../store/auth'
 
 const searchSchema = z.object({
   token: z.string().optional(),
@@ -34,7 +33,6 @@ type ResetData = z.infer<typeof resetSchema>
 function ResetPasswordPage() {
   const search = Route.useSearch()
   const navigate = useNavigate()
-  const accessToken = useAuthStore(state => state.accessToken)
   const [authMessage, setAuthMessage] = useState<{ type: 'error' | 'success', text: string } | null>(null)
 
   const { register, handleSubmit, formState: { errors } } = useForm<ResetData>({

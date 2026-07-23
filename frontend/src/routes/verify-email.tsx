@@ -47,7 +47,6 @@ function VerifyEmailPage() {
   const isCheckingSession = useAuthStore(state => state.isCheckingSession)
   
   const [authMessage, setAuthMessage] = useState<{ type: 'error' | 'success', text: string } | null>(null)
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const [showCaptchaForResend, setShowCaptchaForResend] = useState(false)
   const [countdown, setCountdown] = useState(0)
   const [timeLeft, setTimeLeft] = useState<number | null>(null)
@@ -152,12 +151,10 @@ function VerifyEmailPage() {
       }
       setResendAvailableAt(Date.now() + (data.resend_cooldown_seconds || 60) * 1000)
       setShowCaptchaForResend(false)
-      setTurnstileToken(null)
     },
     onError: (error: any) => {
       setAuthMessage({ type: 'error', text: extractErrorMessage(error, 'Failed to resend code') })
       setShowCaptchaForResend(false)
-      setTurnstileToken(null)
     }
   })
 
@@ -236,14 +233,13 @@ function VerifyEmailPage() {
           {verifyMutation.isPending ? 'Verifying...' : 'Verify Email'}
         </Button>
 
-        <div className="mt-6 text-center text-sm font-medium text-slate min-h-[40px] flex items-center justify-center">
+        <div className="mt-6 text-center text-sm font-medium text-slate min-h-10 flex items-center justify-center">
           {showCaptchaForResend ? (
             <div className="flex justify-center w-full">
               <span className="text-sm font-medium text-slate">Verifying...</span>
               <Turnstile 
                 siteKey={(import.meta.env.VITE_TURNSTILE_SITE_KEY || '').replace(/^["']|["']$/g, '').trim() || '1x00000000000000000000AA'} 
                 onSuccess={(token) => {
-                  setTurnstileToken(token);
                   if (formEmail) {
                     resendMutation.mutate({ email: formEmail, token: token });
                   }
