@@ -15,14 +15,9 @@ export default defineConfig(({ mode }) => {
     resolve: { tsconfigPaths: true },
     server: {
       allowedHosts: env.ALLOWED_HOSTS ? env.ALLOWED_HOSTS.split(',') : undefined,
-      // Optional: proxy setup for local backend development
-      // proxy: {
-      //   '/api': {
-      //     target: env.BACKEND_URL || 'http://localhost:8000/v1',
-      //     changeOrigin: true,
-      //     rewrite: (path) => path.replace(/^\/api/, ''),
-      //   },
-      // },
+    },
+    optimizeDeps: {
+      include: ['react', 'react-dom', '@tanstack/react-router', 'lucide-react']
     },
     plugins: [
       devtools(),

@@ -16,9 +16,12 @@ import { Label } from '../components/ui/label'
 import { GoogleIcon, GithubIcon } from '../components/ui/icons'
 
 export const Route = createFileRoute('/login')({
-  beforeLoad: () => {
+  validateSearch: z.object({
+    redirect: z.string().optional().catch(''),
+  }),
+  beforeLoad: ({ search }) => {
     if (useAuthStore.getState().accessToken) {
-      throw redirect({ to: '/' })
+      throw redirect({ to: search.redirect || '/' })
     }
   },
   component: LoginPage,
@@ -45,13 +48,14 @@ function LoginPage() {
 
   const verifiedEmail = useAuthStore(state => state.verifiedEmail)
 
+  const search = Route.useSearch()
+
   // Redirect if token arrives asynchronously (e.g. from root silent refresh)
   useEffect(() => {
     if (accessToken) {
-      navigate({ to: '/' })
+      navigate({ to: search.redirect || '/' })
     }
-
-  }, [accessToken, navigate])
+  }, [accessToken, navigate, search.redirect])
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
@@ -71,7 +75,7 @@ function LoginPage() {
     },
     onSuccess: (data) => {
       setAuth(data.access_token, data.user)
-      navigate({ to: '/' })
+      navigate({ to: search.redirect || '/' })
     },
     onError: (error: any) => {
       setAuthError(extractErrorMessage(error, 'Login failed'))
