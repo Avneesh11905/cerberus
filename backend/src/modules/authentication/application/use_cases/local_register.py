@@ -149,20 +149,13 @@ class LocalRegisterUseCase:
                 else f"pending_reg:global:{email_hash}"
             )
 
-            # Use SETNX to prevent race conditions when two concurrent registrations for the same email are submitted
-            success = await self._cache.set_dict_nx(
+            # Use SET instead of SETNX so that if a user closes the tab and tries to register again
+            # within the 15-minute window, they will receive a new OTP. Turnstile prevents spam.
+            await self._cache.set_dict(
                 cache_key,
                 payload,
                 get_settings().verification.OTP_RESEND_WINDOW_SECONDS,
             )
-            if not success:
-                await self._logger.warning(
-                    f"Registration failed: Concurrent registration attempt for {anonymize_email(command.email)}"
-                )
-                if command.is_challenged:
-                    await self._rate_limiter.record_captcha_success(limit_key)
-                    await self._rate_limiter.record_failure(limit_key)
-                return expires_in  # enumeration protection
 
             if command.is_challenged:
                 await self._rate_limiter.record_success(limit_key)

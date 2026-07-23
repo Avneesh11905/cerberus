@@ -93,11 +93,11 @@ class TenantOAuthCallbackUseCase[SessionType, RequestType]:
     ) -> tuple[UserIdentity, str, str, bool]:
         async with self.uow:
             """
-        Process a tenant OAuth callback.
+            Process a tenant OAuth callback.
 
-        Returns:
-            (user_identity, raw_refresh_token, access_token, is_new_user)
-        """
+            Returns:
+                (user_identity, raw_refresh_token, access_token, is_new_user)
+            """
             user_info = await self._oauth_service.exchange_code_for_user_info(
                 command.provider, None, command.request, uow=self.uow
             )

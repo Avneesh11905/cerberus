@@ -5,6 +5,7 @@ Module: Github
 from src.core.config import get_settings
 from src.modules.authentication.domain.entities import OAuthUserInfo
 from src.modules.authentication.infrastructure.oauth.registry import oauth_registry
+from src.shared.domain.value_objects import EmailAddress, HttpsUrl
 
 client_id, client_secret = get_settings().oauth.get_credentials("github")
 
@@ -33,8 +34,8 @@ async def parse_github_user(provider, token) -> OAuthUserInfo:
 
     return OAuthUserInfo(
         sub=str(github_user["id"]),
-        email=email["email"],
+        email=EmailAddress(value=email["email"]),
         name=github_user.get("name") or github_user.get("login"),
-        picture=github_user.get("avatar_url"),
+        picture=HttpsUrl(value=github_user["avatar_url"]) if github_user.get("avatar_url") else None,
         provider="github",
     )

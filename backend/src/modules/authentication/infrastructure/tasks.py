@@ -14,7 +14,13 @@ logger = AsyncSQLLogger("BackgroundTasks")
 async def run_clean_expired_tokens():
 
     try:
-        async with SQLAlchemyUoWAdapter() as uow:
+        from src.modules.authentication.infrastructure.database.repositories.authentication_uow import SQLAuthUnitOfWork
+        from src.core.container import app_container
+        
+        async with SQLAuthUnitOfWork(
+            encryption_adapter=app_container.encryption_adapter,
+            cache=app_container.cache_adapter,
+        ) as uow:
             count_tokens = await uow.refresh_token_repo.cleanup_expired()
             if count_tokens:
                 await uow.session.commit()
@@ -38,7 +44,13 @@ def clean_expired_tokens():
 async def run_clean_unverified_and_deleted_users():
 
     try:
-        async with SQLAlchemyUoWAdapter() as uow:
+        from src.modules.authentication.infrastructure.database.repositories.authentication_uow import SQLAuthUnitOfWork
+        from src.core.container import app_container
+        
+        async with SQLAuthUnitOfWork(
+            encryption_adapter=app_container.encryption_adapter,
+            cache=app_container.cache_adapter,
+        ) as uow:
             count_users = await uow.user_maintenance_repo.delete_unverified_users(
                 hours_old=24
             )
@@ -51,7 +63,13 @@ async def run_clean_unverified_and_deleted_users():
         await logger.error(f"Unverified user cleanup failed: {e}")
 
     try:
-        async with SQLAlchemyUoWAdapter() as uow:
+        from src.modules.authentication.infrastructure.database.repositories.authentication_uow import SQLAuthUnitOfWork
+        from src.core.container import app_container
+        
+        async with SQLAuthUnitOfWork(
+            encryption_adapter=app_container.encryption_adapter,
+            cache=app_container.cache_adapter,
+        ) as uow:
             count_soft_deleted = await uow.user_maintenance_repo.hard_delete_users(
                 days_old=get_settings().account.RETENTION_DAYS
             )

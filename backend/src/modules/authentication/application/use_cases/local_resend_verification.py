@@ -3,7 +3,7 @@ import secrets
 import time
 
 from src.core.config import get_settings
-from src.core.exceptions import TurnstileVerificationFailed
+from src.core.exceptions import TurnstileVerificationFailed, RateLimitExceededException
 from src.modules.authentication.application.commands import (
     LocalResendVerificationCommand,
 )
@@ -47,7 +47,7 @@ class LocalResendVerificationUseCase:
         self._rate_limiter = rate_limiter
         self._turnstile = turnstile
 
-    async def execute(self, command: LocalResendVerificationCommand) -> int:
+    async def execute(self, command: LocalResendVerificationCommand) -> tuple[int, int]:
         async with self.uow:
             email_hash = hashlib.sha256(command.email.lower().encode()).hexdigest()
             scope = str(command.project_id) if command.project_id else "global"
@@ -70,6 +70,15 @@ class LocalResendVerificationUseCase:
                     raise TurnstileVerificationFailed("CAPTCHA verification failed")
 
             expires_in = get_settings().verification.OTP_EXPIRATION_SECONDS
+            cooldown_seconds = get_settings().verification.OTP_RESEND_COOLDOWN_SECONDS
+
+            cooldown_key = f"otp_cooldown:{scope}:{email_hash}"
+            is_cooling_down = await self._cache.get_dict(cooldown_key)
+            if is_cooling_down:
+                if command.is_challenged:
+                    await self._rate_limiter.record_captcha_success(limit_key)
+                    await self._rate_limiter.record_failure(limit_key)
+                raise RateLimitExceededException("Please wait before requesting another code.", retry_after=cooldown_seconds)
 
             # Check user existence and verification status FIRST.
             # The rate-limit counter is only bumped once we confirm the user exists,
@@ -82,13 +91,13 @@ class LocalResendVerificationUseCase:
                 # Silently return to prevent email enumeration.
                 if command.is_challenged:
                     await self._rate_limiter.record_success(limit_key)
-                return expires_in
+                return expires_in, get_settings().verification.OTP_RESEND_COOLDOWN_SECONDS
 
             if user.is_verified:
                 # Silently return to prevent email enumeration.
                 if command.is_challenged:
                     await self._rate_limiter.record_success(limit_key)
-                return expires_in
+                return expires_in, get_settings().verification.OTP_RESEND_COOLDOWN_SECONDS
 
             # Increment the counter now that the user is verified as eligible.
             resends = await self._cache.incr(resend_key, ttl=3600)
@@ -97,7 +106,7 @@ class LocalResendVerificationUseCase:
                 if command.is_challenged:
                     await self._rate_limiter.record_captcha_success(limit_key)
                     await self._rate_limiter.record_failure(limit_key)
-                return expires_in
+                return expires_in, get_settings().verification.OTP_RESEND_COOLDOWN_SECONDS
 
             redis_key = (
                 f"pending_reg:{str(command.project_id)}:{email_hash}"
@@ -111,7 +120,7 @@ class LocalResendVerificationUseCase:
                 if command.is_challenged:
                     await self._rate_limiter.record_captcha_success(limit_key)
                     await self._rate_limiter.record_failure(limit_key)
-                return expires_in
+                return expires_in, get_settings().verification.OTP_RESEND_COOLDOWN_SECONDS
 
             otp = f"{secrets.randbelow(1000000):06d}"
             otp_expires_at = (
@@ -133,6 +142,12 @@ class LocalResendVerificationUseCase:
                 get_settings().verification.OTP_RESEND_WINDOW_SECONDS,
             )
 
+            await self._cache.set_dict(
+                cooldown_key,
+                {"cooling_down": True},
+                cooldown_seconds,
+            )
+
             # Reset the attempt counter atomically
             attempt_key = f"otp_attempts:{scope}:{email_hash}"
             await self._cache.delete_key(attempt_key)
@@ -149,4 +164,4 @@ class LocalResendVerificationUseCase:
             if command.is_challenged:
                 await self._rate_limiter.record_success(limit_key)
 
-            return expires_in
+            return expires_in, get_settings().verification.OTP_RESEND_COOLDOWN_SECONDS

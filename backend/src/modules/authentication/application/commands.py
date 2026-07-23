@@ -33,7 +33,6 @@ class LocalVerifyEmailCommand:
     client_meta: Optional[ClientMetadata] = None
     project_id: Optional[UUID] = None
     is_challenged: bool = False
-    turnstile_token: Optional[str] = None
 
 
 @dataclass(frozen=True)

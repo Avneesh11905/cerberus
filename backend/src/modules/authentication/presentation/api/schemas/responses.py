@@ -8,6 +8,7 @@ class MessageResponse(BaseModel):
 class RegisterResponse(BaseModel):
     message: str
     expires_in_seconds: int
+    resend_cooldown_seconds: int | None = None
 
 
 class LoginResponse(BaseModel):

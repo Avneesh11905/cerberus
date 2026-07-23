@@ -33,9 +33,9 @@ def record_analytics_event(
     )
 
     async def _save():
-        from src.shared.infrastructure.adapters import SQLAlchemyUoWAdapter
+        from src.modules.analytics.infrastructure.database.repositories.analytics_uow import SQLAnalyticsUnitOfWork
 
-        async with SQLAlchemyUoWAdapter() as uow:
+        async with SQLAnalyticsUnitOfWork() as uow:
             repo = uow.analytics_repo
             await repo.save_event(event)
 

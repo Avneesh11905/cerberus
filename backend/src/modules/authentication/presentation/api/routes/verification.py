@@ -56,7 +56,6 @@ async def verify_email(
         otp=req.otp,
         project_id=project_id,
         is_challenged=is_challenged,
-        turnstile_token=req.turnstile_token,
         client_meta=client_meta,
     )
     user, refresh_token = await usecase.execute(command)
@@ -89,8 +88,9 @@ async def resend_verification(
         turnstile_token=req.turnstile_token,
         client_meta=client_meta,
     )
-    expires_in = await usecase.execute(command)
+    expires_in, cooldown = await usecase.execute(command)
     return RegisterResponse(
         message="If the email is registered and unverified, a new OTP has been sent.",
         expires_in_seconds=expires_in,
+        resend_cooldown_seconds=cooldown,
     )

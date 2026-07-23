@@ -13,6 +13,7 @@ class TokenSettings(_BaseSettings):
 
 class VerificationSettings(_BaseSettings):
     OTP_EXPIRATION_SECONDS: int = 300
+    OTP_RESEND_COOLDOWN_SECONDS: int = 60
     OTP_RESEND_WINDOW_SECONDS: int = 900
     OTP_MAX_ATTEMPTS: int = 5
     PASSWORD_RESET_EXPIRY_SECONDS: int = 900

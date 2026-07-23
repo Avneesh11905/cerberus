@@ -68,19 +68,7 @@ class LocalVerifyEmailUseCase:
             limit_key = f"{command.client_meta.ip_address if command.client_meta else 'unknown'}:{command.email.lower()}"
 
             if command.is_challenged:
-                if not command.turnstile_token:
-                    await self._rate_limiter.record_failure(limit_key)
-                    raise TurnstileVerificationFailed(
-                        "CAPTCHA challenge failed or missing"
-                    )
-
-                is_valid = await self._turnstile.verify_token(
-                    command.turnstile_token,
-                    command.client_meta.ip_address if command.client_meta else None,
-                )
-                if not is_valid:
-                    await self._rate_limiter.record_failure(limit_key)
-                    raise TurnstileVerificationFailed("CAPTCHA verification failed")
+                pass # Rate limiting only
 
             # 1. Check if user is in DB
             user = await self.uow.user_query_repo.find_by_email(

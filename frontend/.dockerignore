@@ -11,3 +11,6 @@ dist-ssr
 .env.*
 npm-debug.log*
 .DS_Store
+.cursorrules
+README.md
+.env

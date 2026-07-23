@@ -109,7 +109,7 @@ async def build_auth_redirect_async(
 ) -> RedirectResponse:
     """
     Async version of build_auth_redirect. Stores the token in Redis and returns
-    a RedirectResponse pointing at {frontend}/auth/callback?code=<code>&new_user=<bool>.
+    a RedirectResponse pointing at {frontend}/oauth/callback?code=<code>&new_user=<bool>.
     No cookies are set on this response.
     """
     base_url = (
@@ -122,5 +122,5 @@ async def build_auth_redirect_async(
         access_token=access_token,
         user_id=user_id,
     )
-    redirect_url = f"{base_url}/auth/callback?code={code}&new_user={'true' if is_new_user else 'false'}"
+    redirect_url = f"{base_url}/oauth/callback?code={code}&new_user={'true' if is_new_user else 'false'}"
     return RedirectResponse(url=redirect_url)

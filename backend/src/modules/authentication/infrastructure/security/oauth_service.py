@@ -41,8 +41,11 @@ class OAuthServiceAdapter(OAuthServicePort[Request]):
         request: Request,
         uow: AuthUoWPort,
     ) -> OAuthUserInfo:
+        import logging
+        logger = logging.getLogger(__name__)
         client = await self._get_client(provider, project_id, uow)
 
+        logger.info(f"[OAuth Exchange] Exchanging token with request URL: {request.url}")
         # Exchanges the code and retrieves tokens.
         token = await client.authorize_access_token(request)
 

@@ -5,6 +5,7 @@ Module: Google
 from src.core.config import get_settings
 from src.modules.authentication.domain.entities import OAuthUserInfo
 from src.modules.authentication.infrastructure.oauth.registry import oauth_registry
+from src.shared.domain.value_objects import EmailAddress, HttpsUrl
 
 client_id, client_secret = get_settings().oauth.get_credentials("google")
 
@@ -28,8 +29,8 @@ async def parse_google_user(provider, token) -> OAuthUserInfo:
 
     return OAuthUserInfo(
         sub=google_info["sub"],
-        email=google_info["email"],
+        email=EmailAddress(value=google_info["email"]),
         name=google_info.get("name"),
-        picture=google_info.get("picture"),
+        picture=HttpsUrl(value=google_info["picture"]) if google_info.get("picture") else None,
         provider="google",
     )

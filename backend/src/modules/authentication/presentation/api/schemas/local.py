@@ -35,7 +35,6 @@ class ResetPasswordRequest(BaseModel):
 class VerifyEmailRequest(_EmailMixin):
     email: EmailStr
     otp: str = Field(..., min_length=6, max_length=6)
-    turnstile_token: str | None = None
 
 
 class RequestNewVerificationEmail(_EmailMixin):

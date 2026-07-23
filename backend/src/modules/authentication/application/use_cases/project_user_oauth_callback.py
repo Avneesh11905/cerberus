@@ -107,17 +107,11 @@ class ProjectUserOAuthCallbackUseCase[SessionType, RequestType]:
     ) -> tuple[UserIdentity, str, str, bool, HttpsUrl | None]:
         async with self.uow:
             """
-        Process an OAuth callback.
+            Process a project user OAuth callback.
 
-        Args:
-            uow: Database Unit of Work.
-            provider: The OAuth provider name.
-            project_id: The ID of the project the user is logging into.
-            request: The raw framework request object containing the code/state.
-
-        Returns:
-            (user_identity, raw_refresh_token, access_token, is_new_user, fallback_frontend_url)
-        """
+            Returns:
+                (user_identity, raw_refresh_token, access_token, is_new_user, fallback_frontend_url)
+            """
             project = await self.uow.project_query_repo.get_by_id(command.project_id)
             fallback_frontend_url = project.frontend_url if project else None
 
