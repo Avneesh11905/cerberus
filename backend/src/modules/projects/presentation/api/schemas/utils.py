@@ -1,11 +1,4 @@
-from datetime import datetime
 from typing import Any
-from uuid import UUID
-
-from pydantic import (
-    BaseModel,
-)
-
 
 def mask_oauth_config(config: dict[str, Any] | None) -> dict[str, Any]:
     if not config:
@@ -24,11 +17,14 @@ def mask_oauth_config(config: dict[str, Any] | None) -> dict[str, Any]:
 
     return masked
 
-
-
-class ProjectCreateRes(BaseModel):
-    id: UUID
-    name: str
-    api_key: str
-    public_key: str
-    created_at: datetime
+RESERVED_CLAIM_KEYS = {
+    "sub",
+    "email",
+    "role",
+    "exp",
+    "iat",
+    "jti",
+    "project_id",
+    "is_verified",
+    "family_id",
+}

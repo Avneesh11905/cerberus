@@ -1,3 +1,4 @@
+from .utils import RESERVED_CLAIM_KEYS
 from typing import Any
 
 from pydantic import (
@@ -24,18 +25,6 @@ def mask_oauth_config(config: dict[str, Any] | None) -> dict[str, Any]:
 
     return masked
 
-
-RESERVED_CLAIM_KEYS = {
-    "sub",
-    "email",
-    "role",
-    "exp",
-    "iat",
-    "jti",
-    "project_id",
-    "is_verified",
-    "family_id",
-}
 
 
 class UserClaimsOverrideReq(BaseModel):

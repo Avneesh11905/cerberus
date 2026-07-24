@@ -4,8 +4,12 @@ from fastapi import APIRouter, Depends, Request
 from sse_starlette.sse import EventSourceResponse, ServerSentEvent
 
 from src.shared.application.ports.event_bus import EventSubscriberPort
-from src.modules.analytics.presentation.api.dependencies.event_bus_dep import get_event_subscriber
-from src.modules.authorization.presentation.api.dependencies.roles import RequireTenantRoleDep
+from src.modules.analytics.presentation.api.dependencies.event_bus_dep import (
+    get_event_subscriber,
+)
+from src.modules.authorization.presentation.api.dependencies.roles import (
+    RequireTenantRoleDep,
+)
 
 # Removed {tenant_id} from the path to prevent IDOR (Insecure Direct Object Reference)
 router = APIRouter(prefix="/tenants/me/events", tags=["Analytics Events"])
@@ -24,7 +28,9 @@ async def tenant_analytics_stream(
         channel = f"analytics:tenant:{user.id}"
         try:
             async for data in subscriber.subscribe(channel):
-                yield ServerSentEvent(event="tenant_metrics_update", data=json.dumps(data))
+                yield ServerSentEvent(
+                    event="tenant_metrics_update", data=json.dumps(data)
+                )
         except asyncio.CancelledError:
             pass
 

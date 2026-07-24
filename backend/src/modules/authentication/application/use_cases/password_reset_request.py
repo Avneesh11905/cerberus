@@ -95,7 +95,7 @@ class PasswordResetRequestUseCase:
             base_url = resolved_frontend_url.rstrip("/")
             reset_url = f"{base_url}/reset-password?token={token}"
             await self.email_sender.send_password_reset_email(
-                command.email, 
+                command.email,
                 reset_url,
                 tenant_id=user.id if not user.project_id else None,
                 project_id=command.project_id,

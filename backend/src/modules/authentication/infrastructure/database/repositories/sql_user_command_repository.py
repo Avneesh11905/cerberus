@@ -42,7 +42,6 @@ class SQLUserCommandRepositoryAdapter(UserCommandRepositoryPort):
                 picture=picture,
                 is_verified=True,
                 project_id=project_id,
-                role=None,  # DB still has column, it defaults safely or stores null
             )
             self._session.add(user)
             await self._session.flush()
@@ -114,7 +113,6 @@ class SQLUserCommandRepositoryAdapter(UserCommandRepositoryPort):
                 name=name,
                 is_verified=is_verified,
                 project_id=project_id,
-                role=None,
             )
             self._session.add(user)
             await self._session.flush()
@@ -236,7 +234,9 @@ class SQLUserCommandRepositoryAdapter(UserCommandRepositoryPort):
         if tenant:
             tenant.role = role
 
-    async def update_oauth_profile(self, user_id: UUID, name: str | None, picture: str | None) -> None:
+    async def update_oauth_profile(
+        self, user_id: UUID, name: str | None, picture: str | None
+    ) -> None:
         """Update a user's name, picture, and mark them verified from OAuth."""
         user = await self._session.execute(select(User).where(User.id == user_id))
         user_obj = user.scalar_one_or_none()

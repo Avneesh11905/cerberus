@@ -6,7 +6,7 @@ import asyncio
 
 from src.core.celery_app import celery_app
 from src.core.config import get_settings
-from src.shared.infrastructure.adapters import AsyncSQLLogger, SQLAlchemyUoWAdapter
+from src.shared.infrastructure.adapters import AsyncSQLLogger
 
 logger = AsyncSQLLogger("BackgroundTasks")
 
@@ -14,9 +14,11 @@ logger = AsyncSQLLogger("BackgroundTasks")
 async def run_clean_expired_tokens():
 
     try:
-        from src.modules.authentication.infrastructure.database.repositories.authentication_uow import SQLAuthUnitOfWork
+        from src.modules.authentication.infrastructure.database.repositories.authentication_uow import (
+            SQLAuthUnitOfWork,
+        )
         from src.core.container import app_container
-        
+
         async with SQLAuthUnitOfWork(
             encryption_adapter=app_container.encryption_adapter,
             cache=app_container.cache_adapter,
@@ -44,9 +46,11 @@ def clean_expired_tokens():
 async def run_clean_unverified_and_deleted_users():
 
     try:
-        from src.modules.authentication.infrastructure.database.repositories.authentication_uow import SQLAuthUnitOfWork
+        from src.modules.authentication.infrastructure.database.repositories.authentication_uow import (
+            SQLAuthUnitOfWork,
+        )
         from src.core.container import app_container
-        
+
         async with SQLAuthUnitOfWork(
             encryption_adapter=app_container.encryption_adapter,
             cache=app_container.cache_adapter,
@@ -63,9 +67,11 @@ async def run_clean_unverified_and_deleted_users():
         await logger.error(f"Unverified user cleanup failed: {e}")
 
     try:
-        from src.modules.authentication.infrastructure.database.repositories.authentication_uow import SQLAuthUnitOfWork
+        from src.modules.authentication.infrastructure.database.repositories.authentication_uow import (
+            SQLAuthUnitOfWork,
+        )
         from src.core.container import app_container
-        
+
         async with SQLAuthUnitOfWork(
             encryption_adapter=app_container.encryption_adapter,
             cache=app_container.cache_adapter,
@@ -94,8 +100,8 @@ def clean_unverified_and_deleted_users():
 
 @celery_app.task(name="dispatch_email_task")
 def dispatch_email_task(
-    to_email: str, 
-    subject: str, 
+    to_email: str,
+    subject: str,
     html_content: str,
     tenant_id: str | None = None,
     project_id: str | None = None,

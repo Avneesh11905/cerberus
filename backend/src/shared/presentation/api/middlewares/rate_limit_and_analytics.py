@@ -6,7 +6,7 @@ from starlette.responses import JSONResponse
 
 from src.core.config.app import CoreSettings
 from src.core.config.auth import RateLimitSettings
-from src.shared.application.ports import AnalyticsEventPort, RateLimiterPort
+from src.shared.application.ports import AnalyticsEventPort, RateLimiterPort, CachePort
 
 
 def parse_rate(rate_str: str) -> tuple[int, int]:
@@ -37,6 +37,7 @@ class RateLimitAndAnalyticsMiddleware(BaseHTTPMiddleware):
         rate_limit_settings: RateLimitSettings,
         rate_limiter: RateLimiterPort,
         analytics: AnalyticsEventPort,
+        cache: CachePort,
         default_rate: str = "60/minute",
         auth_rate: str = "10/minute",
     ):
@@ -45,6 +46,7 @@ class RateLimitAndAnalyticsMiddleware(BaseHTTPMiddleware):
         self.rate_limit_settings = rate_limit_settings
         self.rate_limiter = rate_limiter
         self.analytics = analytics
+        self.cache = cache
 
         self.default_count, self.default_window = parse_rate(default_rate)
         self.auth_count, self.auth_window = parse_rate(auth_rate)
@@ -66,6 +68,34 @@ class RateLimitAndAnalyticsMiddleware(BaseHTTPMiddleware):
 
         path = request.url.path
         is_auth_route = "/auth/" in path
+
+        project_id = None
+        auth_header = request.headers.get("authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(" ")[1]
+            try:
+                import jwt
+                payload = jwt.decode(token, options={"verify_signature": False})
+                project_id = payload.get("project_id")
+            except Exception:
+                pass
+        else:
+            api_key = request.headers.get("x-cerberus-api-key")
+            if api_key:
+                try:
+                    import hashlib
+                    key_hash = hashlib.sha256(api_key.encode()).hexdigest()
+                    cache_key = f"api_key_hash:{key_hash}"
+                    project_id = await self.cache.get_string(cache_key)
+                except Exception:
+                    pass
+
+        if project_id and getattr(request.app.state, "project_environments", None):
+            env = request.app.state.project_environments.get(str(project_id))
+            if env == "development":
+                response = await call_next(request)
+                self._emit_api_request(request, response, start_time, ip)
+                return response
 
         limit = self.auth_count if is_auth_route else self.default_count
         window = self.auth_window if is_auth_route else self.default_window

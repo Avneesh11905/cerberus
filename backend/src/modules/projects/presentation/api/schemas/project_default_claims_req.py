@@ -1,3 +1,4 @@
+from .utils import RESERVED_CLAIM_KEYS
 from typing import Any
 
 from pydantic import (
@@ -25,19 +26,9 @@ def mask_oauth_config(config: dict[str, Any] | None) -> dict[str, Any]:
     return masked
 
 
-RESERVED_CLAIM_KEYS = {
-    "sub",
-    "email",
-    "exp",
-    "iat",
-    "jti",
-    "project_id",
-    "is_verified",
-    "family_id",
-}
-
 
 ClaimValue = str | int | bool | float
+
 
 class ProjectDefaultClaimsReq(BaseModel):
     claims: dict[str, ClaimValue | dict[str, ClaimValue]] = Field(default_factory=dict)

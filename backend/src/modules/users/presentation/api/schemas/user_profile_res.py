@@ -4,7 +4,6 @@ from uuid import UUID
 from pydantic import AnyUrl, BaseModel, ConfigDict
 from pydantic.networks import UrlConstraints
 
-from src.modules.authorization.domain.enums import GlobalRole
 
 
 HttpsUrl = Annotated[AnyUrl, UrlConstraints(allowed_schemes=["https"])]
@@ -13,7 +12,6 @@ HttpsUrl = Annotated[AnyUrl, UrlConstraints(allowed_schemes=["https"])]
 class UserProfileRes(BaseModel):
     id: UUID
     email: str
-    role: GlobalRole | None = None
     project_id: UUID | None = None
     name: str | None = None
     picture: str | None = None

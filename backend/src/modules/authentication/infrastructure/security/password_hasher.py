@@ -4,23 +4,18 @@ Argon2id is currently the OWASP recommended algorithm because it resists both GP
 """
 
 import asyncio
-
-from passlib.context import CryptContext  # type: ignore
+import sys
+from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError
 
 
 class Argon2PasswordHasherAdapter:
     def __init__(self):
-        import sys
-
         is_testing = "pytest" in sys.modules
-        self.pwd_context = CryptContext(
-            schemes=["argon2"],
-            deprecated="auto",
-            argon2__time_cost=1 if is_testing else 3,
-            argon2__memory_cost=1024
-            if is_testing
-            else 65536,  # 1 MB for tests, 64 MB for prod
-            argon2__parallelism=1 if is_testing else 2,
+        self.pwd_context = PasswordHasher(
+            time_cost=1 if is_testing else 3,
+            memory_cost=1024 if is_testing else 65536,
+            parallelism=1 if is_testing else 2,
         )
 
     async def hash_password(self, password: str) -> str:
@@ -29,10 +24,17 @@ class Argon2PasswordHasherAdapter:
 
     async def verify_password(self, password: str, hashed_password: str) -> bool:
         loop = asyncio.get_running_loop()
-        return await loop.run_in_executor(
-            None, self.pwd_context.verify, password, hashed_password
-        )
+        def verify():
+            try:
+                return self.pwd_context.verify(hashed_password, password)
+            except VerifyMismatchError:
+                return False
+            except Exception:
+                return False
+        return await loop.run_in_executor(None, verify)
 
     async def dummy_verify(self) -> None:
         loop = asyncio.get_running_loop()
-        await loop.run_in_executor(None, self.pwd_context.dummy_verify)
+        # To simulate verify timing, we can just hash a dummy string
+        await loop.run_in_executor(None, self.pwd_context.hash, "dummy")
+

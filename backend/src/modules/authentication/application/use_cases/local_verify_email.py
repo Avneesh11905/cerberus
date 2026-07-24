@@ -3,7 +3,7 @@ import hashlib
 import time
 
 from src.core.config import get_settings
-from src.core.exceptions import RateLimitExceededException, TurnstileVerificationFailed
+from src.core.exceptions import RateLimitExceededException
 from src.modules.authentication.application.commands import LocalVerifyEmailCommand
 from src.modules.authentication.application.ports import (
     EmailSenderPort,
@@ -68,7 +68,7 @@ class LocalVerifyEmailUseCase:
             limit_key = f"{command.client_meta.ip_address if command.client_meta else 'unknown'}:{command.email.lower()}"
 
             if command.is_challenged:
-                pass # Rate limiting only
+                pass  # Rate limiting only
 
             # 1. Check if user is in DB
             user = await self.uow.user_query_repo.find_by_email(
@@ -195,7 +195,7 @@ class LocalVerifyEmailUseCase:
 
             # Send the welcome email
             await self._email_sender.send_welcome_email(
-                user.email.value, 
+                user.email.value,
                 user.name,
                 tenant_id=user.id if not command.project_id else None,
                 project_id=command.project_id,
@@ -212,7 +212,7 @@ class LocalVerifyEmailUseCase:
                 if command.client_meta
                 else None,
             )
-            
+
             if not command.project_id:
                 self._analytics.record_event(
                     tenant_id=user.id,

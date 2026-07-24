@@ -8,7 +8,9 @@ from src.modules.analytics.application.use_cases import (
     GetTenantMetricsUseCase,
 )
 from src.modules.analytics.presentation.api.dependencies import GetAnalyticsUoWDep
-from src.modules.authentication.presentation.api.dependencies.security import GetCurrentUserDep
+from src.modules.authentication.presentation.api.dependencies.security import (
+    GetCurrentUserDep,
+)
 from src.modules.authorization.domain.enums import GlobalRole
 from src.modules.projects.infrastructure.models import Project
 from src.shared.presentation.api.dependencies import UnitOfWorkDeps
@@ -24,6 +26,7 @@ def get_tenant_metrics_use_case(
     uow: GetAnalyticsUoWDep,
 ) -> GetTenantMetricsUseCase:
     return GetTenantMetricsUseCase(uow=uow)
+
 
 async def verify_project_ownership(
     project_id: UUID,
@@ -45,6 +48,7 @@ async def verify_project_ownership(
 
         if tenant_id != user.id:
             raise HTTPException(status_code=403, detail="Forbidden")
+
 
 VerifyProjectOwenershipDeps = Depends(verify_project_ownership)
 GetProjectMetricsUseCaseDeps = Annotated[

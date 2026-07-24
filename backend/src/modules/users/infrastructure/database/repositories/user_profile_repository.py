@@ -35,7 +35,7 @@ class SQLUserProfileRepositoryAdapter(UserProfileRepositoryPort):
         return UserProfile(
             id=user.id,
             email=EmailAddress(user.email),
-            role=user.role,
+            role=None,
             project_id=user.project_id if user.project_id else None,
             name=PersonName(user.name) if user.name else None,
             picture=HttpsUrl(user.picture) if user.picture else None,

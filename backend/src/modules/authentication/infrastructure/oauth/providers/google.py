@@ -31,6 +31,8 @@ async def parse_google_user(provider, token) -> OAuthUserInfo:
         sub=google_info["sub"],
         email=EmailAddress(value=google_info["email"]),
         name=google_info.get("name"),
-        picture=HttpsUrl(value=google_info["picture"]) if google_info.get("picture") else None,
+        picture=HttpsUrl(value=google_info["picture"])
+        if google_info.get("picture")
+        else None,
         provider="google",
     )

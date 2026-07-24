@@ -182,7 +182,7 @@ class DBRefreshTokenRepositoryAdapter(RefreshTokenRepositoryPort):
                 name=user.name,
                 picture=HttpsUrl(str(user.picture)) if user.picture else None,
                 is_verified=user.is_verified,
-                role=user.role,
+                role=None,
                 project_id=user.project_id,
             )
         else:

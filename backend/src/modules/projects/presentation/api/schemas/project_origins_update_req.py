@@ -25,18 +25,6 @@ def mask_oauth_config(config: dict[str, Any] | None) -> dict[str, Any]:
     return masked
 
 
-RESERVED_CLAIM_KEYS = {
-    "sub",
-    "email",
-    "role",
-    "exp",
-    "iat",
-    "jti",
-    "project_id",
-    "is_verified",
-    "family_id",
-}
-
 
 class ProjectOriginsUpdateReq(BaseModel):
     allowed_origins: list[str] = Field(max_length=5)

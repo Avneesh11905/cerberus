@@ -41,7 +41,7 @@ async def test_protected_route_invalid_token(client: AsyncClient):
 async def test_session_refresh_no_cookie(client: AsyncClient):
     # Missing refresh cookie
     response = await client.post("/v1/auth/refresh")
-    assert response.status_code == 204
+    assert response.status_code == 401
 
 
 @pytest.mark.asyncio
@@ -277,7 +277,7 @@ async def test_verify_email_success(client: AsyncClient, mocker):
 async def test_resend_verification_success(client: AsyncClient, mocker):
     mock_execute = mocker.patch(
         "src.modules.authentication.application.use_cases.LocalResendVerificationUseCase.execute",
-        return_value=300,
+        return_value=(300, 60),
     )
 
     response = await client.post(

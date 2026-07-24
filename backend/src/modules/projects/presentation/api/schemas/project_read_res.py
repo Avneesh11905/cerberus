@@ -31,18 +31,6 @@ def mask_oauth_config(config: dict[str, Any] | None) -> dict[str, Any]:
     return masked
 
 
-RESERVED_CLAIM_KEYS = {
-    "sub",
-    "email",
-    "role",
-    "exp",
-    "iat",
-    "jti",
-    "project_id",
-    "is_verified",
-    "family_id",
-}
-
 
 class ProjectReadRes(BaseModel):
     id: UUID
@@ -61,8 +49,8 @@ class ProjectReadRes(BaseModel):
     def oauth_callback_urls(self) -> dict[str, str]:
         base_url = get_settings().url.API_BASE_URL.rstrip("/")
         return {
-            "google": f"{base_url}/api/v1/auth/oauth/google/callback",
-            "github": f"{base_url}/api/v1/auth/oauth/github/callback",
+            "google": f"{base_url}/v1/auth/oauth/google/callback",
+            "github": f"{base_url}/v1/auth/oauth/github/callback",
         }
 
     @field_serializer("oauth_config")

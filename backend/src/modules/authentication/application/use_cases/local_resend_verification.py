@@ -78,7 +78,10 @@ class LocalResendVerificationUseCase:
                 if command.is_challenged:
                     await self._rate_limiter.record_captcha_success(limit_key)
                     await self._rate_limiter.record_failure(limit_key)
-                raise RateLimitExceededException("Please wait before requesting another code.", retry_after=cooldown_seconds)
+                raise RateLimitExceededException(
+                    "Please wait before requesting another code.",
+                    retry_after=cooldown_seconds,
+                )
 
             # Check user existence and verification status FIRST.
             # The rate-limit counter is only bumped once we confirm the user exists,
@@ -91,13 +94,19 @@ class LocalResendVerificationUseCase:
                 # Silently return to prevent email enumeration.
                 if command.is_challenged:
                     await self._rate_limiter.record_success(limit_key)
-                return expires_in, get_settings().verification.OTP_RESEND_COOLDOWN_SECONDS
+                return (
+                    expires_in,
+                    get_settings().verification.OTP_RESEND_COOLDOWN_SECONDS,
+                )
 
             if user.is_verified:
                 # Silently return to prevent email enumeration.
                 if command.is_challenged:
                     await self._rate_limiter.record_success(limit_key)
-                return expires_in, get_settings().verification.OTP_RESEND_COOLDOWN_SECONDS
+                return (
+                    expires_in,
+                    get_settings().verification.OTP_RESEND_COOLDOWN_SECONDS,
+                )
 
             # Increment the counter now that the user is verified as eligible.
             resends = await self._cache.incr(resend_key, ttl=3600)
@@ -106,7 +115,10 @@ class LocalResendVerificationUseCase:
                 if command.is_challenged:
                     await self._rate_limiter.record_captcha_success(limit_key)
                     await self._rate_limiter.record_failure(limit_key)
-                return expires_in, get_settings().verification.OTP_RESEND_COOLDOWN_SECONDS
+                return (
+                    expires_in,
+                    get_settings().verification.OTP_RESEND_COOLDOWN_SECONDS,
+                )
 
             redis_key = (
                 f"pending_reg:{str(command.project_id)}:{email_hash}"
@@ -120,7 +132,10 @@ class LocalResendVerificationUseCase:
                 if command.is_challenged:
                     await self._rate_limiter.record_captcha_success(limit_key)
                     await self._rate_limiter.record_failure(limit_key)
-                return expires_in, get_settings().verification.OTP_RESEND_COOLDOWN_SECONDS
+                return (
+                    expires_in,
+                    get_settings().verification.OTP_RESEND_COOLDOWN_SECONDS,
+                )
 
             otp = f"{secrets.randbelow(1000000):06d}"
             otp_expires_at = (
@@ -153,7 +168,7 @@ class LocalResendVerificationUseCase:
             await self._cache.delete_key(attempt_key)
 
             await self._email_sender.send_verification_email(
-                command.email, 
+                command.email,
                 otp,
                 project_id=command.project_id,
             )

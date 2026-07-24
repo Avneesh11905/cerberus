@@ -61,7 +61,7 @@ async def test_build_auth_redirect_async():
     assert response.status_code == 307
     location = response.headers.get("location")
     assert location is not None
-    assert "https://frontend.com/auth/callback?code=" in location
+    assert "https://frontend.com/oauth/callback?code=" in location
     assert "&new_user=true" in location
 
 

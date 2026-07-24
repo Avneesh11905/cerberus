@@ -14,7 +14,13 @@ from .base_project import BaseProjectUseCase
 
 
 class CreateProjectUseCase(BaseProjectUseCase):
-    def __init__(self, uow: ProjectUoWPort, api_key_adapter, rsa_key_adapter, analytics: AnalyticsEventPort):
+    def __init__(
+        self,
+        uow: ProjectUoWPort,
+        api_key_adapter,
+        rsa_key_adapter,
+        analytics: AnalyticsEventPort,
+    ):
         self.uow = uow
         self.api_key_adapter = api_key_adapter
         self.rsa_key_adapter = rsa_key_adapter
@@ -41,14 +47,14 @@ class CreateProjectUseCase(BaseProjectUseCase):
                 environment="development",
             )
             saved_project = await self.uow.project_command_repo.save(project)
-            
+
             self.analytics.record_event(
                 event_type="PROJECT_CREATED",
                 tenant_id=command.user_id,
                 project_id=project_id,
                 user_id=command.user_id,
             )
-            
+
             return CreateProjectDTO(
                 project=saved_project,
                 api_key_plaintext=api_key_plaintext,

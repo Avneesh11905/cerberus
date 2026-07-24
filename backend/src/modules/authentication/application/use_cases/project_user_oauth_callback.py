@@ -136,7 +136,7 @@ class ProjectUserOAuthCallbackUseCase[SessionType, RequestType]:
                     await self.uow.user_command_repo.undelete_user(user.id)
                     user.deleted_at = None
                     await self._email_sender.send_account_restored_email(
-                        user.email.value, 
+                        user.email.value,
                         user.name,
                         tenant_id=None,
                         project_id=command.project_id,
@@ -177,7 +177,7 @@ class ProjectUserOAuthCallbackUseCase[SessionType, RequestType]:
                     await self.uow.user_command_repo.undelete_user(user.id)
                     user.deleted_at = None
                     await self._email_sender.send_account_restored_email(
-                        user.email.value, 
+                        user.email.value,
                         user.name,
                         tenant_id=None,
                         project_id=command.project_id,
@@ -249,7 +249,7 @@ class ProjectUserOAuthCallbackUseCase[SessionType, RequestType]:
             )
 
             await self._email_sender.send_welcome_email(
-                new_user.email.value, 
+                new_user.email.value,
                 new_user.name,
                 tenant_id=None,
                 project_id=command.project_id,

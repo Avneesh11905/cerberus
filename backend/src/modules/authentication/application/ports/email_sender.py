@@ -13,8 +13,8 @@ class EmailSenderPort(Protocol):
     """Interface for sending authentication transactional emails."""
 
     async def send_welcome_email(
-        self, 
-        to_email: str, 
+        self,
+        to_email: str,
         name: str | None,
         tenant_id: UUID | None = None,
         project_id: UUID | None = None,
@@ -23,8 +23,8 @@ class EmailSenderPort(Protocol):
         ...
 
     async def send_password_reset_email(
-        self, 
-        to_email: str, 
+        self,
+        to_email: str,
         reset_url: str,
         tenant_id: UUID | None = None,
         project_id: UUID | None = None,
@@ -33,8 +33,8 @@ class EmailSenderPort(Protocol):
         ...
 
     async def send_verification_email(
-        self, 
-        to_email: str, 
+        self,
+        to_email: str,
         otp: str,
         tenant_id: UUID | None = None,
         project_id: UUID | None = None,
@@ -43,8 +43,8 @@ class EmailSenderPort(Protocol):
         ...
 
     async def send_account_restored_email(
-        self, 
-        to_email: str, 
+        self,
+        to_email: str,
         name: str | None,
         tenant_id: UUID | None = None,
         project_id: UUID | None = None,
@@ -53,9 +53,9 @@ class EmailSenderPort(Protocol):
         ...
 
     async def send_login_detected_email(
-        self, 
-        to_email: str, 
-        ip_address: str, 
+        self,
+        to_email: str,
+        ip_address: str,
         device_info: str,
         tenant_id: UUID | None = None,
         project_id: UUID | None = None,

@@ -116,7 +116,7 @@ class TenantOAuthCallbackUseCase[SessionType, RequestType]:
                     await self.uow.user_command_repo.undelete_user(user.id)
                     user.deleted_at = None
                     await self._email_sender.send_account_restored_email(
-                        user.email.value, 
+                        user.email.value,
                         user.name,
                         tenant_id=user.id,
                     )
@@ -158,7 +158,7 @@ class TenantOAuthCallbackUseCase[SessionType, RequestType]:
                     await self.uow.user_command_repo.undelete_user(user.id)
                     user.deleted_at = None
                     await self._email_sender.send_account_restored_email(
-                        user.email.value, 
+                        user.email.value,
                         user.name,
                         tenant_id=user.id,
                     )
@@ -226,7 +226,7 @@ class TenantOAuthCallbackUseCase[SessionType, RequestType]:
                 new_user, extra_claims=extra_claims
             )
             await self._email_sender.send_welcome_email(
-                new_user.email.value, 
+                new_user.email.value,
                 new_user.name,
                 tenant_id=new_user.id,
             )

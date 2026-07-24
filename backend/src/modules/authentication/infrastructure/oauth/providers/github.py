@@ -36,6 +36,8 @@ async def parse_github_user(provider, token) -> OAuthUserInfo:
         sub=str(github_user["id"]),
         email=EmailAddress(value=email["email"]),
         name=github_user.get("name") or github_user.get("login"),
-        picture=HttpsUrl(value=github_user["avatar_url"]) if github_user.get("avatar_url") else None,
+        picture=HttpsUrl(value=github_user["avatar_url"])
+        if github_user.get("avatar_url")
+        else None,
         provider="github",
     )

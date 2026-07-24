@@ -112,6 +112,7 @@ app.add_middleware(
     rate_limit_settings=get_settings().rate_limit,
     rate_limiter=app_container.rate_limiter,
     analytics=app_container.analytics_adapter,
+    cache=app_container.cache_adapter,
     default_rate=get_settings().rate_limit.DEFAULT,
     auth_rate=get_settings().rate_limit.AUTH,
 )

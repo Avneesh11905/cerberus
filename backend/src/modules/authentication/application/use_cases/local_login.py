@@ -202,7 +202,7 @@ class LocalLoginUseCase:
                 await self.uow.user_command_repo.undelete_user(user.id)
                 user.deleted_at = None
                 await self._email_sender.send_account_restored_email(
-                    user.email.value, 
+                    user.email.value,
                     user.name,
                     tenant_id=user.id if not user.project_id else None,
                     project_id=command.project_id,
@@ -246,7 +246,7 @@ class LocalLoginUseCase:
                     await self._email_sender.send_login_detected_email(
                         user.email.value,
                         command.client_meta.ip_address or "Unknown IP",
-                        command.client_meta.user_agent or "Unknown Device",
+                        device_info or "Unknown Device",
                         tenant_id=user.id if not user.project_id else None,
                         project_id=command.project_id,
                     )

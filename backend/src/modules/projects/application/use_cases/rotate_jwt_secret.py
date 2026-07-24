@@ -10,11 +10,12 @@ from .base_project import BaseProjectUseCase
 
 
 from src.shared.application.ports import AnalyticsEventPort
-from .base_project import BaseProjectUseCase
 
 
 class RotateJwtSecretUseCase(BaseProjectUseCase):
-    def __init__(self, uow: ProjectUoWPort, rsa_key_adapter, analytics: AnalyticsEventPort):
+    def __init__(
+        self, uow: ProjectUoWPort, rsa_key_adapter, analytics: AnalyticsEventPort
+    ):
         self.uow = uow
         self.rsa_key_adapter = rsa_key_adapter
         self.analytics = analytics
@@ -31,12 +32,12 @@ class RotateJwtSecretUseCase(BaseProjectUseCase):
             project.public_key = public_pem
             project.updated_at = datetime.now(timezone.utc)
             await self.uow.project_command_repo.save(project)
-            
+
             self.analytics.record_event(
                 event_type="JWT_KEY_ROTATED",
                 project_id=command.project_id,
                 tenant_id=project.tenant_id,
                 user_id=command.user_id,
             )
-            
+
             return RotateJwtSecretDTO(public_pem=public_pem)

@@ -162,7 +162,7 @@ class LocalRegisterUseCase:
 
             # 6. Dispatch email
             await self._email_sender.send_verification_email(
-                command.email, 
+                command.email,
                 otp,
                 project_id=command.project_id,
             )

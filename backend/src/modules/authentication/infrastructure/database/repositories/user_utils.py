@@ -16,7 +16,7 @@ def to_identity(user: User | Tenant) -> UserIdentity:
         id=user.id,
         email=EmailAddress(user.email),
         is_verified=user.is_verified,
-        role=user.role,
+        role=getattr(user, "role", None),
         project_id=getattr(user, "project_id", None),
         name=user.name,
         picture=HttpsUrl(str(user.picture)) if user.picture else None,

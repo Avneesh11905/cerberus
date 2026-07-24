@@ -2,7 +2,9 @@ import json
 import asyncio
 from fastapi import APIRouter, Request
 from sse_starlette.sse import EventSourceResponse, ServerSentEvent
-from src.modules.analytics.presentation.api.dependencies.event_bus_dep import EventSubscriberPortDep
+from src.modules.analytics.presentation.api.dependencies.event_bus_dep import (
+    EventSubscriberPortDep,
+)
 from src.modules.analytics.wiring import VerifyProjectOwenershipDeps
 
 router = APIRouter(prefix="/projects/{project_id}/events", tags=["Analytics Events"])
@@ -21,7 +23,9 @@ async def project_analytics_stream(
         channel = f"analytics:project:{project_id}"
         try:
             async for data in subscriber.subscribe(channel):
-                yield ServerSentEvent(event="project_metrics_update", data=json.dumps(data))
+                yield ServerSentEvent(
+                    event="project_metrics_update", data=json.dumps(data)
+                )
         except asyncio.CancelledError:
             pass
 

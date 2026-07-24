@@ -23,18 +23,6 @@ def mask_oauth_config(config: dict[str, Any] | None) -> dict[str, Any]:
     return masked
 
 
-RESERVED_CLAIM_KEYS = {
-    "sub",
-    "email",
-    "role",
-    "exp",
-    "iat",
-    "jti",
-    "project_id",
-    "is_verified",
-    "family_id",
-}
-
 
 class PaginatedProjectUsersRes(BaseModel):
     items: list[Any]  # Will hold UserProfile at runtime but we can type as Any or dict

@@ -12,7 +12,12 @@ from src.shared.application.ports import CachePort, AnalyticsEventPort
 
 
 class UpdateTenantStatusUseCase:
-    def __init__(self, uow: SuperAdminUoWPort, analytics: AnalyticsEventPort, cache: CachePort | None = None):
+    def __init__(
+        self,
+        uow: SuperAdminUoWPort,
+        analytics: AnalyticsEventPort,
+        cache: CachePort | None = None,
+    ):
         self.uow = uow
         self.cache = cache
         self.analytics = analytics
@@ -39,7 +44,7 @@ class UpdateTenantStatusUseCase:
             else:
                 if self.cache:
                     await self.cache.delete_key(f"disabled_user:{command.tenant_id}")
-                    
+
             if not command.is_active:
                 self.analytics.record_event(
                     event_type="TENANT_SUSPENDED",

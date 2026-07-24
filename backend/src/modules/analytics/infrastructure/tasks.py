@@ -33,7 +33,9 @@ def record_analytics_event(
     )
 
     async def _save():
-        from src.modules.analytics.infrastructure.database.repositories.analytics_uow import SQLAnalyticsUnitOfWork
+        from src.modules.analytics.infrastructure.database.repositories.analytics_uow import (
+            SQLAnalyticsUnitOfWork,
+        )
 
         async with SQLAnalyticsUnitOfWork() as uow:
             repo = uow.analytics_repo
@@ -41,7 +43,7 @@ def record_analytics_event(
 
         # Broadcast SSE via Redis Pub/Sub
         from src.core.container import app_container
-        
+
         publisher = app_container.event_publisher_adapter
         event_data = {
             "event_type": event_type,
@@ -51,18 +53,18 @@ def record_analytics_event(
             "metadata": metadata,
             "timestamp": event.timestamp.isoformat(),
         }
-        
+
         if project_id:
             await publisher.publish(f"analytics:project:{project_id}", event_data)
         if tenant_id:
             await publisher.publish(f"analytics:tenant:{tenant_id}", event_data)
-        
+
         # System global events (e.g., system-wide metrics, tenant creations, key rotations)
         system_events = [
-            "TENANT_ONBOARDED", 
-            "TENANT_SUSPENDED", 
-            "API_KEY_ROTATED", 
-            "JWT_KEY_ROTATED"
+            "TENANT_ONBOARDED",
+            "TENANT_SUSPENDED",
+            "API_KEY_ROTATED",
+            "JWT_KEY_ROTATED",
         ]
         if event_type in system_events:
             await publisher.publish("analytics:system:global", event_data)

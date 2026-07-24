@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 from uuid import UUID
 
-from fastapi import APIRouter, Path, Query
+from fastapi import APIRouter, Path, Query, HTTPException
 
 from src.modules.analytics.application.queries.metrics_queries import (
     GetTenantMetricsQuery,
@@ -16,6 +16,7 @@ from src.modules.analytics.wiring import (
 from src.modules.authorization.presentation.api.dependencies.roles import (
     RequireTenantRoleDep,
 )
+from src.modules.authorization.domain.enums import GlobalRole
 
 router = APIRouter()
 
@@ -32,6 +33,9 @@ async def get_tenant_analytics(
     start_date: date = Query(default_factory=lambda: date.today() - timedelta(days=30)),
     end_date: date = Query(default_factory=lambda: date.today()),
 ):
+    if user.role != GlobalRole.SUPERADMIN and str(user.id) != str(tenant_id):
+        raise HTTPException(status_code=403, detail="You can only access your own metrics.")
+
     metrics = (
         await use_case.execute(
             GetTenantMetricsQuery(
