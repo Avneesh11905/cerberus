@@ -29,12 +29,12 @@ function OAuthCallbackPage() {
         if (search.code) {
           // Redeem the one-time exchange code for session cookies and user info
           const { data } = await apiClient.post('/auth/exchange', { code: search.code });
-          setAuth(data.access_token, data.user);
+          setAuth(data.access_token, data.csrf_token, data.user);
           navigate({ to: '/' })
         } else {
           // Fallback if accessed without code but session exists
           const { data } = await apiClient.get('/users/me');
-          setAuth('', data);
+          setAuth('', '', data);
           navigate({ to: '/' })
         }
       } catch (err: any) {

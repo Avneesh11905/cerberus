@@ -235,3 +235,25 @@ class SQLUserCommandRepositoryAdapter(UserCommandRepositoryPort):
         tenant = tenant_res.scalar_one_or_none()
         if tenant:
             tenant.role = role
+
+    async def update_oauth_profile(self, user_id: UUID, name: str | None, picture: str | None) -> None:
+        """Update a user's name, picture, and mark them verified from OAuth."""
+        user = await self._session.execute(select(User).where(User.id == user_id))
+        user_obj = user.scalar_one_or_none()
+        if user_obj:
+            user_obj.is_verified = True
+            if name and not user_obj.name:
+                user_obj.name = name
+            if picture and not user_obj.picture:
+                user_obj.picture = str(picture)
+        else:
+            tenant = await self._session.execute(
+                select(Tenant).where(Tenant.id == user_id)
+            )
+            tenant_obj = tenant.scalar_one_or_none()
+            if tenant_obj:
+                tenant_obj.is_verified = True
+                if name and not tenant_obj.name:
+                    tenant_obj.name = name
+                if picture and not tenant_obj.picture:
+                    tenant_obj.picture = str(picture)

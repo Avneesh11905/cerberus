@@ -17,6 +17,7 @@ import { GoogleIcon, GithubIcon } from '../components/ui/icons'
 
 export const Route = createFileRoute('/register')({
   beforeLoad: () => {
+    if (typeof window === 'undefined') return;
     if (useAuthStore.getState().accessToken) {
       throw redirect({ to: '/' })
     }
@@ -116,7 +117,7 @@ function RegisterPage() {
     window.location.href = `${API_URL}/auth/tenant/login/${provider}`
   }
 
-  if (isCheckingSession) {
+  if (isCheckingSession || accessToken) {
     return (
       <AuthLayout title="Authenticating" subtitle="Please wait...">
         <div className="flex flex-col items-center justify-center p-8 space-y-4">

@@ -1,9 +1,11 @@
 import * as React from "react"
+import { Copy, ClipboardCheck, Download } from "lucide-react"
+import { motion } from "framer-motion"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "../../lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-bold ring-offset-vanilla transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-bold ring-offset-vanilla transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer",
   {
     variants: {
       variant: {
@@ -52,3 +54,82 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = "Button"
 
 export { Button, buttonVariants }
+
+import { AnimatedIconSwap } from "./animated-icon-swap"
+
+export interface CopyButtonProps extends Omit<ButtonProps, 'onClick'> {
+  value: string
+  copyKey?: string
+}
+
+export function CopyButton({ value, copyKey = 'copy', className, variant = "outline", size = "icon", ...props }: CopyButtonProps) {
+  const [copiedKey, setCopiedKey] = React.useState<string | null>(null)
+
+  const handleCopy = (text: string, key: string) => {
+    navigator.clipboard.writeText(text)
+    setCopiedKey(key)
+    setTimeout(() => {
+      setCopiedKey(null)
+    }, 2000)
+  }
+
+  return (
+    <Button 
+      variant={variant} 
+      size={size} 
+      onClick={() => handleCopy(value, copyKey)} 
+      className={className}
+      {...props}
+    >
+      <AnimatedIconSwap 
+        isActive={copiedKey === copyKey} 
+        inactiveIcon={Copy} 
+        activeIcon={ClipboardCheck} 
+        className={props.children ? "w-3.5 h-3.5 mr-1" : "w-4 h-4"} 
+        activeClassName={props.children ? "w-3.5 h-3.5 mr-1 text-sage" : "w-4 h-4 text-sage"} 
+      />
+      {props.children}
+    </Button>
+  )
+}
+
+export interface DownloadButtonProps extends Omit<ButtonProps, 'onClick'> {
+  onDownload: () => void
+}
+
+export function DownloadButton({ onDownload, className, variant = "outline", size = "icon", ...props }: DownloadButtonProps) {
+  const [isDownloading, setIsDownloading] = React.useState(false)
+
+  const handleDownload = () => {
+    onDownload()
+    setIsDownloading(true)
+    setTimeout(() => {
+      setIsDownloading(false)
+    }, 1000)
+  }
+
+  return (
+    <Button 
+      variant={variant} 
+      size={size} 
+      onClick={handleDownload} 
+      className={className}
+      {...props}
+    >
+      <div className="relative overflow-hidden inline-flex items-center justify-center">
+        <motion.div
+          animate={
+            isDownloading 
+              ? { y: [0, 20, -20, 0], opacity: [1, 0, 0, 1] } 
+              : { y: 0, opacity: 1 }
+          }
+          transition={{ duration: 0.6, times: [0, 0.4, 0.6, 1], ease: "easeInOut" }}
+          className="flex items-center justify-center"
+        >
+          <Download className={props.children ? "w-3.5 h-3.5 mr-1" : "w-4 h-4"} />
+        </motion.div>
+      </div>
+      {props.children}
+    </Button>
+  )
+}

@@ -1,18 +1,19 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
-import { Plus, ShieldCheck, ArrowRight, Activity, CalendarDays, Copy, Download, AlertTriangle, Eye, EyeOff, Edit2, Trash2 } from 'lucide-react'
-import { getProjects, createProject, updateProjectName, deleteProject, type Project, type ProjectCreateRes } from '../api/projects'
+import { Plus, ShieldCheck, Activity, CalendarDays, AlertTriangle, Eye, EyeOff, Edit2, Trash2 } from 'lucide-react'
+import { getProjects, createProject, updateProjectName, deleteProject, type Project } from '../api/projects'
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
 } from "../components/ui/context-menu"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../components/ui/card'
-import { Button } from '../components/ui/button'
+import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card'
+import { Button, CopyButton, DownloadButton } from '../components/ui/button'
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '../components/ui/dialog'
 import { Label } from '../components/ui/label'
 import { Input } from '../components/ui/input'
+import { Skeleton } from '../components/ui/skeleton'
 import { toast } from 'sonner'
 import { extractErrorMessage } from '../lib/api-client'
 
@@ -37,10 +38,7 @@ function ProjectsIndexPage() {
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  const handleCopy = (text: string, label: string) => {
-    navigator.clipboard.writeText(text)
-    toast.success(`${label} copied to clipboard`)
-  }
+
 
   const handleDownloadApiKey = () => {
     if (!createdCredentials) return
@@ -87,7 +85,6 @@ function ProjectsIndexPage() {
     setCreating(true)
     try {
       const res = await createProject({ name: newProjectName, environment: 'development' })
-      toast.success('Project created successfully')
       setCreatedCredentials({ api_key: res.api_key, public_key: res.public_key, name: res.name })
       setShowApiKey(false)
       setShowPublicKey(false)
@@ -106,7 +103,6 @@ function ProjectsIndexPage() {
     setIsRenaming(true)
     try {
       await updateProjectName(projectToRename.id, renameValue.trim())
-      toast.success('Project renamed successfully')
       setProjectToRename(null)
       fetchProjects()
     } catch (err) {
@@ -121,7 +117,6 @@ function ProjectsIndexPage() {
     setIsDeleting(true)
     try {
       await deleteProject(projectToDelete.id)
-      toast.success('Project deleted successfully')
       setProjectToDelete(null)
       fetchProjects()
     } catch (err) {
@@ -153,7 +148,7 @@ function ProjectsIndexPage() {
                   <DialogTitle className="text-2xl font-black text-slate flex items-center gap-2">
                     Project Created: <span className="text-sage">{createdCredentials.name}</span>
                   </DialogTitle>
-                  <DialogDescription className="text-terracotta font-bold flex items-start gap-2 mt-2 bg-terracotta/10 p-3 border-2 border-terracotta">
+                  <DialogDescription className="text-terracotta font-bold flex items-start gap-2 mt-2 bg-terracotta/10 p-3 border-2 border-terracotta rounded-xl">
                     <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
                     Warning: This is the ONLY time you will see this API Key. Please copy it or download the JSON file now. If you lose it, you will need to rotate the key.
                   </DialogDescription>
@@ -172,24 +167,20 @@ function ProjectsIndexPage() {
                       <Button variant="outline" type="button" className="rounded-xl px-3" onClick={() => setShowApiKey(!showApiKey)}>
                         {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </Button>
-                      <Button variant="outline" type="button" className="rounded-xl px-3" onClick={() => handleCopy(createdCredentials.api_key, 'API Key')}>
-                        <Copy className="w-4 h-4" />
-                      </Button>
+                      <CopyButton value={createdCredentials.api_key} />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label className="text-slate font-bold">JWT Public Key (RSA PEM)</Label>
                     <div className="relative">
-                      <pre className="w-full min-h-[120px] border-2 border-slate bg-taupe/10 px-4 py-4 text-xs font-mono rounded-xl overflow-hidden whitespace-pre-wrap break-all leading-relaxed">
+                      <pre className="w-full min-h-30 border-2 border-slate bg-taupe/10 px-4 py-4 text-xs font-mono rounded-xl overflow-hidden whitespace-pre-wrap break-all leading-relaxed">
                         {showPublicKey ? createdCredentials.public_key : createdCredentials.public_key.replace(/(?<=-----BEGIN PUBLIC KEY-----\n)[\s\S]*?(?=\n-----END PUBLIC KEY-----)/, '****************************************************************\n****************************************************************\n****************************************************************\n****************************************************************')}
                       </pre>
-                      <div className="absolute top-2 right-2 flex gap-1">
-                        <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs rounded-lg bg-slate/10 hover:bg-slate/20 font-bold" onClick={() => handleCopy(createdCredentials.public_key, 'Public Key')}>
-                          <Copy className="w-3.5 h-3.5 mr-1" /> Copy
+                      <div className="absolute top-2 right-2 flex gap-3">
+                        <Button type="button" variant="outline" size="icon" className="h-8 w-8 bg-vanilla shrink-0" onClick={() => setShowPublicKey(!showPublicKey)} title={showPublicKey ? "Hide Key" : "Show Key"}>
+                          {showPublicKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </Button>
-                        <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0 rounded-lg bg-slate/10 hover:bg-slate/20" onClick={() => setShowPublicKey(!showPublicKey)}>
-                          {showPublicKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                        </Button>
+                        <CopyButton value={createdCredentials.public_key} variant="outline" size="icon" className="h-8 w-8 bg-vanilla shrink-0" title="Copy Key" />
                       </div>
                     </div>
                   </div>
@@ -197,14 +188,12 @@ function ProjectsIndexPage() {
 
                 <DialogFooter className="flex flex-col sm:flex-row gap-4 sm:gap-2 sm:justify-between border-t-2 border-taupe/20 pt-4 mt-6">
                   <div className="flex gap-2">
-                    <Button variant="outline" onClick={handleDownloadApiKey} className="gap-2">
-                      <Download className="w-4 h-4" />
+                    <DownloadButton variant="outline" size="default" onDownload={handleDownloadApiKey} className="gap-2">
                       API Key (JSON)
-                    </Button>
-                    <Button variant="outline" onClick={handleDownloadPublicKey} className="gap-2">
-                      <Download className="w-4 h-4" />
+                    </DownloadButton>
+                    <DownloadButton variant="outline" size="default" onDownload={handleDownloadPublicKey} className="gap-2">
                       Public Key (PEM)
-                    </Button>
+                    </DownloadButton>
                   </div>
                   <Button onClick={() => { setIsDialogOpen(false); setCreatedCredentials(null) }}>
                     I've Saved Them
@@ -250,7 +239,28 @@ function ProjectsIndexPage() {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3].map(i => (
-            <Card key={i} className="animate-pulse h-[280px]" />
+            <Card key={i} className="relative overflow-hidden flex flex-col justify-between min-h-[240px] border-taupe/40 shadow-none bg-vanilla">
+              <CardHeader className="pb-4">
+                <div className="flex justify-between items-start mb-2">
+                  <Skeleton className="w-20 h-6 rounded-none" />
+                </div>
+                <Skeleton className="w-3/4 h-8 mt-2" />
+              </CardHeader>
+              <CardContent className="flex flex-col gap-4 py-4">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="w-4 h-4 shrink-0" />
+                  <Skeleton className="w-1/2 h-4" />
+                </div>
+                <div className="flex items-center gap-3">
+                  <Skeleton className="w-4 h-4 shrink-0" />
+                  <Skeleton className="w-5/12 h-4" />
+                </div>
+                <div className="flex items-center gap-3">
+                  <Skeleton className="w-4 h-4 shrink-0" />
+                  <Skeleton className="w-2/3 h-4" />
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       ) : (!projects || projects.length === 0) ? (
@@ -273,7 +283,8 @@ function ProjectsIndexPage() {
                   <Card className="relative overflow-hidden flex flex-col justify-between h-full hover:bg-sand/80 transition-all duration-300 ease-out cursor-pointer group-hover:-translate-y-1 group-hover:shadow-[4px_4px_0px_0px_var(--taupe)]">
                     <CardHeader className="pb-4">
                       <div className="flex justify-between items-start mb-2">
-                        <div className="px-2.5 py-0.5 rounded-none border-2 border-slate text-xs font-bold uppercase bg-vanilla">
+                        <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-none border-2 border-slate text-xs font-bold uppercase bg-vanilla text-slate">
+                          <div className={`w-2 h-2 rounded-full ${project.environment === 'production' ? 'bg-sage' : 'bg-ochre'}`} />
                           {project.environment}
                         </div>
                       </div>
@@ -283,7 +294,7 @@ function ProjectsIndexPage() {
                     <CardContent className="flex flex-col gap-3 py-4">
                        <div className="flex items-center gap-3 text-sm font-semibold text-slate/80">
                           <ShieldCheck className="w-4 h-4 text-taupe" />
-                          {project.allowed_oauth_providers?.length || 0} Auth Providers
+                          {Object.values(project.oauth_config || {}).filter(c => c.enabled).length} Auth Providers
                        </div>
                        <div className="flex items-center gap-3 text-sm font-semibold text-slate/80">
                           <Activity className="w-4 h-4 text-taupe" />
@@ -297,10 +308,10 @@ function ProjectsIndexPage() {
                   </Card>
                 </Link>
               </ContextMenuTrigger>
-              <ContextMenuContent className="w-48 bg-vanilla border-2 border-slate rounded-xl shadow-[4px_4px_0px_rgba(96,114,116,1)] overflow-hidden p-1 z-[60]">
+              <ContextMenuContent className="w-48 bg-vanilla border-2 border-slate rounded-xl shadow-[4px_4px_0px_rgba(96,114,116,1)] overflow-hidden p-1 z-60">
                 <ContextMenuItem 
                   className="font-bold cursor-pointer rounded-lg px-3 py-2 hover:bg-sand focus:bg-sand"
-                  onClick={(e) => {
+                  onClick={() => {
                     setProjectToRename(project)
                     setRenameValue(project.name)
                   }}>
@@ -308,7 +319,7 @@ function ProjectsIndexPage() {
                 </ContextMenuItem>
                 <ContextMenuItem 
                   className="font-bold cursor-pointer rounded-lg px-3 py-2 text-terracotta hover:bg-terracotta/10 hover:text-terracotta focus:bg-terracotta/10 focus:text-terracotta"
-                  onClick={(e) => setProjectToDelete(project)}>
+                  onClick={() => setProjectToDelete(project)}>
                   <Trash2 className="w-4 h-4 mr-2" /> Delete Project
                 </ContextMenuItem>
               </ContextMenuContent>

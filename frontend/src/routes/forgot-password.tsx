@@ -14,7 +14,9 @@ import { useAuthStore } from '../store/auth'
 
 export const Route = createFileRoute('/forgot-password')({
   beforeLoad: () => {
-    if (useAuthStore.getState().accessToken) {
+    if (typeof window === 'undefined') return;
+    const { isCheckingSession, accessToken } = useAuthStore.getState();
+    if (isCheckingSession || accessToken) {
       throw redirect({ to: '/' })
     }
   },
@@ -29,15 +31,7 @@ type ForgotData = z.infer<typeof forgotSchema>
 
 function ForgotPasswordPage() {
   const navigate = useNavigate()
-  const accessToken = useAuthStore(state => state.accessToken)
-  const isCheckingSession = useAuthStore(state => state.isCheckingSession)
   const [authMessage, setAuthMessage] = useState<{ type: 'error' | 'success', text: string } | null>(null)
-
-  useEffect(() => {
-    if (accessToken) {
-      navigate({ to: '/' })
-    }
-  }, [accessToken, navigate])
 
   const { register, handleSubmit, formState: { errors } } = useForm<ForgotData>({
     resolver: zodResolver(forgotSchema)
@@ -59,16 +53,6 @@ function ForgotPasswordPage() {
   const onSubmit = (data: ForgotData) => {
     setAuthMessage(null)
     forgotMutation.mutate(data)
-  }
-
-  if (isCheckingSession) {
-    return (
-      <AuthLayout title="Authenticating" subtitle="Please wait...">
-        <div className="flex flex-col items-center justify-center p-8 space-y-4">
-          <div className="animate-spin h-10 w-10 border-4 border-slate border-t-transparent rounded-full" />
-        </div>
-      </AuthLayout>
-    )
   }
 
   return (

@@ -144,7 +144,11 @@ class ProjectUserOAuthCallbackUseCase[SessionType, RequestType]:
 
                 await self._check_new_login(self.uow, user, command.client_meta)
 
-                # We explicitly DO NOT update the name/picture here so we don't overwrite user preferences
+                # Update the name, picture, and verified status based on the OAuth provider's payload
+                await self.uow.user_command_repo.update_oauth_profile(
+                    user.id, name=name, picture=str(picture) if picture else None
+                )
+
                 family_id = uuid7()
                 refresh_token = await self.uow.refresh_token_repo.create(
                     user.id,
@@ -184,6 +188,11 @@ class ProjectUserOAuthCallbackUseCase[SessionType, RequestType]:
                 )
 
                 await self._check_new_login(self.uow, user, command.client_meta)
+
+                # Update the name, picture, and verified status based on the OAuth provider's payload
+                await self.uow.user_command_repo.update_oauth_profile(
+                    user.id, name=name, picture=str(picture) if picture else None
+                )
 
                 family_id = uuid7()
                 refresh_token = await self.uow.refresh_token_repo.create(

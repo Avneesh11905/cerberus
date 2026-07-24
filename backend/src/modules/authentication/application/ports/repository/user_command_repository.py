@@ -66,3 +66,7 @@ class UserCommandRepositoryPort(Protocol):
     async def update_role(self, user_id: UUID, role: GlobalRole) -> None:
         """Persist a new role for a user. Used for admin self-heal recovery."""
         ...
+
+    async def update_oauth_profile(self, user_id: UUID, name: str | None, picture: str | None) -> None:
+        """Update a user's name, picture, and mark them verified from OAuth."""
+        ...

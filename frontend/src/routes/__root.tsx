@@ -8,8 +8,7 @@ import { Toaster } from '../components/ui/sonner'
 import { useEffect } from 'react'
 
 import appCss from '../styles.css?url'
-import { apiClient } from '../lib/api-client'
-import { useAuthStore } from '../store/auth'
+import { checkInitialSession } from '../lib/auth-check'
 
 interface MyRouterContext {
   queryClient: QueryClient
@@ -36,6 +35,23 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       },
     ],
   }),
+  beforeLoad: async () => {
+    await checkInitialSession()
+  },
+  errorComponent: ({ error }) => {
+    console.error('Root Error Boundary caught:', error)
+    return (
+      <div className="min-h-screen bg-vanilla flex flex-col items-center justify-center p-4">
+        <div className="flat-card p-8 rounded-xl bg-sand border-taupe text-center max-w-md w-full">
+          <h1 className="text-3xl font-display font-bold text-terracotta mb-4">Something went wrong</h1>
+          <p className="text-slate/70 font-medium text-sm mb-8">{error?.message || 'An unexpected error occurred.'}</p>
+          <a href="/" className="inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-bold bg-slate text-vanilla shadow-[4px_4px_0px_var(--taupe)] h-10 px-4 py-2 hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_var(--taupe)] active:translate-y-0.5 active:translate-x-0.5 active:shadow-[2px_2px_0px_var(--taupe)] transition-all">
+            Return Home
+          </a>
+        </div>
+      </div>
+    )
+  },
   component: RootComponent,
   notFoundComponent: () => (
     <div className="min-h-screen bg-vanilla flex flex-col items-center justify-center p-4">
@@ -62,19 +78,7 @@ function RootComponent() {
   })
 
   useEffect(() => {
-    // Wait for the next tick to ensure hydration before updating state, though usually fine.
-    apiClient.post('/auth/refresh')
-      .then(res => {
-        if (res.data.access_token) {
-          useAuthStore.getState().setAccessToken(res.data.access_token)
-        }
-      })
-      .catch(() => {
-        useAuthStore.getState().logout()
-      })
-      .finally(() => {
-        useAuthStore.getState().setIsCheckingSession(false)
-      })
+    checkInitialSession()
   }, [])
 
   return (
@@ -86,7 +90,7 @@ function RootComponent() {
         <QueryClientProvider client={queryClient}>
           <TooltipProvider delayDuration={100}>
             <Outlet />
-            <Toaster />
+            <Toaster closeButton />
             {import.meta.env.DEV && (
               <ReactQueryDevtools buttonPosition="bottom-left" />
             )}

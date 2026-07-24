@@ -1,20 +1,51 @@
-import { useEffect, useState, useRef, createContext, useContext, type ReactNode } from 'react'
+import { useEffect, useRef } from 'react'
+import { create } from 'zustand'
 import { useAuthStore } from '../store/auth'
 import { apiClient, API_URL } from '../lib/api-client'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
 
-type AnalyticsContextType = {
+type AnalyticsState = {
   data: any
   status: 'connecting' | 'connected' | 'error'
+  setData: (data: any) => void
+  setStatus: (status: 'connecting' | 'connected' | 'error') => void
 }
 
-const AnalyticsContext = createContext<AnalyticsContextType | null>(null)
+const INITIAL_DATA = {
+  totalRequests: 0,
+  activeUsers: 0,
+  errorRate: '0%',
+  avgLatency: '0ms',
+  trends: {
+    totalRequests: '0%', totalRequestsUp: true,
+    activeUsers: '0%', activeUsersUp: true,
+    errorRate: '0%', errorRateUp: false,
+    avgLatency: '0ms', avgLatencyUp: false
+  },
+  timeSeries: [
+    { time: '00:00', requests: 0 },
+    { time: '04:00', requests: 0 },
+    { time: '08:00', requests: 0 },
+    { time: '12:00', requests: 0 },
+    { time: '16:00', requests: 0 },
+    { time: '20:00', requests: 0 },
+  ],
+  endpoints: []
+}
 
-export function AnalyticsProvider({ children }: { children: ReactNode }) {
-  const [data, setData] = useState<any>(null)
-  const [status, setStatus] = useState<'connecting' | 'connected' | 'error'>('connecting')
+export const useAnalyticsStream = create<AnalyticsState>((set) => ({
+  data: INITIAL_DATA,
+  status: 'connecting',
+  setData: (data) => set({ data }),
+  setStatus: (status) => set({ status }),
+}))
+
+export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   const abortControllerRef = useRef<AbortController | null>(null)
   const token = useAuthStore(state => state.accessToken)
+  
+  const setStatus = useAnalyticsStream(state => state.setStatus)
+  const setData = useAnalyticsStream(state => state.setData)
 
   useEffect(() => {
     if (!token) return
@@ -54,21 +85,17 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
           },
           onerror: (err) => {
             if (err instanceof Error && err.name === 'AbortError') {
-              return null; // Don't retry, just let it close
+              return null;
             }
             console.error('SSE Error:', err)
             setStatus('error')
 
-            // If 401, trigger Axios interceptor to refresh the token, 
-            // and stop fetchEventSource from retrying with the old token.
             if (err instanceof Error && err.message.includes('401')) {
-              apiClient.get('/users/me').catch(() => {
-                // If it fails, the interceptor handles logout
-              })
+              apiClient.get('/users/me').catch(() => {})
               return null;
             }
 
-            return 5000 // Retry after 5s for other errors
+            return 5000 
           }
         })
       } catch (err: any) {
@@ -85,17 +112,7 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
         abortControllerRef.current.abort()
       }
     }
-  }, [token])
+  }, [token, setStatus, setData])
 
-  return (
-    <AnalyticsContext.Provider value={{ data, status }}>
-      {children}
-    </AnalyticsContext.Provider>
-  )
-}
-
-export function useAnalyticsStream() {
-  const ctx = useContext(AnalyticsContext)
-  if (!ctx) throw new Error('useAnalyticsStream must be used within AnalyticsProvider')
-  return ctx
+  return <>{children}</>
 }

@@ -1,13 +1,23 @@
-import { createFileRoute, redirect, Outlet, Link, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, redirect, Outlet, Link, useNavigate, useLocation, Navigate } from '@tanstack/react-router'
 import { useAuthStore } from '../store/auth'
+import { checkInitialSession } from '../lib/auth-check'
 import { LogOut, LayoutDashboard, FolderKanban, Settings, Activity } from 'lucide-react'
 import clsx from 'clsx'
 import { AnalyticsProvider, useAnalyticsStream } from '../hooks/useAnalyticsStream'
-import { Tooltip, TooltipContent, TooltipTrigger } from '../components/ui/tooltip'
-import { toast } from 'sonner'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip'
+import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu'
 
 export const Route = createFileRoute('/_protected')({
   beforeLoad: async ({ location }) => {
+    if (typeof window === 'undefined') return;
     const accessToken = useAuthStore.getState().accessToken
     if (!accessToken) {
       throw redirect({
@@ -22,7 +32,7 @@ export const Route = createFileRoute('/_protected')({
 })
 
 function StreamIndicator() {
-  const { status } = useAnalyticsStream()
+  const status = useAnalyticsStream(state => state.status)
   
   return (
     <Tooltip>
@@ -43,77 +53,99 @@ function StreamIndicator() {
 }
 
 function ProtectedLayout() {
+  const user = useAuthStore(state => state.user)
+  const isCheckingSession = useAuthStore(state => state.isCheckingSession)
   const logout = useAuthStore(state => state.logout)
   const navigate = useNavigate()
+  const location = useLocation()
+  const isSettings = location.pathname.startsWith('/settings')
+
+  const accessToken = useAuthStore(state => state.accessToken)
+
+  if (isCheckingSession) {
+    return (
+      <div className="min-h-screen bg-vanilla flex flex-col items-center justify-center p-4">
+        <div className="w-16 h-16 border-4 border-taupe border-t-terracotta rounded-full animate-spin"></div>
+      </div>
+    )
+  }
+
+  if (!accessToken) {
+    return <Navigate to="/login" search={{ redirect: location.pathname }} />
+  }
 
   const handleLogout = () => {
     logout()
     navigate({ to: '/login' })
   }
 
-  const navItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', to: '/dashboard' },
-    { icon: FolderKanban, label: 'Projects', to: '/projects' },
-    { icon: Settings, label: 'Settings', to: '/settings' },
-  ]
-
   return (
     <AnalyticsProvider>
-      <div className="h-screen bg-vanilla flex overflow-hidden">
-      {/* Sidebar */}
-      <aside className="w-64 bg-vanilla border-r-2 border-taupe/30 hidden md:flex flex-col shrink-0">
-        <div className="h-16 flex items-center px-6 border-b-2 border-taupe/30 shrink-0">
-          <span className="text-xl font-display font-bold text-slate tracking-tight">Cerberus</span>
-        </div>
-        
-        <div className="flex flex-col gap-2 p-4 grow">
-          {navItems.map((item) => (
-            <Link
-              key={item.label}
-              to={item.to}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg text-slate/70 font-bold transition-colors hover:bg-sand/50"
-              activeProps={{
-                className: "bg-sand text-slate relative after:absolute after:left-0 after:top-2 after:bottom-2 after:w-1 after:bg-slate after:rounded-r-full"
-              }}
-            >
-              <item.icon className="w-5 h-5" />
-              {item.label}
-            </Link>
-          ))}
-        </div>
-
-        <div className="p-4 mt-auto">
-          <button 
-            onClick={handleLogout}
-            className="flex w-full items-center gap-3 px-4 py-3 rounded-lg text-terracotta font-bold transition-colors hover:bg-terracotta/10"
-          >
-            <LogOut className="w-5 h-5" />
-            Logout
-          </button>
-        </div>
-      </aside>
+      <div className="fixed inset-0 bg-vanilla flex overflow-hidden">
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Bar */}
         <header className="h-16 bg-vanilla border-b-2 border-taupe/30 flex items-center justify-between px-6 shrink-0">
           <div className="flex items-center">
-            {/* Mobile menu button could go here */}
+            {!isSettings && (
+              <Link to="/dashboard" className="text-xl font-display font-bold text-slate tracking-tight">Cerberus</Link>
+            )}
           </div>
           
           <div className="flex items-center gap-6">
-            <StreamIndicator />
-            <div 
-              onClick={() => toast.success('Cerberus is fully operational!', { description: 'This is what your new Flat 2.0 toasts look like.' })}
-              className="w-8 h-8 rounded-full bg-sand border-2 border-slate flex items-center justify-center font-bold text-slate text-sm flat-shadow-slate cursor-pointer hover:-translate-y-0.5 hover:-translate-x-0.5 transition-transform"
-            >
-              U
-            </div>
+            {!isSettings && <StreamIndicator />}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Avatar 
+                  className="w-8 h-8 cursor-pointer hover:-translate-y-0.5 hover:-translate-x-0.5 transition-transform outline-none select-none"
+                >
+                  <AvatarImage src={user?.picture || undefined} alt="Profile" className="select-none pointer-events-none" />
+                  <AvatarFallback>{(user?.name?.[0] || user?.email?.[0] || 'U').toUpperCase()}</AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 mt-2">
+                <DropdownMenuLabel>
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none text-slate">
+                      {typeof user?.name === 'object' ? (user?.name as any)?.value || JSON.stringify(user?.name) : (user?.name || 'User')}
+                    </p>
+                    <p className="text-xs leading-none text-slate/50">
+                      {typeof user?.email === 'object' ? (user?.email as any)?.value || JSON.stringify(user?.email) : user?.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {!location.pathname.startsWith('/dashboard') && (
+                  <DropdownMenuItem onClick={() => navigate({ to: '/dashboard' })}>
+                    <LayoutDashboard className="w-4 h-4 mr-2" />
+                    Dashboard
+                  </DropdownMenuItem>
+                )}
+                {!location.pathname.startsWith('/projects') && (
+                  <DropdownMenuItem onClick={() => navigate({ to: '/projects' })}>
+                    <FolderKanban className="w-4 h-4 mr-2" />
+                    Projects
+                  </DropdownMenuItem>
+                )}
+                {!isSettings && (
+                  <DropdownMenuItem onClick={() => navigate({ to: '/settings' })}>
+                    <Settings className="w-4 h-4 mr-2" />
+                    Settings
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-terracotta focus:text-vanilla focus:bg-terracotta" onClick={handleLogout}>
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-scroll bg-vanilla p-6 sm:p-8">
+        <main className="flex-1 overflow-y-auto bg-vanilla p-6 sm:p-8">
           <Outlet />
         </main>
       </div>

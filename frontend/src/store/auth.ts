@@ -20,6 +20,8 @@ const safeStorage = {
 export interface User {
   id: string;
   email: string;
+  name?: string;
+  picture?: string;
   role: string;
   is_active: boolean;
   is_verified: boolean;
@@ -27,9 +29,10 @@ export interface User {
 
 interface AuthState {
   accessToken: string | null;
+  csrfToken: string | null;
   user: User | null;
-  setAuth: (accessToken: string, user: User) => void;
-  setAccessToken: (accessToken: string | null) => void;
+  setAuth: (accessToken: string, csrfToken: string, user: User) => void;
+  setAccessToken: (accessToken: string | null, csrfToken?: string | null) => void;
   setUser: (user: User) => void;
   unverifiedEmail: string | null;
   setUnverifiedEmail: (email: string | null) => void;
@@ -48,6 +51,7 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       accessToken: null,
+      csrfToken: null,
       user: null,
       unverifiedEmail: null,
       verifiedEmail: null,
@@ -55,20 +59,21 @@ export const useAuthStore = create<AuthState>()(
       resendAvailableAt: null,
       isCheckingSession: true,
       setIsCheckingSession: (isCheckingSession) => set({ isCheckingSession }),
-      setAuth: (accessToken, user) => set({ accessToken, user }),
-      setAccessToken: (accessToken) => set({ accessToken }),
+      setAuth: (accessToken, csrfToken, user) => set({ accessToken, csrfToken, user }),
+      setAccessToken: (accessToken, csrfToken) => set((state) => ({ accessToken, csrfToken: csrfToken !== undefined ? csrfToken : state.csrfToken })),
       setUser: (user) => set({ user }),
       setUnverifiedEmail: (unverifiedEmail) => set({ unverifiedEmail }),
       setVerifiedEmail: (verifiedEmail) => set({ verifiedEmail }),
       setOtpExpiresAt: (otpExpiresAt) => set({ otpExpiresAt }),
       setResendAvailableAt: (resendAvailableAt) => set({ resendAvailableAt }),
-      logout: () => set({ accessToken: null, user: null, unverifiedEmail: null, verifiedEmail: null, otpExpiresAt: null, resendAvailableAt: null }),
+      logout: () => set({ accessToken: null, csrfToken: null, user: null, unverifiedEmail: null, verifiedEmail: null, otpExpiresAt: null, resendAvailableAt: null }),
     }),
     {
       name: 'cerberus-auth',
       storage: createJSONStorage(() => safeStorage),
       partialize: (state) => ({
         accessToken: state.accessToken,
+        csrfToken: state.csrfToken,
         user: state.user,
         unverifiedEmail: state.unverifiedEmail,
         verifiedEmail: state.verifiedEmail,

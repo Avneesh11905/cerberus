@@ -19,7 +19,6 @@ export const Route = createFileRoute('/')({
 
 function LandingPage() {
   const accessToken = useAuthStore(state => state.accessToken)
-  const isCheckingSession = useAuthStore(state => state.isCheckingSession)
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -190,8 +189,6 @@ function LandingPage() {
                     Go to Dashboard
                     <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </Link>
-                ) : isCheckingSession ? (
-                  <div className="w-full sm:w-56 h-14 bg-taupe/10 animate-pulse rounded-xl" />
                 ) : (
                   <Link 
                     to="/register" 
@@ -285,8 +282,6 @@ function LandingPage() {
                 >
                   Go to Dashboard
                 </Link>
-              ) : isCheckingSession ? (
-                <div className="w-full sm:w-56 h-14 bg-taupe/10 animate-pulse rounded-xl" />
               ) : (
                 <Link 
                   to="/register" 

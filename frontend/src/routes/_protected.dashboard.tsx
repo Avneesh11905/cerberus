@@ -1,7 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useAnalyticsStream } from '../hooks/useAnalyticsStream'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
-import { Activity, Users, ShieldAlert, Zap } from 'lucide-react'
+import { Activity, Users, ShieldAlert, Zap, FolderKanban } from 'lucide-react'
+import { Button } from '../components/ui/button'
+import { useNavigate } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_protected/dashboard')({
   component: DashboardPage,
@@ -18,10 +20,12 @@ function StatCard({ title, value, icon: Icon, trend, trendUp }: any) {
           <Icon className="w-5 h-5 text-slate" />
         </div>
       </div>
-      <div className="text-3xl font-display font-bold text-slate mb-2">{value}</div>
+      <div className="text-3xl font-display font-bold text-slate mb-2">
+        {typeof value === 'object' && value !== null ? String(value.value || JSON.stringify(value)) : value}
+      </div>
       {trend && (
         <div className={`text-sm font-bold ${trendUp ? 'text-sage' : 'text-terracotta'}`}>
-          {trendUp ? '↑' : '↓'} {trend}
+          {trendUp ? '↑' : '↓'} {typeof trend === 'object' && trend !== null ? String(trend.value || JSON.stringify(trend)) : trend}
         </div>
       )}
     </div>
@@ -29,7 +33,14 @@ function StatCard({ title, value, icon: Icon, trend, trendUp }: any) {
 }
 
 function DashboardPage() {
-  const { data } = useAnalyticsStream()
+  const data = useAnalyticsStream(state => state.data)
+  const navigate = useNavigate()
+
+  if (!data) return (
+    <div className="flex flex-col items-center justify-center p-8 space-y-4 h-full">
+      <div className="animate-spin h-10 w-10 border-4 border-slate border-t-transparent rounded-full" />
+    </div>
+  )
 
   const timeSeriesData = data?.timeSeries || []
   const endpointsData = data?.endpoints || []
@@ -41,6 +52,10 @@ function DashboardPage() {
           <h1 className="text-3xl font-display font-bold text-slate mb-2">Dashboard Overview</h1>
           <p className="text-slate/70 font-medium">Real-time metrics for your infrastructure.</p>
         </div>
+        <Button variant="primary" onClick={() => navigate({ to: '/projects' })} className="hidden sm:flex items-center gap-2">
+          <FolderKanban className="w-4 h-4" />
+          View Projects
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

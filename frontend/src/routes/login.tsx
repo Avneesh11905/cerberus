@@ -20,6 +20,7 @@ export const Route = createFileRoute('/login')({
     redirect: z.string().optional().catch(''),
   }),
   beforeLoad: ({ search }) => {
+    if (typeof window === 'undefined') return;
     if (useAuthStore.getState().accessToken) {
       throw redirect({ to: search.redirect || '/' })
     }
@@ -74,7 +75,7 @@ function LoginPage() {
       return response.data
     },
     onSuccess: (data) => {
-      setAuth(data.access_token, data.user)
+      setAuth(data.access_token, data.csrf_token, data.user)
       navigate({ to: search.redirect || '/' })
     },
     onError: (error: any) => {
@@ -115,7 +116,7 @@ function LoginPage() {
     window.location.href = `${API_URL}/auth/tenant/login/${provider}`
   }
 
-  if (isCheckingSession) {
+  if (isCheckingSession || accessToken) {
     return (
       <AuthLayout title="Authenticating" subtitle="Please wait...">
         <div className="flex flex-col items-center justify-center p-8 space-y-4">

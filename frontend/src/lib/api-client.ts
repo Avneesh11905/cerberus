@@ -25,6 +25,8 @@ export const API_URL = 'http://localhost:8000/v1' ;
 export const apiClient = axios.create({
   baseURL: API_URL,
   withCredentials: true, // Crucial for sending the HTTP-only refresh cookie
+  xsrfCookieName: 'csrf_token', // Axios will automatically read this cookie
+  xsrfHeaderName: 'X-CSRF', // and append it to this header for unsafe methods
   headers: {
     'Content-Type': 'application/json',
   },
@@ -49,9 +51,12 @@ const processQueue = (error: Error | null, token: string | null = null) => {
 
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = useAuthStore.getState().accessToken;
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const { accessToken, csrfToken } = useAuthStore.getState();
+    if (accessToken && config.headers) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
+    }
+    if (csrfToken && config.headers) {
+      config.headers['X-CSRF'] = csrfToken;
     }
     return config;
   },
@@ -59,6 +64,16 @@ apiClient.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
+export const refreshClient = axios.create({
+  baseURL: API_URL,
+  withCredentials: true,
+  xsrfCookieName: 'csrf_token',
+  xsrfHeaderName: 'X-CSRF',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
 apiClient.interceptors.response.use(
   (response) => {
@@ -69,7 +84,6 @@ apiClient.interceptors.response.use(
     const isAuthRoute = originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/verify-email') || originalRequest.url?.includes('/auth/refresh') || originalRequest.url?.includes('/auth/password');
 
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isAuthRoute) {
-      // If we are already trying to refresh, queue the request
       if (isRefreshing) {
         return new Promise(function (resolve, reject) {
           failedQueue.push({ resolve, reject });
@@ -87,16 +101,22 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // The backend expects a POST to /auth/refresh with the refresh_token cookie automatically attached
-        const { data } = await axios.post<{ access_token: string }>(
-          `${API_URL}/auth/refresh`,
+        const csrfToken = useAuthStore.getState().csrfToken;
+        const { data } = await refreshClient.post<{ access_token: string, csrf_token?: string }>(
+          '/auth/refresh',
           {},
-          { withCredentials: true }
+          {
+            headers: csrfToken ? { 'X-CSRF': csrfToken } : undefined
+          }
         );
 
         const newAccessToken = data.access_token;
-        useAuthStore.getState().setAccessToken(newAccessToken);
+        const newCsrfToken = data?.csrf_token;
+        useAuthStore.getState().setAccessToken(newAccessToken, newCsrfToken);
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        if (newCsrfToken) {
+          originalRequest.headers['X-CSRF'] = newCsrfToken;
+        }
 
         processQueue(null, newAccessToken);
         return apiClient(originalRequest);

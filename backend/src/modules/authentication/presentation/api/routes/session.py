@@ -58,7 +58,8 @@ async def refresh(
     """
     refresh_token = request.cookies.get("refresh_token")
     if not refresh_token:
-        return Response(status_code=204)
+        response.status_code = 401
+        return response
 
     client_meta = extract_client_metadata(request)
     command = SessionRefreshCommand(

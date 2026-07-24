@@ -1,16 +1,17 @@
-import { createFileRoute, useRouter, Link } from '@tanstack/react-router'
+import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { z } from 'zod'
-import { ArrowLeft, Save, Key, Shield, RefreshCw, Trash2, Webhook, Settings2, User, Plus, Copy, Download, AlertTriangle, Check, Pencil, Eye, EyeOff } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ArrowLeft, Save, Key, Shield, RefreshCw, Trash2, Webhook, Settings2, User, Plus, AlertTriangle, Check, Pencil, Eye, EyeOff } from 'lucide-react'
 import { getProject, updateProjectName, updateProjectEnvironment, updateProjectFrontendUrl, updateProjectOrigins, updateProjectOAuth, rotateApiKey, rotateJwtSecret, getProjectSecrets, type Project, type Environment } from '../api/projects'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../components/ui/card'
-import { Button } from '../components/ui/button'
+import { Button, CopyButton, DownloadButton } from '../components/ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs'
 import { Label } from '../components/ui/label'
 import { Input } from '../components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import { toast } from 'sonner'
-import { extractErrorMessage } from '../lib/api-client'
+import { extractErrorMessage, API_URL } from '../lib/api-client'
 import { ProjectUsers } from '../components/ProjectUsers'
 import { updateProjectClaims } from '../api/projects'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog'
@@ -31,6 +32,7 @@ function ProjectSettingsPage() {
   const [publicKey, setPublicKey] = useState('')
   const [loading, setLoading] = useState(true)
   const [savingGeneral, setSavingGeneral] = useState(false)
+  const [generalSaved, setGeneralSaved] = useState(false)
   const [savingAuth, setSavingAuth] = useState(false)
   const [savingOrigins, setSavingOrigins] = useState(false)
   const [savingName, setSavingName] = useState(false)
@@ -49,10 +51,12 @@ function ProjectSettingsPage() {
   const [allowedProviders, setAllowedProviders] = useState<string[]>([])
   const [claimsJson, setClaimsJson] = useState('{}')
   const [savingClaims, setSavingClaims] = useState(false)
+  const [claimsSaved, setClaimsSaved] = useState(false)
   const [claimsError, setClaimsError] = useState<string>('')
   const [authErrors, setAuthErrors] = useState<Record<string, string>>({})
   const [generalErrors, setGeneralErrors] = useState<Record<string, string>>({})
   const [originError, setOriginError] = useState<string>('')
+  const [rsaRotated, setRsaRotated] = useState(false)
   
   // Auth Modal States
   const [isProviderModalOpen, setIsProviderModalOpen] = useState(false)
@@ -81,11 +85,6 @@ function ProjectSettingsPage() {
   const [isRotateApiConfirmOpen, setIsRotateApiConfirmOpen] = useState(false)
   const [isRotateRsaConfirmOpen, setIsRotateRsaConfirmOpen] = useState(false)
   const [isPublicKeyVisible, setIsPublicKeyVisible] = useState(false)
-
-  const handleCopy = (text: string, label: string) => {
-    navigator.clipboard.writeText(text)
-    toast.success(`${label} copied to clipboard`)
-  }
 
   const handleDownloadJson = (data: any, filename: string) => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2))
@@ -165,7 +164,8 @@ function ProjectSettingsPage() {
     try {
       await updateProjectEnvironment(projectId, environment)
       if (frontendUrl) await updateProjectFrontendUrl(projectId, frontendUrl)
-      toast.success('General settings updated')
+      setGeneralSaved(true)
+      setTimeout(() => setGeneralSaved(false), 2000)
       fetchProject(false)
     } catch (err: any) {
       if (err.response?.status === 422 && Array.isArray(err.response?.data?.detail)) {
@@ -197,7 +197,6 @@ function ProjectSettingsPage() {
     setSavingName(true)
     try {
       await updateProjectName(projectId, name)
-      toast.success('Project name updated')
       setIsEditingName(false)
       fetchProject(false)
     } catch (err: any) {
@@ -226,7 +225,6 @@ function ProjectSettingsPage() {
       await updateProjectOrigins(projectId, updatedOrigins)
       setAllowedOrigins(updatedOrigins)
       setNewOrigin('')
-      toast.success('Origin added')
     } catch (err: any) {
       if (err.response?.status === 422 && Array.isArray(err.response?.data?.detail)) {
         setOriginError(err.response.data.detail[0]?.msg || 'Invalid URL format')
@@ -245,7 +243,6 @@ function ProjectSettingsPage() {
     try {
       await updateProjectOrigins(projectId, updatedOrigins)
       setAllowedOrigins(updatedOrigins)
-      toast.success('Origin removed')
       setOriginToDelete(null)
     } catch (err) {
       toast.error(extractErrorMessage(err, 'Failed to remove origin'))
@@ -314,7 +311,7 @@ function ProjectSettingsPage() {
         return
       }
 
-      const claimsSchema = z.record(z.any())
+      const claimsSchema = z.record(z.string(), z.any())
         .refine(obj => Object.keys(obj).length <= 10, "Maximum 10 custom claims allowed.")
         .refine(obj => {
           const reserved = ['sub', 'email', 'exp', 'iat', 'jti', 'project_id', 'is_verified', 'family_id']
@@ -329,7 +326,8 @@ function ProjectSettingsPage() {
       }
 
       await updateProjectClaims(projectId, claimsObj)
-      toast.success('Custom claims updated')
+      setClaimsSaved(true)
+      setTimeout(() => setClaimsSaved(false), 2000)
       fetchProject(false)
     } catch (err: any) {
       if (err instanceof SyntaxError) {
@@ -361,7 +359,8 @@ function ProjectSettingsPage() {
       const data = await rotateJwtSecret(projectId)
       setPublicKey(data.public_key)
       setIsRotateRsaConfirmOpen(false)
-      toast.success('RSA Keys rotated successfully!')
+      setRsaRotated(true)
+      setTimeout(() => setRsaRotated(false), 2000)
       fetchProject(false)
     } catch (err) {
       toast.error(extractErrorMessage(err, 'Failed to rotate RSA Keys'))
@@ -372,14 +371,8 @@ function ProjectSettingsPage() {
     return (
       <div className="flex flex-col gap-6 max-w-4xl mx-auto w-full animate-pulse">
         <div className="h-10 bg-taupe/20 w-1/3 mb-4 rounded-none"></div>
-        <div className="h-[400px] bg-taupe/20 w-full rounded-none"></div>
+        <div className="h-100 bg-taupe/20 w-full rounded-none"></div>
       </div>
-    )
-  }
-
-  const toggleProvider = (provider: string) => {
-    setAllowedProviders(prev => 
-      prev.includes(provider) ? prev.filter(p => p !== provider) : [...prev, provider]
     )
   }
 
@@ -406,7 +399,7 @@ function ProjectSettingsPage() {
 
   const handleModalSave = async () => {
     if (!modalProvider) {
-      toast.error('Please select a provider')
+      setAuthErrors({ provider: 'Please select a provider' })
       return
     }
 
@@ -437,7 +430,6 @@ function ProjectSettingsPage() {
           }
         }
       })
-      toast.success(`${modalProvider === 'github' ? 'GitHub' : 'Google'} provider saved`)
       
       setAllowedProviders(newAllowedProviders)
       if (modalProvider === 'github') {
@@ -505,7 +497,6 @@ function ProjectSettingsPage() {
           }
         }
       })
-      toast.success(`${providerToDelete === 'github' ? 'GitHub' : 'Google'} provider removed`)
       
       setAllowedProviders(newAllowedProviders)
       if (providerToDelete === 'github') {
@@ -529,18 +520,16 @@ function ProjectSettingsPage() {
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <div className="pb-4 mb-4">
           <div className="flex items-center gap-4 mb-8">
-            <Link to="/projects">
-              <Button variant="outline" size="icon" className="h-10 w-10 shrink-0">
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </Link>
+            <Button variant="outline" size="icon" className="h-10 w-10 shrink-0" onClick={() => router.navigate({ to: '/projects' })}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
             <div className="flex flex-col flex-1 min-w-0">
               {isEditingName ? (
-                <div className="flex items-center gap-2 h-[36px]">
+                <div className="flex items-center gap-2 h-9">
                   <Input 
                     value={name}
                     onChange={(e: any) => setName(e.target.value)}
-                    className="text-3xl font-display font-black tracking-tight text-slate h-full py-0 px-2 -ml-2 bg-taupe/10 border-slate/20 max-w-[300px]"
+                    className="text-3xl font-display font-black tracking-tight text-slate h-full py-0 px-2 -ml-2 bg-taupe/10 border-slate/20 max-w-75"
                     autoFocus
                     onKeyDown={(e: any) => {
                       if (e.key === 'Enter') handleUpdateName()
@@ -555,7 +544,7 @@ function ProjectSettingsPage() {
                   </Button>
                 </div>
               ) : (
-                <div className="flex items-center gap-3 group h-[36px]">
+                <div className="flex items-center gap-3 group h-9 ">
                   <h1 className="text-3xl font-display font-black tracking-tight text-slate truncate">{project.name}</h1>
                   <button onClick={() => setIsEditingName(true)} className="opacity-0 group-hover:opacity-100 transition-opacity text-slate/40 hover:text-slate shrink-0">
                     <Pencil className="w-4 h-4" />
@@ -586,10 +575,13 @@ function ProjectSettingsPage() {
               <CardContent className="space-y-6">
                 <div className="space-y-2">
                   <Label>Environment</Label>
-                  <div className="flex items-center justify-between p-4 border-2 border-taupe rounded-xl bg-vanilla">
-                    <div>
-                      <h4 className="font-bold text-slate capitalize">{environment}</h4>
-                      <p className="text-sm font-semibold text-slate/70">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between p-6 border-2 border-slate bg-vanilla rounded-xl transition-colors shadow-[4px_4px_0px_rgba(30,41,59,1)] gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-3 h-3 rounded-full ${environment === 'production' ? 'bg-sage' : 'bg-ochre'}`} />
+                        <h4 className="font-bold text-lg capitalize text-slate">{environment}</h4>
+                      </div>
+                      <p className="text-sm font-semibold text-slate/70 mt-1 max-w-lg">
                         {environment === 'development' ? 'Running in dev mode. Limits and caching are relaxed.' : 'Running in production mode. Strict limits applied.'}
                       </p>
                     </div>
@@ -597,6 +589,7 @@ function ProjectSettingsPage() {
                       type="button" 
                       variant="outline" 
                       onClick={() => setShowEnvConfirm(true)}
+                      className="shrink-0 bg-vanilla"
                     >
                       Switch to {environment === 'development' ? 'Production' : 'Development'}
                     </Button>
@@ -617,26 +610,60 @@ function ProjectSettingsPage() {
                 </div>
               </CardContent>
               <CardFooter className="flex justify-end border-t-2 border-taupe/20 pt-6">
-                <Button type="submit" disabled={savingGeneral} className="gap-2">
-                  {savingGeneral ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                  Save Changes
+                <Button type="submit" disabled={savingGeneral || generalSaved} className={`relative overflow-hidden w-37.5 transition-all duration-300 ${generalSaved ? 'bg-sage! text-vanilla! border-sage!' : ''}`}>
+                  <AnimatePresence mode="wait">
+                    {savingGeneral ? (
+                      <motion.div key="saving" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex items-center justify-center gap-2 absolute inset-0">
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        Saving...
+                      </motion.div>
+                    ) : generalSaved ? (
+                      <motion.div key="saved" initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} className="flex items-center justify-center gap-2 absolute inset-0">
+                        <Check className="w-4 h-4" />
+                        Saved!
+                      </motion.div>
+                    ) : (
+                      <motion.div key="default" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex items-center justify-center gap-2 absolute inset-0">
+                        <Save className="w-4 h-4" />
+                        Save Changes
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  {/* Placeholder to maintain button height since absolute content doesn't affect height */}
+                  <div className="invisible flex items-center justify-center gap-2">
+                    <Save className="w-4 h-4" />
+                    Save Changes
+                  </div>
+                  {generalSaved && (
+                    <motion.div
+                      initial={{ scale: 0, opacity: 0.4 }}
+                      animate={{ scale: 3, opacity: 0 }}
+                      transition={{ duration: 0.6, ease: 'easeOut' }}
+                      className="absolute inset-0 bg-vanilla rounded-full origin-center pointer-events-none"
+                    />
+                  )}
                 </Button>
               </CardFooter>
             </Card>
           </form>
           
-          <div className="mt-8 border-2 border-terracotta bg-terracotta/5 p-6 relative">
-            <div className="absolute top-0 left-0 w-2 h-full bg-terracotta" />
-            <h3 className="text-xl font-bold text-terracotta mb-2">Danger Zone</h3>
-            <p className="text-slate/70 font-semibold mb-4">Deleting this project will permanently remove all associated users, sessions, and configurations.</p>
-            <Button variant="destructive" onClick={() => setIsDeleteProjectModalOpen(true)}>
-              <Trash2 className="w-4 h-4 mr-2" />
-              Delete Project
-            </Button>
-          </div>
+          <Card className="mt-8 border-terracotta overflow-hidden relative">
+            <CardHeader>
+              <CardTitle className="text-terracotta">Danger Zone</CardTitle>
+              <CardDescription>
+                Deleting this project will permanently remove all associated users, sessions, and configurations.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button variant="destructive" onClick={() => setIsDeleteProjectModalOpen(true)}>
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete Project
+              </Button>
+            </CardContent>
+          </Card>
 
           <Dialog open={showEnvConfirm} onOpenChange={setShowEnvConfirm}>
-            <DialogContent className="sm:max-w-[425px] border-2 border-slate bg-vanilla p-0 overflow-hidden shadow-[8px_8px_0px_rgba(30,41,59,1)]">
+            <DialogContent className="sm:max-w-106.25 border-2 border-slate bg-vanilla p-0 overflow-hidden shadow-[8px_8px_0px_rgba(30,41,59,1)]">
               <DialogHeader className="p-6 bg-sand border-b-2 border-slate">
                 <DialogTitle className="text-2xl font-black text-slate">Change Environment</DialogTitle>
                 <DialogDescription className="font-semibold text-slate/70">
@@ -649,13 +676,21 @@ function ProjectSettingsPage() {
                 ) : (
                   <p>Switching to development will relax security constraints and rate limits.</p>
                 )}
-                <p className="mt-2 text-terracotta">This change will take effect immediately upon saving changes.</p>
+                <p className="mt-2 text-terracotta">This change will take effect immediately.</p>
               </div>
               <DialogFooter className="p-6 bg-sand border-t-2 border-slate flex justify-end">
                 <Button type="button" variant="outline" onClick={() => setShowEnvConfirm(false)}>Cancel</Button>
-                <Button type="button" onClick={() => {
-                  setEnvironment(environment === 'development' ? 'production' : 'development')
-                  setShowEnvConfirm(false)
+                <Button type="button" onClick={async () => {
+                  const newEnv = environment === 'development' ? 'production' : 'development'
+                  try {
+                    await updateProjectEnvironment(projectId, newEnv)
+                    setEnvironment(newEnv)
+                    fetchProject(false)
+                  } catch (err: any) {
+                    toast.error(extractErrorMessage(err, 'Failed to update environment'))
+                  } finally {
+                    setShowEnvConfirm(false)
+                  }
                 }}>
                   Confirm Switch
                 </Button>
@@ -687,12 +722,9 @@ function ProjectSettingsPage() {
                   <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-taupe bg-taupe/5 rounded-xl">
                     <Shield className="w-12 h-12 text-taupe mb-4" />
                     <h3 className="text-lg font-bold text-slate mb-2">No Providers Configured</h3>
-                    <p className="text-sm font-semibold text-slate/70 text-center mb-6 max-w-md">
+                    <p className="text-sm font-semibold text-slate/70 text-center max-w-md">
                       You haven't added any social login providers yet. Add a provider to allow your users to sign in with their existing accounts.
                     </p>
-                    <Button type="button" onClick={openAddProviderModal} className="gap-2">
-                      <Plus className="w-4 h-4" /> Add Provider
-                    </Button>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -704,6 +736,16 @@ function ProjectSettingsPage() {
                             <p className="text-sm font-semibold text-slate/70">
                               Users can sign in with their {provider.charAt(0).toUpperCase() + provider.slice(1)} accounts.
                             </p>
+                          </div>
+                          
+                          <div className="flex flex-col gap-1 mt-3 p-3 bg-taupe/10 border-2 border-slate/10 rounded-xl">
+                            <span className="text-xs font-bold text-slate/70 uppercase">Callback URL</span>
+                            <div className="flex items-center gap-2">
+                              <code className="flex-1 text-xs font-mono bg-vanilla px-2 py-1.5 rounded-lg border border-slate/10 break-all">
+                                {`${API_URL}/auth/callback/${provider}`}
+                              </code>
+                              <CopyButton value={`${API_URL}/auth/callback/${provider}`} />
+                            </div>
                           </div>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
@@ -749,7 +791,7 @@ function ProjectSettingsPage() {
                   />
                   <Button 
                     type="button" 
-                    variant="default"
+                    variant="primary"
                     onClick={handleAddOrigin}
                     disabled={savingOrigins || !newOrigin.trim() || allowedOrigins.length >= 5}
                     className="shrink-0"
@@ -812,26 +854,44 @@ function ProjectSettingsPage() {
                       <p className="text-sm font-semibold text-slate/70 mt-1 max-w-lg">Used to verify the signatures of JWTs issued by Cerberus to your users. This is safe to share.</p>
                       {project.jwt_secret_last_rotated && <p className="text-xs font-semibold text-slate/50 mt-2">Last rotated: {new Date(project.jwt_secret_last_rotated).toLocaleString()}</p>}
                     </div>
-                    <Button variant="destructive" onClick={() => setIsRotateRsaConfirmOpen(true)} className="gap-2 shrink-0">
-                      <RefreshCw className="w-4 h-4" /> Rotate Keys
+                    <Button variant="destructive" onClick={() => setIsRotateRsaConfirmOpen(true)} disabled={rsaRotated} className={`gap-2 shrink-0 relative overflow-hidden transition-all duration-300 w-35 ${rsaRotated ? 'bg-terracotta! text-vanilla! border-terracotta!' : ''}`}>
+                      <AnimatePresence mode="wait">
+                        {rsaRotated ? (
+                          <motion.div key="rotated" initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} className="flex items-center justify-center gap-2 absolute inset-0">
+                            <Check className="w-4 h-4" />
+                            Rotated!
+                          </motion.div>
+                        ) : (
+                          <motion.div key="default" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex items-center justify-center gap-2 absolute inset-0">
+                            <RefreshCw className="w-4 h-4" /> Rotate Keys
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                      <div className="invisible flex items-center justify-center gap-2">
+                        <RefreshCw className="w-4 h-4" /> Rotate Keys
+                      </div>
+                      {rsaRotated && (
+                        <motion.div
+                          initial={{ scale: 0, opacity: 0.4 }}
+                          animate={{ scale: 3, opacity: 0 }}
+                          transition={{ duration: 0.6, ease: 'easeOut' }}
+                          className="absolute inset-0 bg-vanilla rounded-full origin-center pointer-events-none"
+                        />
+                      )}
                     </Button>
                   </div>
                   
                   <div className="mt-2">
                     <div className="relative">
-                      <pre className="w-full min-h-[120px] border-2 border-slate bg-taupe/10 px-4 py-4 text-xs font-mono rounded-xl overflow-hidden whitespace-pre-wrap break-all leading-relaxed">
+                      <pre className="w-full min-h-30 border-2 border-slate bg-taupe/10 px-4 py-4 text-xs font-mono rounded-xl overflow-hidden whitespace-pre-wrap break-all leading-relaxed">
                         {isPublicKeyVisible ? publicKey : publicKey.replace(/(?<=-----BEGIN PUBLIC KEY-----\n)[\s\S]*?(?=\n-----END PUBLIC KEY-----)/, '****************************************************************\n****************************************************************\n****************************************************************\n****************************************************************')}
                       </pre>
-                      <div className="absolute top-2 right-2 flex gap-1">
-                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs rounded-lg bg-slate/10 hover:bg-slate/20 font-bold text-slate" onClick={() => handleDownloadPem(publicKey, `${project.name.replace(/\s+/g, '_').toLowerCase()}_public_key.pem`)}>
-                          <Download className="w-3.5 h-3.5 mr-1" /> PEM
+                      <div className="absolute top-2 right-2 flex gap-3">
+                        <Button variant="outline" size="icon" className="h-8 w-8 bg-vanilla shrink-0" onClick={() => setIsPublicKeyVisible(!isPublicKeyVisible)} title={isPublicKeyVisible ? "Hide Key" : "Show Key"}>
+                          {isPublicKeyVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs rounded-lg bg-slate/10 hover:bg-slate/20 font-bold text-slate" onClick={() => handleCopy(publicKey, 'Public Key')}>
-                          <Copy className="w-3.5 h-3.5 mr-1" /> Copy
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 rounded-lg bg-slate/10 hover:bg-slate/20 text-slate" onClick={() => setIsPublicKeyVisible(!isPublicKeyVisible)}>
-                          {isPublicKeyVisible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                        </Button>
+                        <CopyButton value={publicKey} variant="outline" size="icon" className="h-8 w-8 bg-vanilla shrink-0" title="Copy Key" />
+                        <DownloadButton onDownload={() => handleDownloadPem(publicKey, `${project.name.replace(/\s+/g, '_').toLowerCase()}_public_key.pem`)} variant="outline" size="icon" className="h-8 w-8 bg-vanilla shrink-0" title="Download PEM" />
                       </div>
                     </div>
                   </div>
@@ -874,9 +934,9 @@ function ProjectSettingsPage() {
                     <div className={`w-full font-mono text-sm border-2 rounded-xl bg-vanilla focus-within:ring-2 overflow-hidden transition-colors ${claimsError ? 'border-terracotta focus-within:ring-terracotta' : 'border-taupe focus-within:ring-slate'}`}>
                       <Editor
                         value={claimsJson}
-                        onValueChange={(val) => { setClaimsJson(val); setClaimsError(''); }}
+                        onValueChange={(val: string) => { setClaimsJson(val); setClaimsError(''); }}
                         onKeyDown={handleEditorKeyDown}
-                        highlight={code => Prism.highlight(code, Prism.languages.javascript || Prism.languages.js, 'javascript')}
+                        highlight={(code: string) => Prism.highlight(code, Prism.languages.javascript || Prism.languages.js, 'javascript')}
                         padding={16}
                         style={{
                           fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
@@ -891,9 +951,38 @@ function ProjectSettingsPage() {
                   </div>
                 </CardContent>
                 <CardFooter className="flex justify-end border-t-2 border-taupe/20 pt-6">
-                  <Button type="submit" disabled={savingClaims} className="gap-2">
-                    {savingClaims ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                    Save Claims
+                  <Button type="submit" disabled={savingClaims || claimsSaved} className={`relative overflow-hidden w-35 transition-all duration-300 ${claimsSaved ? 'bg-sage! text-vanilla! border-sage!' : ''}`}>
+                    <AnimatePresence mode="wait">
+                      {savingClaims ? (
+                        <motion.div key="saving" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex items-center justify-center gap-2 absolute inset-0">
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                          Saving...
+                        </motion.div>
+                      ) : claimsSaved ? (
+                        <motion.div key="saved" initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} className="flex items-center justify-center gap-2 absolute inset-0">
+                          <Check className="w-4 h-4" />
+                          Saved!
+                        </motion.div>
+                      ) : (
+                        <motion.div key="default" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex items-center justify-center gap-2 absolute inset-0">
+                          <Save className="w-4 h-4" />
+                          Save Claims
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                    {/* Placeholder to maintain button height since absolute content doesn't affect height */}
+                    <div className="invisible flex items-center gap-2">
+                      <Save className="w-4 h-4" />
+                      Save Claims
+                    </div>
+                    {claimsSaved && (
+                      <motion.div
+                        initial={{ scale: 0, opacity: 0.4 }}
+                        animate={{ scale: 3, opacity: 0 }}
+                        transition={{ duration: 0.6, ease: 'easeOut' }}
+                        className="absolute inset-0 bg-vanilla rounded-full origin-center pointer-events-none"
+                      />
+                    )}
                   </Button>
                 </CardFooter>
             </Card>
@@ -909,7 +998,7 @@ function ProjectSettingsPage() {
               <DialogTitle className="text-2xl font-black text-slate flex items-center gap-2">
                 API Key Rotated!
               </DialogTitle>
-              <DialogDescription className="text-terracotta font-bold flex items-start gap-2 mt-2 bg-terracotta/10 p-3 border-2 border-terracotta">
+              <DialogDescription className="text-terracotta font-bold flex items-start gap-2 mt-2 bg-terracotta/10 p-3 border-2 border-terracotta rounded-xl">
                 <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
                 Warning: This is the ONLY time you will see this new API Key. Please copy it or download the JSON file now.
               </DialogDescription>
@@ -920,16 +1009,15 @@ function ProjectSettingsPage() {
                 <Label className="text-slate font-bold">New API Key (Keep Secret)</Label>
                 <div className="flex gap-2">
                   <Input value={rotatedApiKey} readOnly className="font-mono bg-taupe/10" />
-                  <Button variant="outline" onClick={() => handleCopy(rotatedApiKey, 'API Key')}><Copy className="w-4 h-4" /></Button>
+                  <CopyButton value={rotatedApiKey} />
                 </div>
               </div>
             </div>
 
             <DialogFooter className="flex gap-2 sm:justify-between border-t-2 border-taupe/20 pt-4 mt-6">
-              <Button variant="outline" onClick={() => handleDownloadJson({ api_key: rotatedApiKey }, `${project.name.replace(/\s+/g, '_').toLowerCase()}_api_key.json`)} className="gap-2">
-                <Download className="w-4 h-4" />
+              <DownloadButton variant="outline" size="default" onDownload={() => handleDownloadJson({ api_key: rotatedApiKey }, `${project.name.replace(/\s+/g, '_').toLowerCase()}_api_key.json`)} className="gap-2">
                 Download JSON
-              </Button>
+              </DownloadButton>
               <Button onClick={() => { setIsApiKeyModalOpen(false); setRotatedApiKey('') }}>
                 I've Saved It
               </Button>
@@ -977,7 +1065,7 @@ function ProjectSettingsPage() {
 
       {/* PROVIDER MODAL */}
       <Dialog open={isProviderModalOpen} onOpenChange={setIsProviderModalOpen}>
-        <DialogContent className="sm:max-w-[425px] border-2 border-slate bg-vanilla p-0 overflow-hidden shadow-[8px_8px_0px_rgba(30,41,59,1)]">
+        <DialogContent className="sm:max-w-106.25 border-2 border-slate bg-vanilla p-0 overflow-hidden shadow-[8px_8px_0px_rgba(30,41,59,1)]">
           <DialogHeader className="p-6 bg-sand border-b-2 border-slate">
             <DialogTitle className="text-2xl font-black text-slate">
               {editingProvider ? `Edit ${editingProvider.charAt(0).toUpperCase() + editingProvider.slice(1)}` : 'Add Provider'}
@@ -990,8 +1078,11 @@ function ProjectSettingsPage() {
             {!editingProvider && (
               <div className="space-y-2">
                 <Label>Provider</Label>
-                <Select value={modalProvider} onValueChange={setModalProvider}>
-                  <SelectTrigger>
+                <Select value={modalProvider} onValueChange={(val) => {
+                  setModalProvider(val)
+                  setAuthErrors({ ...authErrors, provider: '' })
+                }}>
+                  <SelectTrigger className={authErrors.provider ? "border-terracotta focus:ring-terracotta" : ""}>
                     <SelectValue placeholder="Select a provider" />
                   </SelectTrigger>
                   <SelectContent>
@@ -999,6 +1090,20 @@ function ProjectSettingsPage() {
                     <SelectItem value="google" disabled={allowedProviders.includes('google')}>Google</SelectItem>
                   </SelectContent>
                 </Select>
+                {authErrors.provider && <p className="text-sm font-bold text-terracotta">{authErrors.provider}</p>}
+              </div>
+            )}
+
+            {modalProvider && (
+              <div className="space-y-2 pb-2 mb-2 border-b-2 border-slate/10">
+                <Label>Callback URL</Label>
+                <div className="flex items-center justify-between gap-2 p-2 bg-taupe/10 border-2 border-slate/20 rounded-xl">
+                   <code className="text-xs font-mono truncate max-w-70">
+                     {`${API_URL}/auth/callback/${modalProvider}`}
+                   </code>
+                   <CopyButton value={`${API_URL}/auth/callback/${modalProvider}`} />
+                </div>
+                <p className="text-xs font-semibold text-slate/60">Set this as the Authorized Redirect URI in your {modalProvider.charAt(0).toUpperCase() + modalProvider.slice(1)} console.</p>
               </div>
             )}
             
@@ -1006,9 +1111,16 @@ function ProjectSettingsPage() {
               <Label>Client ID</Label>
               <Input 
                 value={modalClientId} 
-                onChange={(e: any) => setModalClientId(e.target.value)} 
+                onChange={(e: any) => {
+                  setModalClientId(e.target.value)
+                  if (modalProvider) {
+                    setAuthErrors({ ...authErrors, [`${modalProvider}_client_id`]: '' })
+                  }
+                }} 
                 placeholder="Client ID"
+                className={authErrors[`${modalProvider}_client_id`] ? "border-terracotta focus-visible:ring-terracotta" : ""}
               />
+              {authErrors[`${modalProvider}_client_id`] && <p className="text-sm font-bold text-terracotta">{authErrors[`${modalProvider}_client_id`]}</p>}
             </div>
             
             <div className="space-y-2">
@@ -1016,9 +1128,16 @@ function ProjectSettingsPage() {
               <Input 
                 type="password"
                 value={modalClientSecret} 
-                onChange={(e: any) => setModalClientSecret(e.target.value)} 
+                onChange={(e: any) => {
+                  setModalClientSecret(e.target.value)
+                  if (modalProvider) {
+                    setAuthErrors({ ...authErrors, [`${modalProvider}_client_secret`]: '' })
+                  }
+                }} 
                 placeholder="Client Secret"
+                className={authErrors[`${modalProvider}_client_secret`] ? "border-terracotta focus-visible:ring-terracotta" : ""}
               />
+              {authErrors[`${modalProvider}_client_secret`] && <p className="text-sm font-bold text-terracotta">{authErrors[`${modalProvider}_client_secret`]}</p>}
             </div>
           </div>
           <DialogFooter className="p-6 bg-sand border-t-2 border-slate flex justify-end">
