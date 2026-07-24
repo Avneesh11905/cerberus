@@ -184,40 +184,14 @@ body {
 .flat-card {
   @apply bg-sand border border-taupe;
   box-shadow: 4px 4px 0px 0px var(--slate);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.flat-card:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0px 0px var(--slate);
 }
 
 .flat-card-dark {
   @apply bg-slate border border-taupe text-vanilla;
   box-shadow: 4px 4px 0px 0px var(--taupe);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.flat-card-dark:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0px 0px var(--taupe);
-}
 
-.flat-button {
-  @apply bg-slate text-vanilla border border-transparent;
-  box-shadow: 2px 2px 0px 0px var(--taupe);
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
-}
-
-.flat-button:hover {
-  transform: translate(-1px, -1px);
-  box-shadow: 3px 3px 0px 0px var(--taupe);
-}
-
-.flat-button:active {
-  transform: translate(2px, 2px);
-  box-shadow: 0px 0px 0px 0px var(--taupe);
-}
 
 .flat-shadow-slate {
   box-shadow: 4px 4px 0px 0px var(--slate);
@@ -258,4 +232,19 @@ html {
   background: var(--vanilla-cream);
   border-left: 2px solid var(--taupe);
   border-top: 2px solid var(--taupe);
+}
+
+/* Prism Editor Overrides for Neo-brutalist Theme */
+pre[class*="language-"],
+code[class*="language-"] {
+  text-shadow: none !important;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.punctuation {
+  background: transparent !important;
 }

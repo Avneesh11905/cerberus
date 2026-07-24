@@ -165,7 +165,7 @@ async def custom_http_exception_handler(
         f"HTTP {exc.status_code}: {exc.detail} - Path: {request.url.path}"
     )
     # Provide slightly sanitized messages for HTTP exceptions in production
-    detail = str(exc.detail)
+    detail = exc.detail
     if get_settings().core.ENV != "development":
         if exc.status_code == status.HTTP_401_UNAUTHORIZED:
             detail = "Authentication failed"
@@ -184,7 +184,7 @@ async def validation_exception_handler(
     for err in exc.errors():
         errors.append(
             {
-                "loc": " -> ".join([str(loc) for loc in err.get("loc", [])]),
+                "loc": err.get("loc", []),
                 "msg": err.get("msg"),
                 "type": err.get("type"),
             }

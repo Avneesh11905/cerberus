@@ -11,7 +11,6 @@ MAX_CLAIM_KEYS = 10
 RESERVED_KEYS = {
     "sub",
     "email",
-    "role",
     "exp",
     "iat",
     "jti",
@@ -45,7 +44,7 @@ class UpdateProjectClaimsUseCase(BaseProjectUseCase):
             project.updated_at = datetime.now(timezone.utc)
 
             saved = await self.uow.project_command_repo.save(project)
-            await self.cache.delete(
+            await self.cache.delete_key(
                 f"project:{command.project_id}:command.default_claims"
             )
             return UpdateProjectClaimsDTO(project=saved)

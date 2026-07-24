@@ -28,7 +28,6 @@ def mask_oauth_config(config: dict[str, Any] | None) -> dict[str, Any]:
 RESERVED_CLAIM_KEYS = {
     "sub",
     "email",
-    "role",
     "exp",
     "iat",
     "jti",
@@ -38,8 +37,10 @@ RESERVED_CLAIM_KEYS = {
 }
 
 
+ClaimValue = str | int | bool | float
+
 class ProjectDefaultClaimsReq(BaseModel):
-    claims: dict[str, str | int | bool | float] = Field(default_factory=dict)
+    claims: dict[str, ClaimValue | dict[str, ClaimValue]] = Field(default_factory=dict)
 
     @field_validator("claims")
     @classmethod

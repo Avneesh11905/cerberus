@@ -9,12 +9,6 @@ from src.modules.authentication.domain.exceptions import (
     AuthBaseException,
 )
 
-# Projects
-
-# Superadmin
-
-# Users
-
 
 class RateLimitExceededException(Exception):
     def __init__(self, detail: str, retry_after: int | None = None):

@@ -17,8 +17,8 @@ class HttpsUrl:
     def __post_init__(self):
         if not isinstance(self.value, str):
             object.__setattr__(self, "value", str(self.value))
-        if not self.value.startswith("http"):
-            raise ValueError("Invalid URL format")
+        if not self.value.startswith("https://") and not self.value.startswith("http://localhost"):
+            raise ValueError("Must be an HTTPS URL or http://localhost")
 
     def __str__(self) -> str:
         return self.value

@@ -51,5 +51,9 @@ class ProjectOriginsUpdateReq(BaseModel):
                 continue
             parsed = urlparse(origin)
             if not parsed.scheme or not parsed.netloc:
-                raise ValueError(f"Invalid origin URL: {origin}")
+                raise ValueError("Origins must use https:// or be http://localhost")
+            if parsed.scheme not in ("http", "https"):
+                raise ValueError("Origins must use https:// or be http://localhost")
+            if parsed.scheme == "http" and parsed.hostname != "localhost":
+                raise ValueError("Origins must use https:// or be http://localhost")
         return origins

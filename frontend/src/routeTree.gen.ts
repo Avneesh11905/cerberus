@@ -18,6 +18,8 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as ProtectedDashboardRouteImport } from './routes/_protected.dashboard'
 import { Route as OauthCallbackRouteImport } from './routes/oauth.callback'
+import { Route as ProtectedProjectsIndexRouteImport } from './routes/_protected.projects.index'
+import { Route as ProtectedProjectsProjectIdSettingsRouteImport } from './routes/_protected.projects.$projectId.settings'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -63,6 +65,17 @@ const OauthCallbackRoute = OauthCallbackRouteImport.update({
   path: '/oauth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProtectedProjectsIndexRoute = ProtectedProjectsIndexRouteImport.update({
+  id: '/projects/',
+  path: '/projects/',
+  getParentRoute: () => ProtectedRoute,
+} as any)
+const ProtectedProjectsProjectIdSettingsRoute =
+  ProtectedProjectsProjectIdSettingsRouteImport.update({
+    id: '/projects/$projectId/settings',
+    path: '/projects/$projectId/settings',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -73,6 +86,8 @@ export interface FileRoutesByFullPath {
   '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof ProtectedDashboardRoute
   '/oauth/callback': typeof OauthCallbackRoute
+  '/projects/': typeof ProtectedProjectsIndexRoute
+  '/projects/$projectId/settings': typeof ProtectedProjectsProjectIdSettingsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -83,6 +98,8 @@ export interface FileRoutesByTo {
   '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof ProtectedDashboardRoute
   '/oauth/callback': typeof OauthCallbackRoute
+  '/projects': typeof ProtectedProjectsIndexRoute
+  '/projects/$projectId/settings': typeof ProtectedProjectsProjectIdSettingsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -95,6 +112,8 @@ export interface FileRoutesById {
   '/verify-email': typeof VerifyEmailRoute
   '/_protected/dashboard': typeof ProtectedDashboardRoute
   '/oauth/callback': typeof OauthCallbackRoute
+  '/_protected/projects/': typeof ProtectedProjectsIndexRoute
+  '/_protected/projects/$projectId/settings': typeof ProtectedProjectsProjectIdSettingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -107,6 +126,8 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/dashboard'
     | '/oauth/callback'
+    | '/projects/'
+    | '/projects/$projectId/settings'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -117,6 +138,8 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/dashboard'
     | '/oauth/callback'
+    | '/projects'
+    | '/projects/$projectId/settings'
   id:
     | '__root__'
     | '/'
@@ -128,6 +151,8 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/_protected/dashboard'
     | '/oauth/callback'
+    | '/_protected/projects/'
+    | '/_protected/projects/$projectId/settings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -206,15 +231,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OauthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_protected/projects/': {
+      id: '/_protected/projects/'
+      path: '/projects'
+      fullPath: '/projects/'
+      preLoaderRoute: typeof ProtectedProjectsIndexRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/projects/$projectId/settings': {
+      id: '/_protected/projects/$projectId/settings'
+      path: '/projects/$projectId/settings'
+      fullPath: '/projects/$projectId/settings'
+      preLoaderRoute: typeof ProtectedProjectsProjectIdSettingsRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
   }
 }
 
 interface ProtectedRouteChildren {
   ProtectedDashboardRoute: typeof ProtectedDashboardRoute
+  ProtectedProjectsIndexRoute: typeof ProtectedProjectsIndexRoute
+  ProtectedProjectsProjectIdSettingsRoute: typeof ProtectedProjectsProjectIdSettingsRoute
 }
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedDashboardRoute: ProtectedDashboardRoute,
+  ProtectedProjectsIndexRoute: ProtectedProjectsIndexRoute,
+  ProtectedProjectsProjectIdSettingsRoute:
+    ProtectedProjectsProjectIdSettingsRoute,
 }
 
 const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(

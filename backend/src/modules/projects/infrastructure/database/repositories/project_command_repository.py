@@ -48,7 +48,7 @@ class SQLProjectCommandRepositoryAdapter(ProjectCommandRepositoryPort):
             allowed_origins=entity.allowed_origins,
             default_claims=entity.default_claims,
             environment=entity.environment,
-            frontend_url=entity.frontend_url,
+            frontend_url=entity.frontend_url.value if entity.frontend_url else None,
             created_at=entity.created_at,
             updated_at=entity.updated_at,
         )

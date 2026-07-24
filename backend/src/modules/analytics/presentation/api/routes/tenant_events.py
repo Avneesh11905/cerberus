@@ -1,3 +1,4 @@
+import json
 import asyncio
 from fastapi import APIRouter, Depends, Request
 from sse_starlette.sse import EventSourceResponse, ServerSentEvent
@@ -23,7 +24,7 @@ async def tenant_analytics_stream(
         channel = f"analytics:tenant:{user.id}"
         try:
             async for data in subscriber.subscribe(channel):
-                yield ServerSentEvent(event="tenant_metrics_update", data=data)
+                yield ServerSentEvent(event="tenant_metrics_update", data=json.dumps(data))
         except asyncio.CancelledError:
             pass
 

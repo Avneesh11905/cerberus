@@ -1,6 +1,6 @@
-import { useEffect, useState, useRef, createContext, useContext, ReactNode } from 'react'
+import { useEffect, useState, useRef, createContext, useContext, type ReactNode } from 'react'
 import { useAuthStore } from '../store/auth'
-import { API_URL } from '../lib/api-client'
+import { apiClient, API_URL } from '../lib/api-client'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
 
 type AnalyticsContextType = {
@@ -14,9 +14,9 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<any>(null)
   const [status, setStatus] = useState<'connecting' | 'connected' | 'error'>('connecting')
   const abortControllerRef = useRef<AbortController | null>(null)
-  
+  const token = useAuthStore(state => state.accessToken)
+
   useEffect(() => {
-    const token = useAuthStore.getState().accessToken
     if (!token) return
 
     const connect = async () => {
@@ -30,6 +30,7 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
             'Authorization': `Bearer ${token}`,
             'Accept': 'text/event-stream',
           },
+          openWhenHidden: true,
           signal: abortControllerRef.current.signal,
           onopen: async (response) => {
             if (response.ok && response.headers.get('content-type')?.includes('text/event-stream')) {
@@ -52,13 +53,28 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
             setStatus('error')
           },
           onerror: (err) => {
+            if (err instanceof Error && err.name === 'AbortError') {
+              return null; // Don't retry, just let it close
+            }
             console.error('SSE Error:', err)
             setStatus('error')
-            return 5000 // Retry after 5s
+
+            // If 401, trigger Axios interceptor to refresh the token, 
+            // and stop fetchEventSource from retrying with the old token.
+            if (err instanceof Error && err.message.includes('401')) {
+              apiClient.get('/users/me').catch(() => {
+                // If it fails, the interceptor handles logout
+              })
+              return null;
+            }
+
+            return 5000 // Retry after 5s for other errors
           }
         })
-      } catch (err) {
-        setStatus('error')
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          setStatus('error')
+        }
       }
     }
 
@@ -69,7 +85,7 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
         abortControllerRef.current.abort()
       }
     }
-  }, [])
+  }, [token])
 
   return (
     <AnalyticsContext.Provider value={{ data, status }}>

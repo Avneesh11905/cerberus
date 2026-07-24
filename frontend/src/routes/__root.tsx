@@ -3,6 +3,8 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { TooltipProvider } from '../components/ui/tooltip'
+import { Toaster } from '../components/ui/sonner'
 import { useEffect } from 'react'
 
 import appCss from '../styles.css?url'
@@ -82,8 +84,13 @@ function RootComponent() {
       </head>
       <body>
         <QueryClientProvider client={queryClient}>
-          <Outlet />
-          <ReactQueryDevtools buttonPosition="bottom-left" />
+          <TooltipProvider delayDuration={100}>
+            <Outlet />
+            <Toaster />
+            {import.meta.env.DEV && (
+              <ReactQueryDevtools buttonPosition="bottom-left" />
+            )}
+          </TooltipProvider>
         </QueryClientProvider>
         
         <TanStackDevtools

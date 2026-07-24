@@ -7,6 +7,7 @@ from pydantic import (
     ConfigDict,
     computed_field,
     field_serializer,
+    field_validator,
 )
 
 from src.core.config import get_settings
@@ -50,6 +51,7 @@ class ProjectReadRes(BaseModel):
     allowed_origins: list[str]
     environment: Literal["development", "production"]
     frontend_url: str | None = None
+    default_claims: dict[str, Any] = {}
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -66,3 +68,7 @@ class ProjectReadRes(BaseModel):
     @field_serializer("oauth_config")
     def serialize_oauth_config(self, oauth_config: dict[str, Any]) -> dict[str, Any]:
         return mask_oauth_config(oauth_config)
+
+    @field_validator("frontend_url", mode="before")
+    def extract_frontend_url(cls, v: Any) -> str | None:
+        return v.value if hasattr(v, "value") else v

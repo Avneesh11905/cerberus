@@ -1,0 +1,96 @@
+{
+  "ProjectDefaultClaimsReq": {
+    "properties": {
+      "claims": {
+        "additionalProperties": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        },
+        "type": "object",
+        "title": "Claims"
+      }
+    },
+    "type": "object",
+    "title": "ProjectDefaultClaimsReq"
+  },
+  "PaginatedProjectUsersRes": {
+    "properties": {
+      "items": {
+        "items": {},
+        "type": "array",
+        "title": "Items"
+      },
+      "total": {
+        "type": "integer",
+        "title": "Total"
+      },
+      "page": {
+        "type": "integer",
+        "title": "Page"
+      },
+      "size": {
+        "type": "integer",
+        "title": "Size"
+      }
+    },
+    "type": "object",
+    "required": [
+      "items",
+      "total",
+      "page",
+      "size"
+    ],
+    "title": "PaginatedProjectUsersRes"
+  },
+  "ProjectUserStatusUpdateReq": {
+    "properties": {
+      "is_active": {
+        "type": "boolean",
+        "title": "Is Active"
+      }
+    },
+    "type": "object",
+    "required": [
+      "is_active"
+    ],
+    "title": "ProjectUserStatusUpdateReq"
+  },
+  "UserClaimsOverrideReq": {
+    "properties": {
+      "overrides": {
+        "additionalProperties": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        },
+        "type": "object",
+        "title": "Overrides"
+      }
+    },
+    "type": "object",
+    "title": "UserClaimsOverrideReq"
+  }
+}

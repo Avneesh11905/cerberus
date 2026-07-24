@@ -8,6 +8,8 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { Observer } from 'gsap/Observer'
 import { ScrollToPlugin } from 'gsap/ScrollToPlugin'
+import { buttonVariants } from '../components/ui/button'
+import { cn } from '../lib/utils'
 
 gsap.registerPlugin(ScrollTrigger, Observer, ScrollToPlugin)
 
@@ -183,17 +185,17 @@ function LandingPage() {
                 {accessToken ? (
                   <Link 
                     to="/dashboard" 
-                    className="flex items-center justify-center w-full sm:w-auto px-8 py-4 text-lg font-bold text-vanilla bg-slate rounded-lg border-2 border-slate flat-shadow-taupe hover:translate-y-0.5 hover:translate-x-0.5 hover:shadow-none transition-all group"
+                    className={cn(buttonVariants({ variant: "primary", size: "xl" }), "w-full sm:w-auto group")}
                   >
                     Go to Dashboard
                     <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 ) : isCheckingSession ? (
-                  <div className="w-full sm:w-56 h-16 bg-taupe/10 animate-pulse rounded-lg" />
+                  <div className="w-full sm:w-56 h-14 bg-taupe/10 animate-pulse rounded-xl" />
                 ) : (
                   <Link 
                     to="/register" 
-                    className="flex items-center justify-center w-full sm:w-auto px-8 py-4 text-lg font-bold text-vanilla bg-slate rounded-lg border-2 border-slate flat-shadow-taupe hover:translate-y-0.5 hover:translate-x-0.5 hover:shadow-none transition-all group"
+                    className={cn(buttonVariants({ variant: "primary", size: "xl" }), "w-full sm:w-auto group")}
                   >
                     Start Building Free
                     <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -201,7 +203,7 @@ function LandingPage() {
                 )}
                 <a 
                   href="#features" 
-                  className="flex items-center justify-center w-full sm:w-auto px-8 py-4 text-lg font-bold text-slate bg-sand rounded-lg border-2 border-taupe flat-shadow hover:translate-y-0.5 hover:translate-x-0.5 hover:shadow-none transition-all"
+                  className={cn(buttonVariants({ variant: "outline", size: "xl" }), "w-full sm:w-auto bg-sand")}
                 >
                   Explore Features
                 </a>
@@ -279,16 +281,16 @@ function LandingPage() {
               {accessToken ? (
                 <Link 
                   to="/dashboard" 
-                  className="w-full sm:w-auto px-8 py-4 text-lg font-bold text-slate bg-vanilla rounded-lg border-2 border-slate flat-shadow-slate hover:translate-y-0.5 hover:translate-x-0.5 hover:shadow-none transition-all text-center"
+                  className={cn(buttonVariants({ variant: "inverse", size: "xl" }), "w-full sm:w-auto")}
                 >
                   Go to Dashboard
                 </Link>
               ) : isCheckingSession ? (
-                <div className="w-full sm:w-56 h-16 bg-taupe/10 animate-pulse rounded-lg" />
+                <div className="w-full sm:w-56 h-14 bg-taupe/10 animate-pulse rounded-xl" />
               ) : (
                 <Link 
                   to="/register" 
-                  className="w-full sm:w-auto px-8 py-4 text-lg font-bold text-slate bg-vanilla rounded-lg border-2 border-slate flat-shadow-slate hover:translate-y-0.5 hover:translate-x-0.5 hover:shadow-none transition-all text-center"
+                  className={cn(buttonVariants({ variant: "inverse", size: "xl" }), "w-full sm:w-auto")}
                 >
                   Create Your Account
                 </Link>

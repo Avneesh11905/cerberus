@@ -29,7 +29,7 @@ function StatCard({ title, value, icon: Icon, trend, trendUp }: any) {
 }
 
 function DashboardPage() {
-  const { data, status } = useAnalyticsStream()
+  const { data } = useAnalyticsStream()
 
   const timeSeriesData = data?.timeSeries || []
   const endpointsData = data?.endpoints || []
