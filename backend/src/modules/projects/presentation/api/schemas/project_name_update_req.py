@@ -23,6 +23,5 @@ def mask_oauth_config(config: dict[str, Any] | None) -> dict[str, Any]:
     return masked
 
 
-
 class ProjectNameUpdateReq(BaseModel):
     name: str

@@ -23,7 +23,6 @@ def mask_oauth_config(config: dict[str, Any] | None) -> dict[str, Any]:
     return masked
 
 
-
 class PaginatedProjectUsersRes(BaseModel):
     items: list[Any]  # Will hold UserProfile at runtime but we can type as Any or dict
     total: int

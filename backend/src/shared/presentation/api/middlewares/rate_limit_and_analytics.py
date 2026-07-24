@@ -75,6 +75,7 @@ class RateLimitAndAnalyticsMiddleware(BaseHTTPMiddleware):
             token = auth_header.split(" ")[1]
             try:
                 import jwt
+
                 payload = jwt.decode(token, options={"verify_signature": False})
                 project_id = payload.get("project_id")
             except Exception:
@@ -84,6 +85,7 @@ class RateLimitAndAnalyticsMiddleware(BaseHTTPMiddleware):
             if api_key:
                 try:
                     import hashlib
+
                     key_hash = hashlib.sha256(api_key.encode()).hexdigest()
                     cache_key = f"api_key_hash:{key_hash}"
                     project_id = await self.cache.get_string(cache_key)

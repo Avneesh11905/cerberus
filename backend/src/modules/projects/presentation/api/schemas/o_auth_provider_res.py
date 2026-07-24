@@ -23,7 +23,6 @@ def mask_oauth_config(config: dict[str, Any] | None) -> dict[str, Any]:
     return masked
 
 
-
 class OAuthProviderRes(BaseModel):
     key: str
     display_name: str

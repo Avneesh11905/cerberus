@@ -25,7 +25,6 @@ def mask_oauth_config(config: dict[str, Any] | None) -> dict[str, Any]:
     return masked
 
 
-
 class ProjectOriginsUpdateReq(BaseModel):
     allowed_origins: list[str] = Field(max_length=5)
 

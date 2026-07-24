@@ -24,7 +24,6 @@ def mask_oauth_config(config: dict[str, Any] | None) -> dict[str, Any]:
     return masked
 
 
-
 class ProjectUserStatusUpdateRes(BaseModel):
     message: str
     user_id: UUID

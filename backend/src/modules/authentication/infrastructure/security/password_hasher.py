@@ -24,6 +24,7 @@ class Argon2PasswordHasherAdapter:
 
     async def verify_password(self, password: str, hashed_password: str) -> bool:
         loop = asyncio.get_running_loop()
+
         def verify():
             try:
                 return self.pwd_context.verify(hashed_password, password)
@@ -31,10 +32,10 @@ class Argon2PasswordHasherAdapter:
                 return False
             except Exception:
                 return False
+
         return await loop.run_in_executor(None, verify)
 
     async def dummy_verify(self) -> None:
         loop = asyncio.get_running_loop()
         # To simulate verify timing, we can just hash a dummy string
         await loop.run_in_executor(None, self.pwd_context.hash, "dummy")
-

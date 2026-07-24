@@ -31,7 +31,6 @@ def mask_oauth_config(config: dict[str, Any] | None) -> dict[str, Any]:
     return masked
 
 
-
 class ProjectRes(BaseModel):
     id: UUID
     name: str

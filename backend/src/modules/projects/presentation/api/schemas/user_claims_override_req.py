@@ -26,7 +26,6 @@ def mask_oauth_config(config: dict[str, Any] | None) -> dict[str, Any]:
     return masked
 
 
-
 class UserClaimsOverrideReq(BaseModel):
     overrides: dict[str, str | int | bool | float] = Field(default_factory=dict)
 

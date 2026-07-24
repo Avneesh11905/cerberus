@@ -26,7 +26,6 @@ def mask_oauth_config(config: dict[str, Any] | None) -> dict[str, Any]:
     return masked
 
 
-
 ClaimValue = str | int | bool | float
 
 

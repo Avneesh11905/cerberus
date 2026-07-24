@@ -1,5 +1,6 @@
 from typing import Any
 
+
 def mask_oauth_config(config: dict[str, Any] | None) -> dict[str, Any]:
     if not config:
         return {}
@@ -16,6 +17,7 @@ def mask_oauth_config(config: dict[str, Any] | None) -> dict[str, Any]:
         masked[provider] = safe_config
 
     return masked
+
 
 RESERVED_CLAIM_KEYS = {
     "sub",

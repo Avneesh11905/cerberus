@@ -24,7 +24,6 @@ def mask_oauth_config(config: dict[str, Any] | None) -> dict[str, Any]:
     return masked
 
 
-
 class UserClaimsRes(BaseModel):
     user_id: UUID
     default_claims: dict[str, Any]

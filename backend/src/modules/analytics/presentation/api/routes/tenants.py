@@ -34,7 +34,9 @@ async def get_tenant_analytics(
     end_date: date = Query(default_factory=lambda: date.today()),
 ):
     if user.role != GlobalRole.SUPERADMIN and str(user.id) != str(tenant_id):
-        raise HTTPException(status_code=403, detail="You can only access your own metrics.")
+        raise HTTPException(
+            status_code=403, detail="You can only access your own metrics."
+        )
 
     metrics = (
         await use_case.execute(

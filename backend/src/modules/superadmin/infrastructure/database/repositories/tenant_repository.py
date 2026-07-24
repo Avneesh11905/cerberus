@@ -47,7 +47,7 @@ class SQLTenantRepositoryAdapter(TenantRepositoryPort):
         limit: int = 100,
         search: str | None = None,
     ) -> Sequence[TenantEntity]:
-        from sqlalchemy import or_
+        from sqlalchemy import or_, String
 
         stmt = select(Tenant)
 
@@ -56,7 +56,7 @@ class SQLTenantRepositoryAdapter(TenantRepositoryPort):
                 or_(
                     Tenant.email.ilike(f"%{search}%"),
                     Tenant.name.ilike(f"%{search}%"),
-                    Tenant.role.cast(str).ilike(f"%{search}%"),
+                    Tenant.role.cast(String).ilike(f"%{search}%"),
                 )
             )
 
@@ -66,7 +66,7 @@ class SQLTenantRepositoryAdapter(TenantRepositoryPort):
         return [self._to_entity(model) for model in orm_models]
 
     async def count_all(self, search: str | None = None) -> int:
-        from sqlalchemy import func, or_
+        from sqlalchemy import func, or_, String
 
         stmt = select(func.count(Tenant.id))
 
@@ -75,7 +75,7 @@ class SQLTenantRepositoryAdapter(TenantRepositoryPort):
                 or_(
                     Tenant.email.ilike(f"%{search}%"),
                     Tenant.name.ilike(f"%{search}%"),
-                    Tenant.role.cast(str).ilike(f"%{search}%"),
+                    Tenant.role.cast(String).ilike(f"%{search}%"),
                 )
             )
 
