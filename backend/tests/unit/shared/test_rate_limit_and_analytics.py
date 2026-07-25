@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from src.shared.presentation.api.middlewares.rate_limit_and_analytics import RateLimitAndAnalyticsMiddleware
 
@@ -33,8 +33,8 @@ def test_app(rate_limiter_mock, analytics_mock, cache_mock):
     app = FastAPI()
     app.add_middleware(
         RateLimitAndAnalyticsMiddleware,
-        core_settings=DummyCoreSettings(),
-        rate_limit_settings=DummyRateLimitSettings(),
+        core_settings=DummyCoreSettings(),  # type: ignore
+        rate_limit_settings=DummyRateLimitSettings(),  # type: ignore
         rate_limiter=rate_limiter_mock,
         analytics=analytics_mock,
         cache=cache_mock
@@ -82,8 +82,8 @@ def test_rate_limit_disabled(test_app, rate_limiter_mock, analytics_mock, cache_
         ENABLED = False
     app.add_middleware(
         RateLimitAndAnalyticsMiddleware,
-        core_settings=DummyCoreSettings(),
-        rate_limit_settings=DisabledSettings(),
+        core_settings=DummyCoreSettings(),  # type: ignore
+        rate_limit_settings=DisabledSettings(),  # type: ignore
         rate_limiter=rate_limiter_mock,
         analytics=analytics_mock,
         cache=cache_mock

@@ -105,13 +105,17 @@ async def test_save_profile(db_session: AsyncSession, repo: SQLUserProfileReposi
     profile.receive_updates = False
     
     updated_profile = await repo.save_profile(profile)
+    assert updated_profile.name is not None
+    assert updated_profile.picture is not None
     assert updated_profile.name.value == "Updated Name"
     assert updated_profile.picture.value == "https://example.com/updated.jpg"
     assert updated_profile.receive_updates is False
     
     tenant_profile = await repo.get_profile(setup_users["tenant_id"])
+    assert tenant_profile is not None
     tenant_profile.name = PersonName("Updated Tenant")
     updated_tenant = await repo.save_profile(tenant_profile)
+    assert updated_tenant.name is not None
     assert updated_tenant.name.value == "Updated Tenant"
     
     profile.id = uuid4()

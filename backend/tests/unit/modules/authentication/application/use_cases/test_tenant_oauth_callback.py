@@ -7,7 +7,6 @@ from src.modules.authentication.application.use_cases.tenant_oauth_callback impo
 from src.modules.authorization.domain.enums import GlobalRole
 from src.modules.authentication.domain.entities import UserIdentity
 from src.shared.domain.value_objects import EmailAddress
-from src.core.config import get_settings
 
 @pytest.fixture
 def mocks():

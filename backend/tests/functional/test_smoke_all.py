@@ -10,7 +10,9 @@ def test_smoke_all_routes(client):
     for route in app.routes:
         if hasattr(route, "methods"):
             method = list(route.methods)[0]
-            path = route.path
+            path = getattr(route, "path", None)
+            if not path:
+                continue
             
             # replace path params with dummy values
             path = path.replace("{provider}", "google")

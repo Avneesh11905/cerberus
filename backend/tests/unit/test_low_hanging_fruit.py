@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 from datetime import datetime
 
@@ -14,11 +14,6 @@ from src.modules.projects.presentation.api.schemas.project_origins_update_req im
 from src.modules.projects.application.use_cases.update_oauth import UpdateOauthUseCase
 from src.modules.projects.application.commands.project_commands import UpdateOauthCommand
 
-from src.modules.authentication.infrastructure.tasks import (
-    run_clean_expired_tokens,
-    run_clean_unverified_and_deleted_users,
-    dispatch_email_task
-)
 
 @pytest.fixture
 def session():
@@ -122,7 +117,7 @@ def test_schemas():
     except Exception:
         pass
     try:
-        ProjectOriginsUpdateReq(allowed_origins=["http://localhost:3000"], default_claims={"foo": "bar"})
+        ProjectOriginsUpdateReq(allowed_origins=["http://localhost:3000"])
     except Exception:
         pass
     try:

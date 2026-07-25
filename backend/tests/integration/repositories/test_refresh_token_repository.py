@@ -13,6 +13,8 @@ from src.modules.authentication.infrastructure.database.repositories.refresh_tok
 )
 from src.modules.authentication.infrastructure.models import RefreshToken
 from sqlalchemy import select
+from src.modules.superadmin.infrastructure.models import Tenant
+from src.modules.authorization.domain.enums import GlobalRole
 
 
 @pytest.fixture
@@ -23,8 +25,7 @@ def repo(db_session: AsyncSession):
     )
 
 
-from src.modules.superadmin.infrastructure.models import Tenant
-from src.modules.authorization.domain.enums import GlobalRole
+
 
 
 @pytest.fixture
