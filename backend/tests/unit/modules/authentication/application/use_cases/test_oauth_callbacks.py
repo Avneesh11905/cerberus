@@ -14,6 +14,7 @@ from src.modules.authentication.application.use_cases.tenant_oauth_callback impo
 )
 from src.modules.authentication.domain.entities import UserIdentity
 from src.shared.domain.value_objects import EmailAddress
+from src.shared.domain.entities import ClientMetadata
 
 
 @pytest.fixture
@@ -64,7 +65,10 @@ class MockUserInfo:
 @pytest.mark.asyncio
 async def test_project_oauth_exact_match(project_use_case, mocks):
     command = ProjectUserOAuthCallbackCommand(
-        provider="google", project_id=uuid4(), request=MagicMock(), client_meta=None
+        provider="google",
+        project_id=uuid4(),
+        request=MagicMock(),
+        client_meta=ClientMetadata(ip_address="1.1.1.1", user_agent="test"),
     )
 
     mocks["oauth_service"].exchange_code_for_user_info.return_value = MockUserInfo()
@@ -84,6 +88,7 @@ async def test_project_oauth_exact_match(project_use_case, mocks):
     mocks["uow"].refresh_token_repo.create.return_value = "refresh_token"
     mocks["claims_provider"].get_custom_claims.return_value = {}
     mocks["access_token"].create.return_value = "access_token"
+    mocks["uow"].refresh_token_repo.get_active_sessions.return_value = []
 
     user_ret, rt, at, is_new, fallback = await project_use_case.execute(command)
 
@@ -96,7 +101,10 @@ async def test_project_oauth_exact_match(project_use_case, mocks):
 @pytest.mark.asyncio
 async def test_project_oauth_email_match(project_use_case, mocks):
     command = ProjectUserOAuthCallbackCommand(
-        provider="google", project_id=uuid4(), request=MagicMock(), client_meta=None
+        provider="google",
+        project_id=uuid4(),
+        request=MagicMock(),
+        client_meta=ClientMetadata(ip_address="1.1.1.1", user_agent="test"),
     )
 
     mocks["oauth_service"].exchange_code_for_user_info.return_value = MockUserInfo()
@@ -117,6 +125,7 @@ async def test_project_oauth_email_match(project_use_case, mocks):
     mocks["uow"].refresh_token_repo.create.return_value = "refresh_token"
     mocks["claims_provider"].get_custom_claims.return_value = {}
     mocks["access_token"].create.return_value = "access_token"
+    mocks["uow"].refresh_token_repo.get_active_sessions.return_value = []
 
     user_ret, rt, at, is_new, fallback = await project_use_case.execute(command)
 
@@ -161,7 +170,9 @@ async def test_project_oauth_new_user(project_use_case, mocks):
 @pytest.mark.asyncio
 async def test_tenant_oauth_exact_match(tenant_use_case, mocks):
     command = TenantOAuthCallbackCommand(
-        provider="google", request=MagicMock(), client_meta=None
+        provider="google",
+        request=MagicMock(),
+        client_meta=ClientMetadata(ip_address="1.1.1.1", user_agent="test"),
     )
 
     mocks["oauth_service"].exchange_code_for_user_info.return_value = MockUserInfo()
@@ -180,6 +191,7 @@ async def test_tenant_oauth_exact_match(tenant_use_case, mocks):
     mocks["uow"].refresh_token_repo.create.return_value = "refresh_token"
     mocks["claims_provider"].get_custom_claims.return_value = {}
     mocks["access_token"].create.return_value = "access_token"
+    mocks["uow"].refresh_token_repo.get_active_sessions.return_value = []
 
     user_ret, rt, at, is_new = await tenant_use_case.execute(command)
 

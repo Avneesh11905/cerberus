@@ -1,5 +1,3 @@
-import dataclasses
-
 from fastapi import APIRouter, Request, Response
 
 from src.modules.authentication.application.commands import (
@@ -101,5 +99,15 @@ async def login_user(
         message="Authenticated successfully",
         csrf_token=csrf_token,
         access_token=access_token,
-        user=dataclasses.asdict(profile) if profile else {},
+        user={
+            "id": profile.id,
+            "email": profile.email.value,
+            "name": profile.name,
+            "picture": profile.picture.value if profile.picture else None,
+            "role": profile.role,
+            "is_verified": profile.is_verified,
+            "is_active": True,
+        }
+        if profile
+        else None,  # type: ignore
     )

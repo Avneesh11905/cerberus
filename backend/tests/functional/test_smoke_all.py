@@ -16,11 +16,14 @@ def test_smoke_all_routes(client):
             if not path:
                 continue
 
-            # replace path params with dummy values
+            import re
+
+            path = re.sub(
+                r"\{[a-zA-Z0-9_]+_id\}", "00000000-0000-0000-0000-000000000000", path
+            )
             path = path.replace("{provider}", "google")
-            path = path.replace("{project_id}", "00000000-0000-0000-0000-000000000000")
-            path = path.replace("{user_id}", "00000000-0000-0000-0000-000000000000")
             path = path.replace("{token}", "dummy_token")
+            path = path.replace("{id}", "00000000-0000-0000-0000-000000000000")
 
             if "{" in path:
                 continue

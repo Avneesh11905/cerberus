@@ -1,7 +1,7 @@
 import dataclasses
 import json
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
@@ -19,7 +19,9 @@ from src.shared.domain.value_objects import EmailAddress
 
 @pytest.fixture
 def mock_uow(mock_profile_repo):
-    uow = AsyncMock()
+    uow = MagicMock()
+    uow.__aenter__ = AsyncMock(return_value=uow)
+    uow.__aexit__ = AsyncMock(return_value=None)
     uow.profile_repo = mock_profile_repo
     uow.user_command_repo = mock_profile_repo  # just use the same mock for both
     return uow
@@ -27,12 +29,20 @@ def mock_uow(mock_profile_repo):
 
 @pytest.fixture
 def mock_profile_repo():
-    return AsyncMock()
+    repo = MagicMock()
+    repo.save_profile = AsyncMock()
+    repo.get_profile = AsyncMock()
+    repo.delete_user = AsyncMock()
+    return repo
 
 
 @pytest.fixture
 def mock_cache():
-    return AsyncMock()
+    cache = MagicMock()
+    cache.get_dict = AsyncMock()
+    cache.delete_key = AsyncMock()
+    cache.set_string = AsyncMock()
+    return cache
 
 
 @pytest.fixture

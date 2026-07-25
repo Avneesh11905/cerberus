@@ -182,3 +182,68 @@ async def test_cleanup_expired(
 
     count = await repo.cleanup_expired()
     assert count >= 1
+
+
+@pytest.mark.asyncio
+async def test_reuse_detection(
+    db_session: AsyncSession, repo: DBRefreshTokenRepositoryAdapter, project: Project
+):
+    user_id = uuid4()
+    user = User(
+        id=user_id,
+        email="reuse@example.com",
+        is_active=True,
+        is_verified=True,
+        project_id=project.id,
+    )
+    db_session.add(user)
+    await db_session.flush()
+
+    raw_token = await repo.create(user_id=user_id)
+    await repo.revoke(raw_token)  # Mark as used/revoked
+
+    # Validate the used token (simulates reuse)
+    id1, t1, f1 = await repo.validate(raw_token)
+    assert id1 is None
+
+
+@pytest.mark.asyncio
+async def test_revoke_all_for_tenant_user(
+    db_session: AsyncSession, repo: DBRefreshTokenRepositoryAdapter, project: Project
+):
+    user_id = uuid4()
+    email = "revoke_tenant@example.com"
+    user = User(
+        id=user_id,
+        email=email,
+        is_active=True,
+        is_verified=True,
+        project_id=project.id,
+    )
+    db_session.add(user)
+    await db_session.flush()
+
+    token1 = await repo.create(user_id=user_id)
+    token2 = await repo.create(user_id=user_id)
+
+    await repo.revoke_all_for_user(user_id)
+
+    id1, _, _ = await repo.validate(token1)
+    id2, _, _ = await repo.validate(token2)
+    assert id1 is None
+    assert id2 is None
+
+
+@pytest.mark.asyncio
+async def test_tenant_token(
+    db_session: AsyncSession, repo: DBRefreshTokenRepositoryAdapter, project: Project
+):
+    tenant_id = project.tenant_id
+
+    raw_token = await repo.create(user_id=tenant_id)
+    assert raw_token is not None
+
+    identity, new_token, family_id = await repo.validate(raw_token)
+    assert identity is not None
+    assert identity.id == tenant_id
+    assert identity.role == GlobalRole.TENANT

@@ -154,3 +154,32 @@ async def test_project_users_operations(
     )
     assert updated is not None
     assert updated.custom_claims == {"admin": True}
+
+    # Test search filters
+    users = await project_user_repo.list_project_users(saved.id, search="u1")
+    assert len(users) == 1
+    assert users[0].email.value == "u1@test.com"
+
+    count = await project_user_repo.count_project_users(saved.id, search="u2")
+    assert count == 1
+
+    # Test not found
+    not_found_status = await project_user_repo.update_user_status(
+        saved.id, uuid4(), True
+    )
+    assert not_found_status is None
+
+    not_found_claims = await project_user_repo.update_user_claims(saved.id, uuid4(), {})
+    assert not_found_claims is None
+
+    # Test tenant user status
+    tenant_updated = await project_user_repo.update_tenant_user_status(
+        tenant.id, "u2@test.com", False
+    )
+    assert len(tenant_updated) == 1
+    assert tenant_updated[0].is_active is False
+
+    tenant_updated_empty = await project_user_repo.update_tenant_user_status(
+        tenant.id, "nonexistent@test.com", False
+    )
+    assert len(tenant_updated_empty) == 0

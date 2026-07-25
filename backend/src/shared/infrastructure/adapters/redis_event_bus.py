@@ -33,4 +33,4 @@ class RedisEventSubscriberAdapter(EventSubscriberPort):
             pass
         finally:
             await pubsub.unsubscribe(channel)
-            await pubsub.close()
+            await pubsub.aclose()

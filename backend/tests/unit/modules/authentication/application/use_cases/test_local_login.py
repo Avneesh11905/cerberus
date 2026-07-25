@@ -95,11 +95,12 @@ async def test_local_login_user_not_found(use_case, mocks):
         password="Password123!",
         project_id=None,
         client_meta=None,
-        is_challenged=False,
-        turnstile_token=None,
+        is_challenged=True,
+        turnstile_token="test_token",
     )
 
     mocks["uow"].user_query_repo.find_by_email.return_value = None
+    mocks["turnstile"].verify_token.return_value = True
 
     with pytest.raises(InvalidCredentialsException):
         await use_case.execute(command)
@@ -114,8 +115,8 @@ async def test_local_login_unverified_email(use_case, mocks):
         password="Password123!",
         project_id=None,
         client_meta=None,
-        is_challenged=False,
-        turnstile_token=None,
+        is_challenged=True,
+        turnstile_token="test_token",
     )
 
     user = UserIdentity(
@@ -128,6 +129,7 @@ async def test_local_login_unverified_email(use_case, mocks):
         picture=None,
     )
     mocks["uow"].user_query_repo.find_by_email.return_value = user
+    mocks["turnstile"].verify_token.return_value = True
 
     with pytest.raises(UnverifiedEmailException):
         await use_case.execute(command)
@@ -140,8 +142,8 @@ async def test_local_login_invalid_password(use_case, mocks):
         password="WrongPassword123!",
         project_id=None,
         client_meta=None,
-        is_challenged=False,
-        turnstile_token=None,
+        is_challenged=True,
+        turnstile_token="test_token",
     )
 
     user = UserIdentity(
@@ -156,6 +158,7 @@ async def test_local_login_invalid_password(use_case, mocks):
     mocks["uow"].user_query_repo.find_by_email.return_value = user
     mocks["uow"].user_query_repo.find_password_hash.return_value = "hashed_password"
     mocks["hasher"].verify_password.return_value = False
+    mocks["turnstile"].verify_token.return_value = True
 
     with pytest.raises(InvalidCredentialsException):
         await use_case.execute(command)
@@ -168,8 +171,8 @@ async def test_local_login_oauth_only(use_case, mocks):
         password="Password123!",
         project_id=None,
         client_meta=None,
-        is_challenged=False,
-        turnstile_token=None,
+        is_challenged=True,
+        turnstile_token="test_token",
     )
 
     user = UserIdentity(
@@ -183,6 +186,41 @@ async def test_local_login_oauth_only(use_case, mocks):
     )
     mocks["uow"].user_query_repo.find_by_email.return_value = user
     mocks["uow"].user_query_repo.find_password_hash.return_value = None
+    mocks["turnstile"].verify_token.return_value = True
 
     with pytest.raises(InvalidCredentialsException):
         await use_case.execute(command)
+
+
+@pytest.mark.asyncio
+async def test_local_login_superadmin_heal(use_case, mocks, monkeypatch):
+    monkeypatch.setattr(mocks["core_settings"], "SUPERADMIN_EMAIL", "super@example.com")
+    command = LocalLoginCommand(
+        email="super@example.com",
+        password="Password123!",
+        project_id=None,
+        client_meta=None,
+        is_challenged=False,
+        turnstile_token=None,
+    )
+    user_id = uuid4()
+    user = UserIdentity(
+        id=user_id,
+        email=EmailAddress("super@example.com"),
+        is_verified=True,
+        role=None,
+        project_id=None,
+        name="Test",
+        picture=None,
+    )
+    mocks["uow"].user_query_repo.find_by_email.return_value = user
+    mocks["uow"].user_query_repo.find_password_hash.return_value = "hashed_password"
+    mocks["hasher"].verify_password.return_value = True
+    mocks["uow"].refresh_token_repo.create.return_value = "refresh_token"
+    mocks["access_token"].create.return_value = "access_token"
+    mocks["claims_provider"].get_custom_claims.return_value = {}
+    mocks["uow"].user_query_repo.find_by_id.return_value = user
+    mocks["uow"].refresh_token_repo.get_active_sessions.return_value = []
+
+    await use_case.execute(command)
+    mocks["uow"].user_command_repo.update_role.assert_called_once()

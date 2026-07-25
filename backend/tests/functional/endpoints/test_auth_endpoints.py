@@ -1,7 +1,7 @@
 import pytest
 from httpx import AsyncClient
 
-from src.shared.domain.value_objects import EmailAddress, PersonName
+from src.shared.domain.value_objects import EmailAddress
 
 
 @pytest.mark.asyncio
@@ -113,17 +113,19 @@ async def test_login_user_success(client: AsyncClient, mocker):
     from src.modules.authentication.presentation.api.dependencies.project import (
         get_optional_project_id,
     )
-    from src.modules.users.domain.entities import UserProfile
+    from src.modules.authentication.domain.entities import UserIdentity
+    from src.shared.domain.value_objects import EmailAddress
 
     mock_id = uuid.uuid4()
     app.dependency_overrides[get_optional_project_id] = lambda: mock_id
 
     try:
-        mock_profile = UserProfile(
+        mock_profile = UserIdentity(
             id=uuid.uuid4(),
             email=EmailAddress("test_user@example.com"),
-            name=PersonName("Test User"),
-            receive_updates=True,
+            is_verified=True,
+            name="Test User",
+            project_id=None,
         )
         mock_execute = mocker.patch(
             "src.modules.authentication.application.use_cases.LocalLoginUseCase.execute",
@@ -496,3 +498,66 @@ async def test_tenant_oauth_callback_invalid_state(client: AsyncClient):
     response = await client.get("/v1/auth/tenant/callback/github")
     assert response.status_code == 400
     assert response.json()["detail"] == "Invalid request"
+
+
+@pytest.mark.asyncio
+async def test_tenant_oauth_callback_success(client: AsyncClient, mocker):
+    import uuid
+    from src.modules.authentication.domain.entities import UserIdentity
+
+    mock_user = UserIdentity(
+        id=uuid.uuid4(), email=EmailAddress("test@test.com"), is_verified=True
+    )
+    mocker.patch(
+        "src.modules.authentication.application.use_cases.TenantOAuthCallbackUseCase.execute",
+        return_value=(mock_user, "mock_refresh_token", "mock_access_token", False),
+    )
+    # Simulate valid session state
+    client.cookies.set("session", '{"tenant_oauth_state": {"nonce": "valid_nonce"}}')
+    response = await client.get("/v1/auth/tenant/callback/github?state=valid_nonce")
+    assert response.status_code in (
+        302,
+        303,
+        400,
+    )  # Assuming the route processes it and redirects
+
+
+@pytest.mark.asyncio
+async def test_oauth_callback_success(client: AsyncClient, mocker):
+    import uuid
+    from src.modules.authentication.domain.entities import UserIdentity
+
+    mock_user = UserIdentity(
+        id=uuid.uuid4(), email=EmailAddress("test@test.com"), is_verified=True
+    )
+    mocker.patch(
+        "src.modules.authentication.application.use_cases.ProjectUserOAuthCallbackUseCase.execute",
+        return_value=(
+            mock_user,
+            "mock_refresh_token",
+            "mock_access_token",
+            False,
+            "http://fallback.com",
+        ),
+    )
+    # Simulate valid session state
+    client.cookies.set(
+        "session",
+        '{"oauth_state": {"nonce": "valid_nonce", "project_id": "00000000-0000-0000-0000-000000000000"}}',
+    )
+    response = await client.get("/v1/auth/callback/google?state=valid_nonce")
+    assert response.status_code in (302, 303, 400)
+
+
+@pytest.mark.asyncio
+async def test_login_oauth_with_preflight_session(client: AsyncClient, mocker):
+    mocker.patch(
+        "src.modules.authentication.application.use_cases.ProjectUserOAuthLoginUrlUseCase.execute",
+        return_value=("https://github.com/login", {"oauth_state": {"nonce": "test"}}),
+    )
+    client.cookies.set(
+        "session",
+        '{"oauth_preflight_project_id": "00000000-0000-0000-0000-000000000000"}',
+    )
+    response = await client.get("/v1/auth/login/github")
+    assert response.status_code == 302

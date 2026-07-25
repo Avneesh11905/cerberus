@@ -81,7 +81,10 @@ async def refresh(
 
     csrf_token = generate_csrf_token(active_refresh_token)
 
-    return RefreshResponse(access_token=access_token, csrf_token=csrf_token)
+    return RefreshResponse(
+        access_token=access_token,
+        csrf_token=csrf_token,
+    )
 
 
 """

@@ -292,6 +292,4 @@ class LocalLoginUseCase:
                 else None,
             )
 
-            profile = await self.uow.user_query_repo.find_by_id(user.id)
-
-            return profile, token, access_token
+            return user, token, access_token

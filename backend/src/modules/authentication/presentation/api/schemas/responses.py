@@ -1,4 +1,5 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
+from uuid import UUID
 
 
 class MessageResponse(BaseModel):
@@ -11,8 +12,26 @@ class RegisterResponse(BaseModel):
     resend_cooldown_seconds: int | None = None
 
 
+class UserIdentityRes(BaseModel):
+    id: UUID
+    email: str
+    name: str | None = None
+    picture: str | None = None
+    role: str | None = None
+    is_verified: bool
+    is_active: bool = True
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class LoginResponse(BaseModel):
     message: str
     csrf_token: str
     access_token: str
-    user: dict
+    user: UserIdentityRes
+
+
+class RefreshResponse(BaseModel):
+    access_token: str
+    csrf_token: str
+    user: UserIdentityRes

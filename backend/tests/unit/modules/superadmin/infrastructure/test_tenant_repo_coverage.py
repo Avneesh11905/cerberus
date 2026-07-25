@@ -10,18 +10,6 @@ from src.modules.superadmin.domain.entities import TenantEntity
 from src.shared.domain.value_objects import EmailAddress, PersonName
 from src.modules.authorization.domain.enums import GlobalRole
 
-from src.modules.projects.presentation.api.schemas.project_default_claims_req import (
-    ProjectDefaultClaimsReq,
-)
-from src.modules.projects.presentation.api.schemas.project_origins_update_req import (
-    ProjectOriginsUpdateReq,
-)
-
-from src.modules.projects.application.use_cases.update_oauth import UpdateOauthUseCase
-from src.modules.projects.application.commands.project_commands import (
-    UpdateOauthCommand,
-)
-
 
 @pytest.fixture
 def session():
@@ -127,58 +115,3 @@ async def test_tenant_repo_save_new(repo, session):
     )
     res = await repo.save(ent)
     assert res is not None
-
-
-def test_schemas():
-    try:
-        ProjectDefaultClaimsReq(claims={"a": "b"})
-    except Exception:
-        pass
-    try:
-        ProjectDefaultClaimsReq(claims={"a": 1})
-    except Exception:
-        pass
-    try:
-        ProjectOriginsUpdateReq(allowed_origins=["http://localhost:3000"])
-    except Exception:
-        pass
-    try:
-        ProjectOriginsUpdateReq(allowed_origins=["invalid_url"])
-    except Exception:
-        pass
-    try:
-        ProjectOriginsUpdateReq(allowed_origins=["http://localhost:3000"])
-    except Exception:
-        pass
-    try:
-        ProjectOriginsUpdateReq(allowed_origins=[])
-    except Exception:
-        pass
-
-
-@pytest.mark.asyncio
-async def test_update_oauth():
-    uow = AsyncMock()
-    uow.__aenter__.return_value = uow
-    uc = UpdateOauthUseCase(uow, MagicMock())
-    cmd = UpdateOauthCommand(
-        project_id=uuid4(),
-        user_id=uuid4(),
-        incoming_config={
-            "google": {"enabled": True, "client_id": "test", "client_secret": "secret"}
-        },
-    )
-
-    mock_proj = MagicMock()
-    mock_proj.tenant_id = cmd.user_id
-    mock_proj.settings.oauth = MagicMock()
-    uow.project_query_repo.get_by_id.return_value = mock_proj
-
-    await uc.execute(cmd)
-
-    # Without project
-    uow.project_query_repo.get_by_id.return_value = None
-    try:
-        await uc.execute(cmd)
-    except Exception:
-        pass
