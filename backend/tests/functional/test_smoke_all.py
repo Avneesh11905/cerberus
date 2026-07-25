@@ -2,9 +2,11 @@ import pytest
 from fastapi.testclient import TestClient
 from src import app
 
+
 @pytest.fixture
 def client():
     return TestClient(app)
+
 
 def test_smoke_all_routes(client):
     for route in app.routes:
@@ -13,16 +15,16 @@ def test_smoke_all_routes(client):
             path = getattr(route, "path", None)
             if not path:
                 continue
-            
+
             # replace path params with dummy values
             path = path.replace("{provider}", "google")
             path = path.replace("{project_id}", "00000000-0000-0000-0000-000000000000")
             path = path.replace("{user_id}", "00000000-0000-0000-0000-000000000000")
             path = path.replace("{token}", "dummy_token")
-            
+
             if "{" in path:
                 continue
-                
+
             try:
                 if method == "GET":
                     client.get(path)

@@ -25,9 +25,6 @@ def repo(db_session: AsyncSession):
     )
 
 
-
-
-
 @pytest.fixture
 async def project(db_session: AsyncSession):
     t = Tenant(
@@ -41,12 +38,12 @@ async def project(db_session: AsyncSession):
     db_session.add(t)
     await db_session.flush()
     p = Project(
-        id=uuid4(), 
-        name="Test Project", 
+        id=uuid4(),
+        name="Test Project",
         tenant_id=t.id,
         private_key="dummy_private",
         public_key="dummy_public",
-        api_key_hash="dummy_hash"
+        api_key_hash="dummy_hash",
     )
     db_session.add(p)
     await db_session.flush()
