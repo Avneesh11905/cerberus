@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
 from uuid6 import uuid7
 
@@ -9,7 +9,7 @@ from src.modules.projects.application.dtos.project_dtos import CreateProjectDTO
 from src.modules.projects.application.ports.projects_unit_of_work import ProjectUoWPort
 from src.modules.projects.domain.entities import ProjectEntity
 
-from src.shared.application.ports import AnalyticsEventPort
+from src.shared.application.ports import AnalyticsEventPort, ApiKeyPort, RsaKeyPort
 from .base_project import BaseProjectUseCase
 
 
@@ -17,8 +17,8 @@ class CreateProjectUseCase(BaseProjectUseCase):
     def __init__(
         self,
         uow: ProjectUoWPort,
-        api_key_adapter,
-        rsa_key_adapter,
+        api_key_adapter: ApiKeyPort,
+        rsa_key_adapter: RsaKeyPort,
         analytics: AnalyticsEventPort,
     ):
         self.uow = uow
@@ -26,8 +26,6 @@ class CreateProjectUseCase(BaseProjectUseCase):
         self.rsa_key_adapter = rsa_key_adapter
         self.analytics = analytics
         super().__init__()
-        self.api_key_adapter = api_key_adapter
-        self.rsa_key_adapter = rsa_key_adapter
 
     async def execute(self, command: CreateProjectCommand) -> CreateProjectDTO:
         async with self.uow:
@@ -43,7 +41,7 @@ class CreateProjectUseCase(BaseProjectUseCase):
                 private_key=private_pem,
                 public_key=public_pem,
                 api_key_hash=api_key_hash,
-                created_at=datetime.now(timezone.utc),
+                created_at=datetime.now(UTC),
                 environment="development",
             )
             saved_project = await self.uow.project_command_repo.save(project)

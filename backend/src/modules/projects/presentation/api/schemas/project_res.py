@@ -1,5 +1,6 @@
-from typing import Any
-from src.modules.projects.presentation.api.schemas.provider_config import MaskedProviderConfig
+from src.modules.projects.presentation.api.schemas.provider_config import (
+    MaskedProviderConfig,
+)
 from src.modules.projects.presentation.api.schemas.utils import mask_oauth_config
 from datetime import datetime
 from typing import Literal
@@ -9,12 +10,10 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     computed_field,
-    field_serializer,
     field_validator,
 )
 
 from src.core.config import get_settings
-
 
 
 class ProjectRes(BaseModel):
@@ -44,5 +43,8 @@ class ProjectRes(BaseModel):
         return mask_oauth_config(v)
 
     @field_validator("frontend_url", mode="before")
-    def extract_frontend_url(cls, v: Any) -> str | None:
-        return v.value if hasattr(v, "value") else v
+    def extract_frontend_url(cls, v: object) -> str | None:
+        if hasattr(v, "value"):
+            val = getattr(v, "value")
+            return str(val) if val is not None else None
+        return v if v is None else str(v)

@@ -12,7 +12,7 @@ from src.modules.projects.application.dtos.project_dtos import (
     SetProjectUserActiveStatusDTO,
     UpdateUserClaimsDTO,
 )
-from src.modules.users.domain.entities import UserProfile
+from src.modules.projects.domain.entities.project_user import ProjectUser
 from src.shared.domain.value_objects import EmailAddress
 
 
@@ -37,7 +37,7 @@ async def test_list_project_users_m2m_success(
     # Mock return value (users_list, total_count)
     mock_user_id = uuid.uuid4()
     mock_users = [
-        UserProfile(
+        ProjectUser(
             id=mock_user_id,
             email=EmailAddress("test@example.com"),
             receive_updates=False,
@@ -79,7 +79,7 @@ async def test_set_project_user_status_m2m_success(
     )
 
     target_user_id = uuid.uuid4()
-    mock_updated_user = UserProfile(
+    mock_updated_user = ProjectUser(
         id=target_user_id,
         email=EmailAddress("test@example.com"),
         receive_updates=False,
@@ -153,7 +153,7 @@ async def test_update_user_claims_m2m_success(
     )
 
     target_user_id = uuid.uuid4()
-    mock_updated_user = UserProfile(
+    mock_updated_user = ProjectUser(
         id=target_user_id,
         email=EmailAddress("test@example.com"),
         receive_updates=False,

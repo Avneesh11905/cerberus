@@ -5,6 +5,7 @@ from src.modules.projects.application.dtos.project_dtos import UpdateUserClaimsD
 from src.modules.projects.application.ports.projects_unit_of_work import ProjectUoWPort
 from src.modules.projects.application.use_cases import BaseProjectUseCase
 from src.modules.projects.domain.exceptions import ProjectNotFoundError
+from src.shared.application.ports import CachePort
 
 RESERVED_KEYS = {
     "sub",
@@ -20,11 +21,10 @@ RESERVED_KEYS = {
 
 
 class UpdateUserClaimsUseCase(BaseProjectUseCase):
-    def __init__(self, uow: ProjectUoWPort, cache):
+    def __init__(self, uow: ProjectUoWPort, cache: CachePort):
         self.uow = uow
         self.cache = cache
         super().__init__()
-        self.cache = cache
 
     async def execute(self, command: UpdateUserClaimsCommand) -> UpdateUserClaimsDTO:
         async with self.uow:
@@ -35,7 +35,7 @@ class UpdateUserClaimsUseCase(BaseProjectUseCase):
             project = await self._get_project_or_404(
                 self.uow, command.project_id, command.tenant_id
             )
-            allowed = set(project.default_claims.keys())
+            allowed = set((project.default_claims or {}).keys())
             unknown = set(command.overrides.keys()) - allowed
             if unknown:
                 raise ValueError(
@@ -48,5 +48,5 @@ class UpdateUserClaimsUseCase(BaseProjectUseCase):
             if not user:
                 raise ProjectNotFoundError("User not found in this project")
 
-            await self.cache.delete(f"user_profile:{command.user_id}:custom_claims")
+            await self.cache.delete_key(f"user_profile:{command.user_id}:custom_claims")
             return UpdateUserClaimsDTO(user=user)

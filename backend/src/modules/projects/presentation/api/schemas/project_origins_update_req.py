@@ -1,12 +1,8 @@
-from src.modules.projects.presentation.api.schemas.provider_config import MaskedProviderConfig
-from src.modules.projects.presentation.api.schemas.utils import mask_oauth_config
-
 from pydantic import (
     BaseModel,
     Field,
     field_validator,
 )
-
 
 
 class ProjectOriginsUpdateReq(BaseModel):

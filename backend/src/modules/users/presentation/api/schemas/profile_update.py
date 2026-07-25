@@ -1,10 +1,9 @@
 from typing import Annotated
 
-from pydantic import AnyUrl, BaseModel
+from pydantic import HttpUrl, BaseModel
 from pydantic.networks import UrlConstraints
 
-
-HttpsUrl = Annotated[AnyUrl, UrlConstraints(allowed_schemes=["https"])]
+HttpsUrl = Annotated[HttpUrl, UrlConstraints(allowed_schemes=["https"])]
 
 
 class ProfileUpdate(BaseModel):

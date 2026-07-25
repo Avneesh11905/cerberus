@@ -1,5 +1,5 @@
 import secrets
-from typing import Any
+from pydantic import JsonValue
 
 from src.modules.authentication.application.commands import (
     ProjectUserOAuthLoginUrlQuery,
@@ -23,7 +23,7 @@ class ProjectUserOAuthLoginUrlUseCase[SessionType, RequestType]:
         self,
         uow: AuthUoWPort,
         api_key_adapter: ApiKeyPort,
-        oauth_service: OAuthServicePort[Any],
+        oauth_service: OAuthServicePort[RequestType],
     ):
         self.uow = uow
         self.api_key_adapter = api_key_adapter
@@ -31,7 +31,7 @@ class ProjectUserOAuthLoginUrlUseCase[SessionType, RequestType]:
 
     async def execute(
         self, command: ProjectUserOAuthLoginUrlQuery
-    ) -> tuple[str, dict[str, Any]]:
+    ) -> tuple[str, dict[str, JsonValue]]:
         async with self.uow:
             """
         Returns a tuple of (authorization_url, session_data_to_store)
@@ -55,7 +55,9 @@ class ProjectUserOAuthLoginUrlUseCase[SessionType, RequestType]:
             ):
                 raise OAuthFailedException("Provider not available")
 
-            session_data: dict[str, Any] = {"oauth_project_id": str(command.project_id)}
+            session_data: dict[str, JsonValue] = {
+                "oauth_project_id": str(command.project_id)
+            }
 
             origin = origin_from_url(command.request_origin)
             allowed_origins = {

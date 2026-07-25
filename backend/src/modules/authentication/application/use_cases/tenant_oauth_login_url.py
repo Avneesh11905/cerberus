@@ -1,5 +1,5 @@
 import secrets
-from typing import Any
+from pydantic import JsonValue
 
 from src.modules.authentication.application.commands import (
     TenantOAuthLoginUrlQuery,
@@ -22,20 +22,22 @@ class TenantOAuthLoginUrlUseCase[SessionType, RequestType]:
     def __init__(
         self,
         uow: AuthUoWPort,
-        oauth_service: OAuthServicePort[Any],
+        oauth_service: OAuthServicePort[RequestType],
     ):
         self.uow = uow
         self.oauth_service = oauth_service
 
     async def execute(
         self, command: TenantOAuthLoginUrlQuery
-    ) -> tuple[str, dict[str, Any]]:
+    ) -> tuple[str, dict[str, JsonValue]]:
         async with self.uow:
             """
         Returns a tuple of (authorization_url, session_data_to_store)
         """
             nonce = secrets.token_urlsafe(16)
-            session_data: dict[str, Any] = {"tenant_oauth_state": {"nonce": nonce}}
+            session_data: dict[str, JsonValue] = {
+                "tenant_oauth_state": {"nonce": nonce}
+            }
 
             # Let the service generate the URL
             url = await self.oauth_service.get_authorization_url(

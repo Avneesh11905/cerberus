@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Any
 
 
 """
@@ -25,7 +24,7 @@ class PersonName:
     def __str__(self) -> str:
         return self.value
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, str):
             return self.value == other
         if isinstance(other, PersonName):

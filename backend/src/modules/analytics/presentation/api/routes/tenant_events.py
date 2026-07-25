@@ -15,6 +15,7 @@ from src.modules.analytics.wiring import GetTenantMetricsUseCaseDeps
 # Removed {tenant_id} from the path to prevent IDOR (Insecure Direct Object Reference)
 router = APIRouter(prefix="/tenants/me/events", tags=["Analytics Events"])
 
+
 @router.get(
     "/stream",
 )
@@ -25,18 +26,22 @@ async def tenant_analytics_stream(
     subscriber: EventSubscriberPort = Depends(get_event_subscriber),
 ):
     async def event_generator():
-        from src.modules.analytics.application.queries.metrics_queries import GetTenantMetricsQuery
+        from src.modules.analytics.application.queries.metrics_queries import (
+            GetTenantMetricsQuery,
+        )
         import dataclasses
         from datetime import date, timedelta
+
         initial_data = await get_metrics_use_case.execute(
             GetTenantMetricsQuery(
                 tenant_id=user.id,
                 start_date=date.today() - timedelta(days=30),
-                end_date=date.today()
+                end_date=date.today(),
             )
         )
         yield ServerSentEvent(
-            event="tenant_metrics_update", data=json.dumps(dataclasses.asdict(initial_data))
+            event="tenant_metrics_update",
+            data=json.dumps(dataclasses.asdict(initial_data)),
         )
 
         # The channel is strictly tied to the authenticated user's ID

@@ -12,4 +12,3 @@ class SessionResponse(BaseModel):
     last_active: datetime
     is_current: bool
     auth_provider: str
-

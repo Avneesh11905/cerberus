@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
 from src.modules.projects.application.commands.project_commands import (
     RotateJwtSecretCommand,
@@ -9,18 +9,20 @@ from src.modules.projects.application.ports.projects_unit_of_work import Project
 from .base_project import BaseProjectUseCase
 
 
-from src.shared.application.ports import AnalyticsEventPort
+from src.shared.application.ports import AnalyticsEventPort, RsaKeyPort
 
 
 class RotateJwtSecretUseCase(BaseProjectUseCase):
     def __init__(
-        self, uow: ProjectUoWPort, rsa_key_adapter, analytics: AnalyticsEventPort
+        self,
+        uow: ProjectUoWPort,
+        rsa_key_adapter: RsaKeyPort,
+        analytics: AnalyticsEventPort,
     ):
         self.uow = uow
         self.rsa_key_adapter = rsa_key_adapter
         self.analytics = analytics
         super().__init__()
-        self.rsa_key_adapter = rsa_key_adapter
 
     async def execute(self, command: RotateJwtSecretCommand) -> RotateJwtSecretDTO:
         async with self.uow:
@@ -30,7 +32,7 @@ class RotateJwtSecretUseCase(BaseProjectUseCase):
             private_pem, public_pem = await self.rsa_key_adapter.generate_keypair()
             project.private_key = private_pem
             project.public_key = public_pem
-            project.updated_at = datetime.now(timezone.utc)
+            project.updated_at = datetime.now(UTC)
             await self.uow.project_command_repo.save(project)
 
             self.analytics.record_event(

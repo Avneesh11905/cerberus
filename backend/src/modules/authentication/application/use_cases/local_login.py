@@ -1,5 +1,5 @@
 import dataclasses
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
 from uuid6 import uuid7
 
@@ -219,8 +219,8 @@ class LocalLoginUseCase:
             if user.updated_at:
                 updated_at = user.updated_at
                 if updated_at.tzinfo is None:
-                    updated_at = updated_at.replace(tzinfo=timezone.utc)
-                delta = datetime.now(timezone.utc) - updated_at
+                    updated_at = updated_at.replace(tzinfo=UTC)
+                delta = datetime.now(UTC) - updated_at
                 if delta.total_seconds() < 300:
                     is_first_login_post_verification = True
 

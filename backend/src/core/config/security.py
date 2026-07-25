@@ -15,7 +15,7 @@ class SecuritySettings(_BaseSettings):
     JWT_PUBLIC_KEY_PATH: str = ""
 
     @model_validator(mode="after")
-    def load_keys(self) -> "SecuritySettings":
+    def load_keys(self) -> SecuritySettings:
         base_dir = Path(__file__).resolve().parent.parent.parent.parent
 
         if self.JWT_PRIVATE_KEY_PATH:

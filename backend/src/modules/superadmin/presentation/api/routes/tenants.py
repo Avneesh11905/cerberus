@@ -53,6 +53,7 @@ async def update_tenant_status(
     """Disable or re-enable a tenant account."""
     if tenant_id == admin.id:
         from fastapi import HTTPException
+
         raise HTTPException(status_code=400, detail="You cannot modify your own status")
     dto = await use_case.execute(
         UpdateTenantStatusCommand(tenant_id=tenant_id, is_active=req.is_active)
@@ -71,6 +72,7 @@ async def update_tenant_global_role(
     """Promote or demote a tenant to/from SUPERADMIN."""
     if tenant_id == admin.id:
         from fastapi import HTTPException
+
         raise HTTPException(status_code=400, detail="You cannot modify your own role")
     dto = await use_case.execute(
         UpdateTenantGlobalRoleCommand(tenant_id=tenant_id, role=req.role)

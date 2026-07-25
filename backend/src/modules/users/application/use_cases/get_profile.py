@@ -32,8 +32,6 @@ class GetProfileUseCase:
                     cached_data["name"] = PersonName(cached_data["name"]["value"])
                 if cached_data.get("picture"):
                     cached_data["picture"] = HttpsUrl(cached_data["picture"]["value"])
-                if cached_data.get("project_id"):
-                    cached_data["project_id"] = UUID(cached_data["project_id"])
                 profile: UserProfile = UserProfile(**cached_data)
             else:
                 db_profile = await self.uow.profile_repo.get_profile(query.user_id)
@@ -52,7 +50,6 @@ class GetProfileUseCase:
                 role=profile.role
                 if isinstance(profile.role, str)
                 else (profile.role.value if profile.role else None),
-                project_id=profile.project_id,
                 name=profile.name.value if profile.name else None,
                 picture=profile.picture.value if profile.picture else None,
             )

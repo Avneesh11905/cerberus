@@ -1,4 +1,3 @@
-from typing import Any
 from pydantic import BaseModel, ConfigDict, field_validator
 from uuid import UUID
 
@@ -26,10 +25,11 @@ class UserIdentityRes(BaseModel):
 
     @field_validator("email", "picture", mode="before")
     @classmethod
-    def extract_value(cls, v: Any) -> str | None:
+    def extract_value(cls, v: object) -> str | None:
         if hasattr(v, "value"):
-            return v.value
-        return v
+            val = getattr(v, "value")
+            return str(val) if val is not None else None
+        return v if v is None else str(v)
 
 
 class LoginResponse(BaseModel):

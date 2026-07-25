@@ -1,5 +1,5 @@
+from src.modules.projects.presentation.api.schemas.utils import mask_oauth_config
 from src.modules.projects.presentation.api.schemas.project_origins_update_req import (
-    mask_oauth_config,
     ProjectOriginsUpdateReq,
 )
 from src.modules.projects.presentation.api.schemas.project_default_claims_req import (
@@ -12,7 +12,7 @@ from src.modules.projects.presentation.api.schemas.user_claims_override_req impo
 
 def test_mask_oauth_config():
     mask_oauth_config(None)
-    mask_oauth_config({"google": "not_a_dict"})
+    mask_oauth_config({"google": "not_a_dict"})  # type: ignore
     mask_oauth_config({"google": {"client_id": "123", "client_secret": "456"}})
 
 

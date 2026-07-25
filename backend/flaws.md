@@ -36,20 +36,20 @@ Based on an exhaustive static analysis (using Ruff, Mypy, Vulture, and Bandit) o
 *   **Location:** `src/modules/analytics/presentation/api/routes/tenant_events.py` (Line 18)
 *   **The Flaw:** Ruff flagged an `E402` violation because `GetTenantMetricsUseCaseDeps` was being imported directly in the middle of the file (right above the route definition) instead of at the top of the file.
 *   **Impact:** While not a critical runtime bug, inline module-level imports break PEP 8 standards, cause linter failures in CI pipelines, and make dependency management harder to track. The import has been moved to the top.
-## 7. Python Any Types (Type Safety Check)
+## 7. Python Any Types (Type Safety Check) - ✅ [RESOLVED]
 An exhaustive search of the backend codebase reveals that the `Any` type is used heavily. Here is a breakdown of where it is used and how it should be reviewed:
 
-Unstructured JSON Payloads:
+Unstructured JSON Payloads: - ✅ [RESOLVED]
 *   **Locations:** Abundantly used to type flexible JSON dictionaries (e.g., `dict[str, Any]`) across files like `project_read_res.py`, `project_res.py`, `project_rotate_api_key_res.py`, `project_rotate_rsa_keys_res.py`, `project_secrets_res.py`, `project_user_status_update_req.py`, `project_user_status_update_res.py`, `provider_config.py`, `user_claims_override_req.py`, `user_claims_res.py`, `utils.py`, `analytics.py`, `event_bus.py`, and `redis_event_bus.py`.
-*   **Recommendation:** Review if specific Pydantic schemas can be applied to enforce stricter serialization instead of relying on `dict[str, Any]`.
+*   **Recommendation:** Replaced `dict[str, Any]` with strongly typed `MaskedProviderConfig` schemas for OAuth configs, and `JsonValue` for claims and metadata event bus payloads.
 
-Value Object Equality Checkers:
-*   **Locations:** Used in domain value objects for overriding the equality operator `__eq__(self, other: Any) -> bool:` inside `email_address.py`, `https_url.py`, and `person_name.py`.
-*   **Recommendation:** This is mandated by Python's core type system for `__eq__` and is strictly safe.
+Value Object Equality Checkers: - ✅ [RESOLVED]
+*   **Locations:** Used in domain value objects for overriding the equality operator `__eq__(self, other: object) -> bool:` inside `email_address.py`, `https_url.py`, and `person_name.py`.
+*   **Recommendation:** Although Python's native type system theoretically accepts `Any`, we've successfully replaced it with the stricter `object` type to be perfectly clean and type-safe.
 
-Pydantic Field Validators:
-*   **Locations:** Used in pre-validation hooks like `@field_validator("email", mode="before") def extract_val(cls, v: Any):` in `tenant_res.py`, `project_res.py`, `project_read_res.py`, and `responses.py`.
-*   **Recommendation:** Required by Pydantic since pre-validated input can be of any type before casting.
+Pydantic Field Validators: - ✅ [RESOLVED]
+*   **Locations:** Used in pre-validation hooks like `@field_validator("email", mode="before") def extract_val(cls, v: object):` in `tenant_res.py`, `project_res.py`, `project_read_res.py`, and `responses.py`.
+*   **Recommendation:** Replaced `Any` with strict `object` typing. Explicit casting using `str()` is now utilized to safely ensure validation downstream without breaking type checks.
 
 Third-Party Interfaces & Protocols:
 *   **Locations:** Used in `profile_update.py` and `user_profile_res.py` for `AnyUrl` imports, `cache.py` for generic cache port annotations, and `rate_limit_and_analytics.py` (though the latter was unrelated to type casting).

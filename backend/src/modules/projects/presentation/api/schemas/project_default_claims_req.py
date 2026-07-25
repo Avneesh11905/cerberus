@@ -1,5 +1,3 @@
-from src.modules.projects.presentation.api.schemas.provider_config import MaskedProviderConfig
-from src.modules.projects.presentation.api.schemas.utils import mask_oauth_config
 from .utils import RESERVED_CLAIM_KEYS
 
 from pydantic import (
@@ -9,12 +7,11 @@ from pydantic import (
 )
 
 
-
-ClaimValue = str | int | bool | float
+from pydantic import JsonValue
 
 
 class ProjectDefaultClaimsReq(BaseModel):
-    claims: dict[str, ClaimValue | dict[str, ClaimValue]] = Field(default_factory=dict)
+    claims: dict[str, JsonValue] = Field(default_factory=dict)
 
     @field_validator("claims")
     @classmethod

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
 from src.modules.projects.application.commands.project_commands import (
     UpdateOriginsCommand,
@@ -20,7 +20,7 @@ class UpdateOriginsUseCase(BaseProjectUseCase):
                 self.uow, command.project_id, command.user_id
             )
             project.allowed_origins = command.allowed_origins
-            project.updated_at = datetime.now(timezone.utc)
+            project.updated_at = datetime.now(UTC)
             return UpdateOriginsDTO(
                 project=await self.uow.project_command_repo.save(project)
             )

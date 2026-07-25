@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
 from src.core.config import TokenSettings
 from src.modules.authentication.application.commands import SessionLogoutCommand
@@ -43,7 +43,7 @@ class SessionLogoutUseCase:
                 await self.uow.refresh_token_repo.revoke(command.refresh_token)
 
             if command.jti and command.exp:
-                now = int(datetime.now(timezone.utc).timestamp())
+                now = int(datetime.now(UTC).timestamp())
                 ttl = command.exp - now
                 if ttl > 0:
                     max_ttl = self.token_settings.ACCESS_TOKEN_LIFETIME_MINUTES * 60

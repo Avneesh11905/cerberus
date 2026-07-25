@@ -1,18 +1,17 @@
 from dataclasses import dataclass
-from typing import Optional
 from uuid import UUID
 
 
 @dataclass(frozen=True)
 class UpdateProfileCommand:
     user_id: UUID
-    name: Optional[str] = None
-    picture: Optional[str] = None
-    receive_updates: Optional[bool] = None
+    name: str | None = None
+    picture: str | None = None
+    receive_updates: bool | None = None
 
 
 @dataclass(frozen=True)
 class DeleteAccountCommand:
     user_id: UUID
-    jwt_jti: Optional[str] = None
-    jwt_exp: Optional[int] = None
+    jwt_jti: str | None = None
+    jwt_exp: int | None = None

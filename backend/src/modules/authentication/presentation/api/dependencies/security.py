@@ -64,6 +64,8 @@ async def get_jwt_payload(
     uow: Annotated[AuthUoWPort, Depends(get_auth_uow)],
 ) -> dict:
     """Extracts, verifies, and returns the raw JWT payload (including custom claims)."""
+    if getattr(request.state, "jwt_payload", None) is not None:
+        return request.state.jwt_payload
 
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
@@ -115,7 +117,7 @@ async def get_jwt_payload(
         try:
             updated_at = float(results[2])
             # If the token was issued before the role was updated, it's invalid
-            iat = float(payload.get("iat", 0))
+            iat = float(str(payload.get("iat", 0)))
             if iat < updated_at:
                 raise InvalidTokenException()
         except ValueError:
@@ -123,6 +125,7 @@ async def get_jwt_payload(
 
     # Attach the strongly typed UserIdentity so downstream dependencies can access it if needed
     payload["_user_obj"] = user
+    request.state.jwt_payload = payload
     return payload
 
 

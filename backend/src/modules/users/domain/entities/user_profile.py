@@ -17,7 +17,6 @@ class UserProfile:
     id: UUID
     email: EmailAddress
     role: GlobalRole | str | None = None
-    project_id: UUID | None = None
     name: PersonName | None = None
     picture: HttpsUrl | None = None
     receive_updates: bool

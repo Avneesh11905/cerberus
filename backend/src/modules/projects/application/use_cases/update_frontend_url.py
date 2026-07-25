@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
 from src.modules.projects.application.commands.project_commands import (
     UpdateFrontendUrlCommand,
@@ -23,7 +23,7 @@ class UpdateFrontendUrlUseCase(BaseProjectUseCase):
             project.frontend_url = (
                 HttpsUrl(command.frontend_url) if command.frontend_url else None
             )
-            project.updated_at = datetime.now(timezone.utc)
+            project.updated_at = datetime.now(UTC)
             return UpdateFrontendUrlDTO(
                 project=await self.uow.project_command_repo.save(project)
             )

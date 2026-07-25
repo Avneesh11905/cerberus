@@ -17,4 +17,4 @@ class GetProjectClaimsUseCase(BaseProjectUseCase):
             project = await self._get_project_or_404(
                 self.uow, query.project_id, query.user_id
             )
-            return GetProjectClaimsDTO(claims=project.default_claims)
+            return GetProjectClaimsDTO(claims=project.default_claims or {})

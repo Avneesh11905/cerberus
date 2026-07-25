@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 from uuid import UUID
 
 from src.shared.domain.entities import ClientMetadata
@@ -9,84 +8,84 @@ from src.shared.domain.entities import ClientMetadata
 class LocalRegisterCommand:
     email: str
     password: str
-    name: Optional[str] = None
-    project_id: Optional[UUID] = None
-    client_meta: Optional[ClientMetadata] = None
+    name: str | None = None
+    project_id: UUID | None = None
+    client_meta: ClientMetadata | None = None
     is_challenged: bool = False
-    turnstile_token: Optional[str] = None
+    turnstile_token: str | None = None
 
 
 @dataclass(frozen=True)
 class LocalLoginCommand:
     email: str
     password: str
-    client_meta: Optional[ClientMetadata] = None
-    project_id: Optional[UUID] = None
+    client_meta: ClientMetadata | None = None
+    project_id: UUID | None = None
     is_challenged: bool = False
-    turnstile_token: Optional[str] = None
+    turnstile_token: str | None = None
 
 
 @dataclass(frozen=True)
 class LocalVerifyEmailCommand:
     email: str
     otp: str
-    client_meta: Optional[ClientMetadata] = None
-    project_id: Optional[UUID] = None
+    client_meta: ClientMetadata | None = None
+    project_id: UUID | None = None
     is_challenged: bool = False
 
 
 @dataclass(frozen=True)
 class LocalResendVerificationCommand:
     email: str
-    project_id: Optional[UUID] = None
-    client_meta: Optional[ClientMetadata] = None
+    project_id: UUID | None = None
+    client_meta: ClientMetadata | None = None
     is_challenged: bool = False
-    turnstile_token: Optional[str] = None
+    turnstile_token: str | None = None
 
 
 @dataclass(frozen=True)
 class PasswordResetRequestCommand:
     email: str
-    project_id: Optional[UUID] = None
-    client_meta: Optional[ClientMetadata] = None
+    project_id: UUID | None = None
+    client_meta: ClientMetadata | None = None
     is_challenged: bool = False
-    turnstile_token: Optional[str] = None
+    turnstile_token: str | None = None
 
 
 @dataclass(frozen=True)
 class PasswordResetExecuteCommand:
     token: str
     new_password: str
-    client_meta: Optional[ClientMetadata] = None
+    client_meta: ClientMetadata | None = None
     is_challenged: bool = False
-    turnstile_token: Optional[str] = None
+    turnstile_token: str | None = None
 
 
 @dataclass(frozen=True)
 class PasswordChangeCommand:
     user_id: UUID
     new_password: str
-    current_password: Optional[str] = None
+    current_password: str | None = None
 
 
 @dataclass(frozen=True)
 class SessionLogoutCommand:
-    refresh_token: Optional[str] = None
-    jti: Optional[str] = None
-    exp: Optional[int] = None
+    refresh_token: str | None = None
+    jti: str | None = None
+    exp: int | None = None
 
 
 @dataclass(frozen=True)
 class SessionLogoutAllCommand:
     user_id: UUID
-    jti: Optional[str] = None
-    exp: Optional[int] = None
+    jti: str | None = None
+    exp: int | None = None
 
 
 @dataclass(frozen=True)
 class SessionRefreshCommand:
     refresh_token: str
-    client_meta: Optional[ClientMetadata] = None
+    client_meta: ClientMetadata | None = None
 
 
 @dataclass(frozen=True)
@@ -106,7 +105,7 @@ class TenantOAuthLoginUrlQuery[RequestType]:
 class TenantOAuthCallbackCommand[RequestType]:
     provider: str
     request: RequestType
-    client_meta: Optional[ClientMetadata] = None
+    client_meta: ClientMetadata | None = None
 
 
 @dataclass(frozen=True)
@@ -114,8 +113,8 @@ class ProjectUserOAuthLoginUrlQuery[RequestType]:
     request: RequestType
     provider: str
     redirect_uri: str
-    project_id: Optional[UUID] = None
-    request_origin: Optional[str] = None
+    project_id: UUID | None = None
+    request_origin: str | None = None
 
 
 @dataclass(frozen=True)
@@ -123,7 +122,7 @@ class ProjectUserOAuthCallbackCommand[RequestType]:
     provider: str
     project_id: UUID
     request: RequestType
-    client_meta: Optional[ClientMetadata] = None
+    client_meta: ClientMetadata | None = None
 
 
 @dataclass(frozen=True)
@@ -134,4 +133,4 @@ class OAuthExchangeCommand:
 @dataclass(frozen=True)
 class ListActiveSessionsQuery:
     user_id: UUID
-    current_token: Optional[str] = None
+    current_token: str | None = None

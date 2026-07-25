@@ -1,5 +1,3 @@
-from typing import Any
-
 from uuid6 import uuid7
 
 from src.modules.authentication.application.commands import (
@@ -51,7 +49,7 @@ class ProjectUserOAuthCallbackUseCase[SessionType, RequestType]:
         email_sender: EmailSenderPort,
         access_token: AccessTokenPort,
         claims_provider: ClaimsProviderPort,
-        oauth_service: OAuthServicePort[Any],
+        oauth_service: OAuthServicePort[RequestType],
         role_provisioning: RoleProvisioningService,
     ):
         self.uow = uow

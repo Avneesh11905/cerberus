@@ -79,9 +79,7 @@ async def preview_email(
         "forgot_password_url": f"{get_settings().url.FRONTEND_URL}/forgot-password",
         "otp": "123456",
         "theme": active_theme,
-        "time": datetime.datetime.now(datetime.timezone.utc).strftime(
-            "%Y-%m-%d %H:%M:%S UTC"
-        ),
+        "time": datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%d %H:%M:%S UTC"),
         "device_info": "Chrome on Windows 11",
         "ip_address": "192.168.1.100",
     }

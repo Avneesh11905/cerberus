@@ -15,7 +15,7 @@ from redis.asyncio import Redis
 class RedisCacheAdapter:
     """Implements CachePort using Redis hash sets for structured data caching."""
 
-    def __init__(self, client: "Redis"):
+    def __init__(self, client: Redis):
         self._client = client
 
     async def get_dict(self, key: str) -> dict | None:

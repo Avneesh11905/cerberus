@@ -30,11 +30,6 @@ async def test_project_user_repo():
         pass
 
     try:
-        await repo.count_project_users(uuid4())
-    except Exception:
-        pass
-
-    try:
         await repo.update_user_status(uuid4(), uuid4(), True)
     except Exception:
         pass

@@ -1,5 +1,3 @@
-from typing import Any
-
 from uuid6 import uuid7
 
 from src.core.config import get_settings
@@ -44,10 +42,10 @@ class TenantOAuthCallbackUseCase[SessionType, RequestType]:
     def __init__(
         self,
         uow: AuthUoWPort,
-        email_sender: "EmailSenderPort",
-        access_token: "AccessTokenPort",
-        claims_provider: "ClaimsProviderPort",
-        oauth_service: OAuthServicePort[Any],
+        email_sender: EmailSenderPort,
+        access_token: AccessTokenPort,
+        claims_provider: ClaimsProviderPort,
+        oauth_service: OAuthServicePort[RequestType],
     ):
         self.uow = uow
         self._email_sender = email_sender

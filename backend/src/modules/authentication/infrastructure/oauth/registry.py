@@ -2,7 +2,8 @@
 Module: Registry
 """
 
-from typing import Any, Awaitable, Callable, Protocol
+from typing import Protocol
+from collections.abc import Awaitable, Callable
 
 from authlib.integrations.starlette_client import OAuth
 from fastapi import Request
@@ -24,7 +25,7 @@ class OAuthClientPort(Protocol):
 class ProviderMetadata(BaseModel):
     key: str
     display_name: str
-    authlib_config: dict[str, Any]
+    authlib_config: dict[str, object]
     scopes: list[str] = Field(default_factory=list)
     required_fields: list[str] = Field(
         default_factory=lambda: ["client_id", "client_secret"]

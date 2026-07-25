@@ -1,5 +1,3 @@
-from src.modules.projects.presentation.api.schemas.provider_config import MaskedProviderConfig
-from src.modules.projects.presentation.api.schemas.utils import mask_oauth_config
 from .utils import RESERVED_CLAIM_KEYS
 
 from pydantic import (
@@ -7,7 +5,6 @@ from pydantic import (
     Field,
     field_validator,
 )
-
 
 
 class UserClaimsOverrideReq(BaseModel):

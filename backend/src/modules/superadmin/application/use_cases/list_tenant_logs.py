@@ -1,4 +1,4 @@
-from typing import Sequence
+from collections.abc import Sequence
 
 from src.modules.superadmin.application.ports.superadmin_unit_of_work import (
     SuperAdminUoWPort,

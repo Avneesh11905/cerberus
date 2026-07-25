@@ -2,7 +2,7 @@
 Module: SQL Tenant Repository Adapter
 """
 
-from typing import Sequence
+from collections.abc import Sequence
 from uuid import UUID
 
 from sqlalchemy import select

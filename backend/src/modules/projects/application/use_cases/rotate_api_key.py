@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
 from src.modules.projects.application.commands.project_commands import (
     RotateApiKeyCommand,
@@ -9,18 +9,20 @@ from src.modules.projects.application.ports.projects_unit_of_work import Project
 from .base_project import BaseProjectUseCase
 
 
-from src.shared.application.ports import AnalyticsEventPort
+from src.shared.application.ports import AnalyticsEventPort, ApiKeyPort
 
 
 class RotateApiKeyUseCase(BaseProjectUseCase):
     def __init__(
-        self, uow: ProjectUoWPort, api_key_adapter, analytics: AnalyticsEventPort
+        self,
+        uow: ProjectUoWPort,
+        api_key_adapter: ApiKeyPort,
+        analytics: AnalyticsEventPort,
     ):
         self.uow = uow
         self.api_key_adapter = api_key_adapter
         self.analytics = analytics
         super().__init__()
-        self.api_key_adapter = api_key_adapter
 
     async def execute(self, command: RotateApiKeyCommand) -> RotateApiKeyDTO:
         async with self.uow:
@@ -29,7 +31,7 @@ class RotateApiKeyUseCase(BaseProjectUseCase):
             )
             api_key_plaintext = self.api_key_adapter.generate(project.id)
             project.api_key_hash = self.api_key_adapter.hash(api_key_plaintext)
-            project.updated_at = datetime.now(timezone.utc)
+            project.updated_at = datetime.now(UTC)
             await self.uow.project_command_repo.save(project)
 
             self.analytics.record_event(

@@ -1,7 +1,8 @@
 import json
 import asyncio
-from typing import Any, AsyncGenerator
+from collections.abc import AsyncGenerator, Mapping
 from redis.asyncio import Redis
+from pydantic import JsonValue
 
 from src.shared.application.ports.event_bus import (
     EventPublisherPort,
@@ -13,7 +14,7 @@ class RedisEventPublisherAdapter(EventPublisherPort):
     def __init__(self, redis_client: Redis):
         self.redis = redis_client
 
-    async def publish(self, channel: str, message: dict[str, Any]) -> None:
+    async def publish(self, channel: str, message: Mapping[str, JsonValue]) -> None:
         await self.redis.publish(channel, json.dumps(message))
 
 
@@ -21,7 +22,7 @@ class RedisEventSubscriberAdapter(EventSubscriberPort):
     def __init__(self, redis_client: Redis):
         self.redis = redis_client
 
-    async def subscribe(self, channel: str) -> AsyncGenerator[dict[str, Any], None]:
+    async def subscribe(self, channel: str) -> AsyncGenerator[dict[str, JsonValue]]:
         pubsub = self.redis.pubsub()
         await pubsub.subscribe(channel)
         try:

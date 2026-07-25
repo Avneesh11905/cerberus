@@ -46,7 +46,7 @@ class ProjectClaimsProviderAdapter(ClaimsProviderPort):
         defaults = await self.cache.get_dict(cache_key)
         if defaults is None:
             project = await uow.project_query_repo.get_by_id(user.project_id)
-            defaults = project.default_claims if project else {}
+            defaults = dict(project.default_claims or {}) if project else {}
             await self.cache.set_dict(cache_key, defaults, ttl=900)
 
         if defaults:

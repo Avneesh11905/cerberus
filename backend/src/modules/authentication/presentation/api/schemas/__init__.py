@@ -9,7 +9,13 @@ from .local import (
 )
 from .mixins import _EmailMixin as _EmailMixin
 from .oauth import ExchangeRequest, ExchangeResponse, OAuthPreflightResponse
-from .responses import LoginResponse, MessageResponse, RegisterResponse, RefreshResponse
+from .responses import (
+    LoginResponse,
+    MessageResponse,
+    RegisterResponse,
+    RefreshResponse,
+    UserIdentityRes,
+)
 from .session import SessionResponse
 
 __all__ = [
@@ -29,4 +35,5 @@ __all__ = [
     "MessageResponse",
     "RegisterResponse",
     "LoginResponse",
+    "UserIdentityRes",
 ]

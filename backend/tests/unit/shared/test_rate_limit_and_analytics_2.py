@@ -1,11 +1,14 @@
 import pytest
 from src.shared.presentation.api.middlewares.rate_limit_and_analytics import parse_rate
+from typing import cast
 from unittest.mock import AsyncMock, MagicMock
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from src.shared.presentation.api.middlewares.rate_limit_and_analytics import (
     RateLimitAndAnalyticsMiddleware,
 )
+from src.core.config.app import CoreSettings
+from src.core.config.auth import RateLimitSettings
 
 
 def test_parse_rate():
@@ -35,8 +38,8 @@ def test_app(rate_limiter_mock):
     app = FastAPI()
     app.add_middleware(
         RateLimitAndAnalyticsMiddleware,
-        core_settings=DummyCoreSettings(),  # type: ignore
-        rate_limit_settings=DummyRateLimitSettings(),  # type: ignore
+        core_settings=cast(CoreSettings, DummyCoreSettings()),
+        rate_limit_settings=cast(RateLimitSettings, DummyRateLimitSettings()),
         rate_limiter=rate_limiter_mock,
         analytics=MagicMock(),
         cache=AsyncMock(),

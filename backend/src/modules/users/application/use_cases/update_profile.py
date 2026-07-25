@@ -33,8 +33,6 @@ class UpdateProfileUseCase:
                     cached_data["name"] = PersonName(cached_data["name"]["value"])
                 if cached_data.get("picture"):
                     cached_data["picture"] = HttpsUrl(cached_data["picture"]["value"])
-                if cached_data.get("project_id"):
-                    cached_data["project_id"] = UUID(cached_data["project_id"])
                 profile = UserProfile(**cached_data)
             else:
                 fetched_profile = await self.uow.profile_repo.get_profile(
@@ -61,7 +59,6 @@ class UpdateProfileUseCase:
                 role=updated.role
                 if isinstance(updated.role, str)
                 else (updated.role.value if updated.role else None),
-                project_id=updated.project_id,
                 name=updated.name.value if updated.name else None,
                 picture=updated.picture.value if updated.picture else None,
             )

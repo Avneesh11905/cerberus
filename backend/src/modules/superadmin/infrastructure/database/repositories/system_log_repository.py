@@ -2,7 +2,7 @@
 Module: SQL System Log Repository Adapter
 """
 
-from typing import Sequence
+from collections.abc import Sequence
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -40,7 +40,9 @@ class SQLSystemLogRepositoryAdapter(SystemLogRepositoryPort):
         stmt = select(SystemLog)
         if level:
             if level == LogLevel.WARN:
-                stmt = stmt.where(SystemLog.level.in_([level, "WARNING", "warn", "warning"]))
+                stmt = stmt.where(
+                    SystemLog.level.in_([level, "WARNING", "warn", "warning"])
+                )
             else:
                 stmt = stmt.where(SystemLog.level == level)
 
@@ -54,7 +56,9 @@ class SQLSystemLogRepositoryAdapter(SystemLogRepositoryPort):
         stmt = select(func.count(SystemLog.id))
         if level:
             if level == LogLevel.WARN:
-                stmt = stmt.where(SystemLog.level.in_([level, "WARNING", "warn", "warning"]))
+                stmt = stmt.where(
+                    SystemLog.level.in_([level, "WARNING", "warn", "warning"])
+                )
             else:
                 stmt = stmt.where(SystemLog.level == level)
 

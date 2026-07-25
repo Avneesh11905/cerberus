@@ -1,4 +1,5 @@
-from typing import Protocol, Sequence
+from typing import Protocol
+from collections.abc import Sequence
 from uuid import UUID
 
 from src.modules.superadmin.domain.entities import TenantEntity

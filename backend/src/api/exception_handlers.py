@@ -1,5 +1,4 @@
 import traceback
-from typing import Type
 
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
@@ -51,7 +50,7 @@ class ExceptionMetadata(BaseModel):
 # EXCEPTION TO HTTP STATUS CODE MAPS
 # ==========================================
 
-AUTH_EXCEPTION_STATUS_MAP: dict[Type[AuthBaseException], ExceptionMetadata] = {
+AUTH_EXCEPTION_STATUS_MAP: dict[type[AuthBaseException], ExceptionMetadata] = {
     EmailAlreadyRegisteredException: ExceptionMetadata(
         status_code=status.HTTP_409_CONFLICT,
         dev_detail="Registration failed. Email is already in use.",
@@ -109,7 +108,7 @@ AUTH_EXCEPTION_STATUS_MAP: dict[Type[AuthBaseException], ExceptionMetadata] = {
     ),
 }
 
-USER_EXCEPTION_STATUS_MAP: dict[Type[UserBaseException], ExceptionMetadata] = {
+USER_EXCEPTION_STATUS_MAP: dict[type[UserBaseException], ExceptionMetadata] = {
     UserNotFoundException: ExceptionMetadata(
         status_code=status.HTTP_404_NOT_FOUND,
         dev_detail="User not found.",
@@ -117,7 +116,7 @@ USER_EXCEPTION_STATUS_MAP: dict[Type[UserBaseException], ExceptionMetadata] = {
     ),
 }
 
-PROJECT_EXCEPTION_STATUS_MAP: dict[Type[ProjectError], ExceptionMetadata] = {
+PROJECT_EXCEPTION_STATUS_MAP: dict[type[ProjectError], ExceptionMetadata] = {
     ProjectNotFoundError: ExceptionMetadata(
         status_code=status.HTTP_404_NOT_FOUND,
         dev_detail="Project not found.",
@@ -131,7 +130,7 @@ PROJECT_EXCEPTION_STATUS_MAP: dict[Type[ProjectError], ExceptionMetadata] = {
 }
 
 SUPERADMIN_EXCEPTION_STATUS_MAP: dict[
-    Type[SuperadminBaseException], ExceptionMetadata
+    type[SuperadminBaseException], ExceptionMetadata
 ] = {
     TenantNotFoundException: ExceptionMetadata(
         status_code=status.HTTP_404_NOT_FOUND,

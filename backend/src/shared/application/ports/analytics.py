@@ -1,5 +1,6 @@
-from typing import Any, Protocol
+from typing import Protocol
 from uuid import UUID
+from pydantic import JsonValue
 
 
 class AnalyticsEventPort(Protocol):
@@ -14,7 +15,7 @@ class AnalyticsEventPort(Protocol):
         project_id: UUID | None = None,
         tenant_id: UUID | None = None,
         user_id: UUID | None = None,
-        metadata: dict[str, Any] | None = None,
+        metadata: dict[str, JsonValue] | None = None,
     ) -> None:
         """
         Record a generic analytics event.

@@ -3,7 +3,7 @@ Handles reading and writing Refresh Tokens.
 """
 
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 from typing import cast
 from uuid import UUID
 
@@ -29,7 +29,7 @@ class DBRefreshTokenRepositoryAdapter(RefreshTokenRepositoryPort):
         self,
         session: AsyncSession,
         lifetime_days: int,
-        cache: "CachePort | None" = None,
+        cache: CachePort | None = None,
     ):
         self._session = session
         self._lifetime_days = lifetime_days
@@ -45,7 +45,7 @@ class DBRefreshTokenRepositoryAdapter(RefreshTokenRepositoryPort):
         """Create a new refresh token. Returns the raw token."""
         raw_token = secrets.token_urlsafe(64)
         hashed = hash_token(raw_token)
-        expires_at = datetime.now(timezone.utc) + timedelta(days=self._lifetime_days)
+        expires_at = datetime.now(UTC) + timedelta(days=self._lifetime_days)
 
         ip_addr = client_meta.ip_address if client_meta else None
         u_agent = client_meta.user_agent if client_meta else None
@@ -121,7 +121,7 @@ class DBRefreshTokenRepositoryAdapter(RefreshTokenRepositoryPort):
         self,
     ) -> int:
         """Delete all expired and used refresh tokens. Returns count deleted."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         result = await self._session.execute(
             select(RefreshToken).where(
                 (RefreshToken.expires_at < now) | (RefreshToken.used.is_(True))
@@ -149,14 +149,14 @@ class DBRefreshTokenRepositoryAdapter(RefreshTokenRepositoryPort):
         if not refresh:
             return None, None, None
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         if refresh.used:
             await self._revoke_family(refresh.family_id)
             return None, None, None
 
         refresh_expires_at = (
-            refresh.expires_at.replace(tzinfo=timezone.utc)
+            refresh.expires_at.replace(tzinfo=UTC)
             if refresh.expires_at.tzinfo is None
             else refresh.expires_at
         )
@@ -228,7 +228,7 @@ class DBRefreshTokenRepositoryAdapter(RefreshTokenRepositoryPort):
     async def get_active_sessions(
         self, user_id: UUID, current_token: str | None = None
     ) -> list[ActiveSession]:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         result = await self._session.execute(
             select(RefreshToken)
             .where(

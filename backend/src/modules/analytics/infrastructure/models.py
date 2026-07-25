@@ -1,7 +1,6 @@
 import uuid
-from typing import Any
-
 from sqlalchemy import Column, Date, DateTime, Enum, Integer, UniqueConstraint, func
+from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 
 from src.core.database import Base
@@ -15,8 +14,10 @@ class AnalyticsEventModel(Base):
     project_id = Column(UUID(as_uuid=True), nullable=True, index=True)
     tenant_id = Column(UUID(as_uuid=True), nullable=True, index=True)
     user_id = Column(UUID(as_uuid=True), nullable=True)
-    event_type: Any = Column(
-        Enum(EventType, name="event_type_enum"), nullable=False, index=True
+    event_type: Mapped[EventType] = mapped_column(
+        Enum(EventType, name="event_type_enum", native_enum=True),
+        nullable=False,
+        index=True,
     )
     timestamp = Column(
         DateTime(timezone=True), default=func.now(), nullable=False, index=True

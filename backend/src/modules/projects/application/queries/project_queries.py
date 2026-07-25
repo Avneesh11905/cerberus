@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 from uuid import UUID
 
 
@@ -24,7 +23,7 @@ class GetProjectPublicCredentialsQuery:
 @dataclass(frozen=True)
 class GetUserClaimsQuery:
     project_id: UUID
-    tenant_id: Optional[UUID]
+    tenant_id: UUID | None
     user_id: UUID
 
 
@@ -36,7 +35,7 @@ class ListProjectsQuery:
 @dataclass(frozen=True)
 class ListProjectUsersQuery:
     project_id: UUID
-    tenant_id: Optional[UUID]
+    tenant_id: UUID | None
     skip: int = 0
     limit: int = 20
-    search: Optional[str] = None
+    search: str | None = None

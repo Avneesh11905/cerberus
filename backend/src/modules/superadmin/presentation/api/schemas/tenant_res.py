@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional, Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, field_validator
@@ -10,7 +9,7 @@ from src.modules.authorization.domain.enums import GlobalRole
 class TenantRes(BaseModel):
     id: UUID
     email: str
-    name: Optional[str]
+    name: str | None
     is_active: bool
     role: GlobalRole
     created_at: datetime
@@ -19,14 +18,15 @@ class TenantRes(BaseModel):
 
     @field_validator("email", mode="before")
     @classmethod
-    def extract_email(cls, v: Any) -> str:
+    def extract_email(cls, v: object) -> str:
         if hasattr(v, "value"):
-            return v.value
-        return v
+            return str(getattr(v, "value"))
+        return str(v)
 
     @field_validator("name", mode="before")
     @classmethod
-    def extract_name(cls, v: Any) -> str | None:
+    def extract_name(cls, v: object) -> str | None:
         if hasattr(v, "value"):
-            return v.value
-        return v
+            val = getattr(v, "value")
+            return str(val) if val is not None else None
+        return v if v is None else str(v)

@@ -14,8 +14,8 @@ class GetUserClaimsUseCase(BaseProjectUseCase):
             project = await self._get_project_or_404(
                 self.uow, query.project_id, query.tenant_id
             )
-            defaults = project.default_claims
-            all_users = await self.uow.project_user_repo.list_project_users(
+            defaults = project.default_claims or {}
+            all_users, _ = await self.uow.project_user_repo.list_project_users(
                 query.project_id, skip=0, limit=9999
             )
             target = next(
@@ -29,8 +29,8 @@ class GetUserClaimsUseCase(BaseProjectUseCase):
             }
             return GetUserClaimsDTO(
                 claims={
-                    "default_claims": defaults,
-                    "user_overrides": overrides,
-                    "effective_claims": effective,
+                    "default_claims": dict(defaults),
+                    "user_overrides": dict(overrides),
+                    "effective_claims": dict(effective),
                 }
             )

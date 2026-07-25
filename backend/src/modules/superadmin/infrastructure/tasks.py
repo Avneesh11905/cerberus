@@ -5,7 +5,7 @@ Wraps `asyncio.create_task` or a message broker client to ensure "fire-and-forge
 """
 
 import asyncio
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 
 from celery_batches import Batches  # type: ignore
 from sqlalchemy import delete, select
@@ -22,7 +22,7 @@ logger = AsyncSQLLogger("LogCleanupTask")
 async def _clean_old_system_logs_async():
     try:
         async with AsyncSessionLocal() as db:
-            cutoff_date = datetime.now(timezone.utc) - timedelta(
+            cutoff_date = datetime.now(UTC) - timedelta(
                 days=get_settings().log.RETENTION_DAYS
             )
             total_deleted = 0

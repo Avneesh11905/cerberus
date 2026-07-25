@@ -1,5 +1,5 @@
-from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Optional
+from datetime import datetime, UTC
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import (
@@ -49,13 +49,13 @@ class Tenant(Base):
         DateTime(timezone=True), nullable=True
     )
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
     updated_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
     )
 
     role: Mapped[GlobalRole] = mapped_column(
@@ -64,13 +64,13 @@ class Tenant(Base):
         nullable=False,
     )
 
-    owned_projects: Mapped[list["Project"]] = relationship(
+    owned_projects: Mapped[list[Project]] = relationship(
         back_populates="tenant", cascade="all, delete-orphan"
     )
-    oauth_accounts: Mapped[list["OAuthAccount"]] = relationship(
+    oauth_accounts: Mapped[list[OAuthAccount]] = relationship(
         back_populates="tenant", cascade="all, delete-orphan", lazy="selectin"
     )
-    password: Mapped[Optional["Password"]] = relationship(
+    password: Mapped[Password | None] = relationship(
         back_populates="tenant",
         cascade="all, delete-orphan",
         lazy="selectin",

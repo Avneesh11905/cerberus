@@ -1,4 +1,5 @@
-from typing import Callable, Protocol
+from typing import Protocol
+from collections.abc import Callable
 
 
 class TaskRunnerPort(Protocol):

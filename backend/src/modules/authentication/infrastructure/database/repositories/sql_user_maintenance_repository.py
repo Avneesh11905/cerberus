@@ -2,7 +2,7 @@
 Adapter: SQL User Maintenance Repository
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,7 +21,7 @@ class SQLUserMaintenanceRepositoryAdapter(UserMaintenanceRepositoryPort):
 
     async def cleanup_unverified_users(self, hours_old: int = 24) -> int:
         """Delete all unverified users older than `hours_old` hours."""
-        cutoff = datetime.now(timezone.utc) - timedelta(hours=hours_old)
+        cutoff = datetime.now(UTC) - timedelta(hours=hours_old)
         stmt = delete(User).where(User.is_verified.is_(False), User.created_at < cutoff)
         result = await self._session.execute(stmt)
         return int(result.rowcount)  # type: ignore
@@ -29,7 +29,7 @@ class SQLUserMaintenanceRepositoryAdapter(UserMaintenanceRepositoryPort):
     async def cleanup_soft_deleted_users(self, days_old: int = 30) -> int:
         """Permanently delete users who were soft-deleted more than `days_old` days ago."""
 
-        cutoff = datetime.now(timezone.utc) - timedelta(days=days_old)
+        cutoff = datetime.now(UTC) - timedelta(days=days_old)
         stmt = delete(User).where(
             User.deleted_at.is_not(None), User.deleted_at < cutoff
         )

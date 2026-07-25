@@ -295,9 +295,10 @@ async def test_resend_verification_success(client: AsyncClient, mocker):
 async def test_session_refresh_success(client: AsyncClient, mocker):
     from src.modules.authentication.domain.entities import UserIdentity
     import uuid
+
     dummy_user = UserIdentity(
         id=uuid.uuid4(),
-        email="test@example.com",
+        email=EmailAddress("test@example.com"),
         name="Test User",
         role="TENANT",
         is_verified=True,

@@ -1,11 +1,10 @@
-from typing import Annotated
+from typing import Annotated, Any
 from uuid import UUID
 
-from pydantic import AnyUrl, BaseModel, ConfigDict
+from pydantic import HttpUrl, BaseModel, ConfigDict, field_validator
 from pydantic.networks import UrlConstraints
 
-
-HttpsUrl = Annotated[AnyUrl, UrlConstraints(allowed_schemes=["https"])]
+HttpsUrl = Annotated[HttpUrl, UrlConstraints(allowed_schemes=["https"])]
 
 
 class UserProfileRes(BaseModel):
@@ -17,3 +16,10 @@ class UserProfileRes(BaseModel):
     receive_updates: bool
     login_methods: list[str]
     model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def extract_email(cls, v: Any) -> str:
+        if hasattr(v, "value"):
+            return str(v.value)
+        return str(v)

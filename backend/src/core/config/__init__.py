@@ -34,6 +34,6 @@ class AppConfig(BaseSettings):
         return CookieSettings(env=self.core.ENV)
 
 
-@lru_cache()
+@lru_cache
 def get_settings() -> AppConfig:
     return AppConfig()

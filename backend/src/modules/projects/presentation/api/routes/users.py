@@ -1,4 +1,5 @@
 from uuid import UUID
+from src.modules.users.presentation.api.schemas.user_profile_res import UserProfileRes
 
 from fastapi import APIRouter
 
@@ -55,7 +56,10 @@ async def list_project_users(
     users = dto.users
     total = dto.total
     return PaginatedProjectUsersRes(
-        items=list(users), total=total, page=page, size=size
+        items=[UserProfileRes.model_validate(u) for u in users],
+        total=total,
+        page=page,
+        size=size,
     )
 
 
@@ -117,8 +121,7 @@ async def get_user_claims(
     dto = await usecase.execute(
         GetUserClaimsQuery(project_id=project_id, tenant_id=user.id, user_id=user_id),
     )
-    claims = dto.claims
-    return UserClaimsRes(user_id=user_id, **claims)
+    return UserClaimsRes.model_validate({"user_id": user_id, **dto.claims})
 
 
 @router.patch("/{project_id}/users/{user_id}/claims", response_model=UserClaimsRes)

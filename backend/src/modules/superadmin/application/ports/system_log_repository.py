@@ -1,4 +1,5 @@
-from typing import Protocol, Sequence
+from typing import Protocol
+from collections.abc import Sequence
 
 from src.modules.superadmin.domain.entities import SystemLogEntity
 from src.shared.domain.enums import LogLevel

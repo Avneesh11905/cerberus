@@ -1,3 +1,4 @@
+from typing import cast, Any
 from authlib.integrations.starlette_client import OAuth
 
 from src.modules.authentication.infrastructure.oauth.registry import oauth_registry
@@ -14,7 +15,7 @@ def get_dynamic_oauth_client(provider: str, client_id: str, client_secret: str):
         raise ValueError(f"Provider {provider} not supported for dynamic config")
 
     oauth = OAuth()
-    config = dict(metadata.authlib_config)
+    config = dict(cast(dict[str, Any], metadata.authlib_config))
     config["client_id"] = client_id
     config["client_secret"] = client_secret
     oauth.register(name=provider, **config)

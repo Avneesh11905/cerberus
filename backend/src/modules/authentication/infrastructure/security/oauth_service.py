@@ -41,12 +41,12 @@ class OAuthServiceAdapter(OAuthServicePort[Request]):
         request: Request,
         uow: AuthUoWPort,
     ) -> OAuthUserInfo:
-        import logging
+        from src.shared.infrastructure.adapters.logger import AsyncSQLLogger
 
-        logger = logging.getLogger(__name__)
+        logger = AsyncSQLLogger(__name__)
         client = await self._get_client(provider, project_id, uow)
 
-        logger.info(
+        await logger.info(
             f"[OAuth Exchange] Exchanging token with request URL: {request.url}"
         )
         # Exchanges the code and retrieves tokens.

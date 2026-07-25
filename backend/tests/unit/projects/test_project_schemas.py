@@ -2,11 +2,12 @@ import pytest
 from pydantic import ValidationError
 from src.modules.projects.presentation.api.schemas.project_origins_update_req import (
     ProjectOriginsUpdateReq,
+)
+from src.modules.projects.presentation.api.schemas.utils import (
     mask_oauth_config,
 )
 from src.modules.projects.presentation.api.schemas.project_default_claims_req import (
     ProjectDefaultClaimsReq,
-    mask_oauth_config as mask_oauth_config_2,
 )
 
 
@@ -16,7 +17,9 @@ def test_mask_oauth_config_empty():
 
 
 def test_mask_oauth_config_masking():
-    config = {
+    from typing import Any
+
+    config: dict[str, Any] = {
         "google": {"client_id": "google_id", "client_secret": "google_secret"},
         "github": {"client_id": "github_id"},
         "invalid_provider": "not_a_dict",
@@ -24,15 +27,15 @@ def test_mask_oauth_config_masking():
 
     masked = mask_oauth_config(config)
 
-    assert masked["invalid_provider"] == "not_a_dict"
+    assert masked["invalid_provider"].enabled is False
 
-    assert "client_secret" not in masked["google"]
-    assert masked["google"]["client_secret_configured"] is True
-    assert masked["google"]["client_id"] == "google_id"
+    assert not getattr(masked["google"], "client_secret", False)
+    assert masked["google"].client_secret_configured is True
+    assert masked["google"].client_id == "google_id"
 
-    assert "client_secret" not in masked["github"]
-    assert masked["github"]["client_secret_configured"] is False
-    assert masked["github"]["client_id"] == "github_id"
+    assert not getattr(masked["github"], "client_secret", False)
+    assert masked["github"].client_secret_configured is False
+    assert masked["github"].client_id == "github_id"
 
     # Original config shouldn't be mutated
     assert "client_secret" in config["google"]
@@ -61,7 +64,7 @@ def test_project_origins_update_req_invalid_url():
 
 
 def test_mask_oauth_config_2():
-    assert mask_oauth_config_2(None) == {}
+    assert mask_oauth_config(None) == {}
 
 
 def test_project_default_claims_req_valid():

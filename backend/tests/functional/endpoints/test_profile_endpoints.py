@@ -51,7 +51,6 @@ async def test_update_profile(client: AsyncClient, override_auth_deps, mocker):
         receive_updates=False,
         login_methods=["local"],
         role=None,
-        project_id=None,
     )
 
     # Update the profile

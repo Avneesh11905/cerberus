@@ -19,6 +19,7 @@ from src.modules.authentication.presentation.api.schemas import (
     MessageResponse,
     RefreshResponse,
     SessionResponse,
+    UserIdentityRes,
 )
 from src.modules.authentication.presentation.api.utils import (
     delete_refresh_token_cookie,
@@ -84,7 +85,7 @@ async def refresh(
     return RefreshResponse(
         access_token=access_token,
         csrf_token=csrf_token,
-        user=user,
+        user=UserIdentityRes.model_validate(user),
     )
 
 

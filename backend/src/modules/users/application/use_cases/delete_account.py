@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
 from src.core.config import get_settings
 from src.modules.users.application.commands.user_commands import DeleteAccountCommand
@@ -22,7 +22,7 @@ class DeleteAccountUseCase:
 
             # 2. Blacklist the current access token
             if command.jwt_jti and command.jwt_exp:
-                now = int(datetime.now(timezone.utc).timestamp())
+                now = int(datetime.now(UTC).timestamp())
                 ttl = command.jwt_exp - now
                 if ttl > 0:
                     max_ttl = get_settings().token.ACCESS_TOKEN_LIFETIME_MINUTES * 60

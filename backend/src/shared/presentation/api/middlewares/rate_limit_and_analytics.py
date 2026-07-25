@@ -1,8 +1,4 @@
 import time
-from src.shared.infrastructure.adapters.logger import AsyncSQLLogger
-
-logger = AsyncSQLLogger("RateLimitMiddleware")
-
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
@@ -10,6 +6,9 @@ from starlette.responses import JSONResponse
 from src.core.config.app import CoreSettings
 from src.core.config.auth import RateLimitSettings
 from src.shared.application.ports import AnalyticsEventPort, RateLimiterPort, CachePort
+from src.shared.infrastructure.adapters.logger import AsyncSQLLogger
+
+logger = AsyncSQLLogger("RateLimitMiddleware")
 
 
 def parse_rate(rate_str: str) -> tuple[int, int]:
@@ -82,7 +81,9 @@ class RateLimitAndAnalyticsMiddleware(BaseHTTPMiddleware):
                 payload = jwt.decode(token, options={"verify_signature": False})
                 project_id = payload.get("project_id")
             except Exception as e:
-                await logger.debug(f"Failed to decode JWT for rate limit project extraction: {e}")
+                await logger.debug(
+                    f"Failed to decode JWT for rate limit project extraction: {e}"
+                )
         else:
             api_key = request.headers.get("x-cerberus-api-key")
             if api_key:

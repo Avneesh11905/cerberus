@@ -4,7 +4,7 @@ Access Tokens are short-lived (e.g. 15 minutes) and signed using RS256 with asym
 They contain the minimal user claims needed by the API to identify the caller without querying the database.
 """
 
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from uuid import UUID
 
 import jwt
@@ -30,7 +30,7 @@ class JWTAccessTokenAdapter:
         extra_claims: dict[str, object] | None = None,
         private_key_override: str | None = None,
     ) -> str:
-        now = int(datetime.now(timezone.utc).timestamp())
+        now = int(datetime.now(UTC).timestamp())
         expires = now + self._lifetime_seconds
         payload = {
             "jti": str(uuid7()),

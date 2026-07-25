@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
 from src.modules.projects.application.commands.project_commands import UpdateNameCommand
 from src.modules.projects.application.dtos.project_dtos import UpdateNameDTO
@@ -18,7 +18,7 @@ class UpdateNameUseCase(BaseProjectUseCase):
                 self.uow, command.project_id, command.user_id
             )
             project.name = command.name
-            project.updated_at = datetime.now(timezone.utc)
+            project.updated_at = datetime.now(UTC)
             return UpdateNameDTO(
                 project=await self.uow.project_command_repo.save(project)
             )

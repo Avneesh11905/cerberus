@@ -1,12 +1,12 @@
 import importlib
-import logging
+from src.shared.infrastructure.adapters.logger import AsyncSQLLogger
 import pkgutil
 
 from src.modules.authentication.infrastructure.oauth import providers
 
 from .registry import oauth_registry as oauth_registry
 
-logger = logging.getLogger(__name__)
+logger = AsyncSQLLogger(__name__)
 
 
 def _discover_providers():
@@ -19,9 +19,16 @@ def _discover_providers():
         try:
             importlib.import_module(f"{package.__name__}.{module_name}")
         except Exception as e:
-            logger.error(
+            import asyncio
+
+            coro = logger.error(
                 f"[OAuthAutoDiscovery] Failed to load provider '{module_name}': {e}"
             )
+            try:
+                loop = asyncio.get_running_loop()
+                loop.create_task(coro)
+            except RuntimeError:
+                asyncio.run(coro)
 
 
 _discover_providers()

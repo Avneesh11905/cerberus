@@ -17,13 +17,10 @@ class ListProjectUsersUseCase(BaseProjectUserUseCase):
             await self._verify_project_ownership(
                 self.uow, query.project_id, query.tenant_id
             )
-            users = await self.uow.project_user_repo.list_project_users(
+            users, total = await self.uow.project_user_repo.list_project_users(
                 query.project_id,
                 skip=query.skip,
                 limit=query.limit,
                 search=query.search,
-            )
-            total = await self.uow.project_user_repo.count_project_users(
-                query.project_id, search=query.search
             )
             return ListProjectUsersDTO(users=users, total=total)

@@ -134,11 +134,10 @@ async def test_project_users_operations(
     await db_session.flush()
 
     # List users
-    users = await project_user_repo.list_project_users(saved.id)
+    users, count = await project_user_repo.list_project_users(saved.id)
     assert len(users) == 2
 
     # Count users
-    count = await project_user_repo.count_project_users(saved.id)
     assert count == 2
 
     # Update status
@@ -156,11 +155,11 @@ async def test_project_users_operations(
     assert updated.custom_claims == {"admin": True}
 
     # Test search filters
-    users = await project_user_repo.list_project_users(saved.id, search="u1")
+    users, count = await project_user_repo.list_project_users(saved.id, search="u1")
     assert len(users) == 1
     assert users[0].email.value == "u1@test.com"
 
-    count = await project_user_repo.count_project_users(saved.id, search="u2")
+    _, count = await project_user_repo.list_project_users(saved.id, search="u2")
     assert count == 1
 
     # Test not found

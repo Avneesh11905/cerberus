@@ -155,5 +155,5 @@ async def update_project_claims(
     )
     project = dto.project
     return ProjectDefaultClaimsRes(
-        project_id=project_id, default_claims=project.default_claims
+        project_id=project_id, default_claims=project.default_claims or {}
     )

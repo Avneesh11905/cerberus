@@ -1,8 +1,6 @@
 from dataclasses import dataclass
-from typing import Sequence
 
 from src.modules.superadmin.domain.entities import TenantEntity
-
 
 
 @dataclass(frozen=True)

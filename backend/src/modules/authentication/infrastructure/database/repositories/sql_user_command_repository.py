@@ -2,7 +2,7 @@
 Adapter: SQL User Command Repository
 """
 
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from uuid import UUID
 
 from sqlalchemy import select
@@ -201,7 +201,7 @@ class SQLUserCommandRepositoryAdapter(UserCommandRepositoryPort):
         user_obj = user.scalar_one_or_none()
         if user_obj:
             user_obj.is_active = False
-            user_obj.deleted_at = datetime.now(timezone.utc)
+            user_obj.deleted_at = datetime.now(UTC)
         else:
             tenant = await self._session.execute(
                 select(Tenant).where(Tenant.id == user_id)
@@ -209,7 +209,7 @@ class SQLUserCommandRepositoryAdapter(UserCommandRepositoryPort):
             tenant_obj = tenant.scalar_one_or_none()
             if tenant_obj:
                 tenant_obj.is_active = False
-                tenant_obj.deleted_at = datetime.now(timezone.utc)
+                tenant_obj.deleted_at = datetime.now(UTC)
 
     async def undelete_user(self, user_id: UUID) -> None:
         """Clear the deleted_at flag to restore a soft-deleted user."""

@@ -1,5 +1,5 @@
-from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Optional
+from datetime import datetime, UTC
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import (
@@ -38,7 +38,7 @@ class OAuthAccount(Base):
     oauth_sub: Mapped[str] = mapped_column(String, nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
 
     __table_args__ = (
@@ -64,8 +64,8 @@ class OAuthAccount(Base):
         ),
     )
 
-    tenant: Mapped[Optional["Tenant"]] = relationship(back_populates="oauth_accounts")
-    user: Mapped[Optional["User"]] = relationship(back_populates="oauth_accounts")
+    tenant: Mapped[Tenant | None] = relationship(back_populates="oauth_accounts")
+    user: Mapped[User | None] = relationship(back_populates="oauth_accounts")
 
 
 class Password(Base):
@@ -82,13 +82,13 @@ class Password(Base):
     password_hash: Mapped[str] = mapped_column(String, nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
     updated_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
     )
 
     __table_args__ = (
@@ -110,8 +110,8 @@ class Password(Base):
         ),
     )
 
-    tenant: Mapped[Optional["Tenant"]] = relationship(back_populates="password")
-    user: Mapped[Optional["User"]] = relationship(back_populates="password")
+    tenant: Mapped[Tenant | None] = relationship(back_populates="password")
+    user: Mapped[User | None] = relationship(back_populates="password")
 
 
 class RefreshToken(Base):
@@ -138,12 +138,12 @@ class RefreshToken(Base):
 
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
         server_default=func.now(),
     )
 

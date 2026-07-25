@@ -1,8 +1,10 @@
 from dataclasses import dataclass, field
 from datetime import datetime
+from collections.abc import Mapping
 from uuid import UUID
 
 from src.shared.domain.value_objects import HttpsUrl
+from src.shared.domain.types import JsonValue
 
 
 @dataclass(kw_only=True)
@@ -19,7 +21,7 @@ class ProjectEntity:
 
     oauth_config: dict = field(default_factory=dict)
     allowed_origins: list[str] = field(default_factory=list)
-    default_claims: dict = field(default_factory=dict)
+    default_claims: Mapping[str, JsonValue] | None = None
     environment: str = "development"
     frontend_url: HttpsUrl | None = None
     updated_at: datetime | None = None

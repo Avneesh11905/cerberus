@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from uuid import UUID
 
 from src.shared.domain.enums import EventType
@@ -12,5 +12,5 @@ class AnalyticsEvent:
     tenant_id: UUID | None = None
     user_id: UUID | None = None
     event_type: EventType
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     metadata: dict | None = None

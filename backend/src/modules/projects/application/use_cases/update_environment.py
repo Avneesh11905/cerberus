@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
 from src.modules.projects.application.commands.project_commands import (
     UpdateEnvironmentCommand,
@@ -20,7 +20,7 @@ class UpdateEnvironmentUseCase(BaseProjectUseCase):
                 self.uow, command.project_id, command.user_id
             )
             project.environment = command.environment
-            project.updated_at = datetime.now(timezone.utc)
+            project.updated_at = datetime.now(UTC)
             return UpdateEnvironmentDTO(
                 project=await self.uow.project_command_repo.save(project)
             )

@@ -1,5 +1,5 @@
-from typing import Any
 from uuid import UUID
+from pydantic import JsonValue
 
 from src.core.celery_app import celery_app
 
@@ -11,9 +11,9 @@ class CeleryAnalyticsAdapter:
         project_id: UUID | None = None,
         tenant_id: UUID | None = None,
         user_id: UUID | None = None,
-        metadata: dict[str, Any] | None = None,
+        metadata: dict[str, JsonValue] | None = None,
     ) -> None:
-        kwargs: dict[str, Any] = {
+        kwargs: dict[str, JsonValue] = {
             "event_type": event_type,
         }
         if project_id:

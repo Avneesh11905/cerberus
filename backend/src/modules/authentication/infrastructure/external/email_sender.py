@@ -185,7 +185,7 @@ class AuthEmailSenderAdapter(EmailSenderPort):
             "proj_name": self._proj_name,
             "theme": self._template_name,
             "forgot_password_url": f"{self._frontend_url}/forgot-password",
-            "time": datetime.datetime.now(datetime.timezone.utc).strftime(
+            "time": datetime.datetime.now(datetime.UTC).strftime(
                 "%Y-%m-%d %H:%M:%S UTC"
             ),
             "ip_address": ip_address,

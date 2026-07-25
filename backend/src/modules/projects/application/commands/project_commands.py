@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from collections.abc import Mapping
+from pydantic import JsonValue
 from uuid import UUID
 
 
@@ -30,7 +31,7 @@ class RotateJwtSecretCommand:
 @dataclass(frozen=True)
 class SetProjectUserActiveStatusCommand:
     project_id: UUID
-    tenant_id: Optional[UUID]
+    tenant_id: UUID | None
     user_id: UUID
     is_active: bool
 
@@ -53,7 +54,7 @@ class UpdateEnvironmentCommand:
 class UpdateFrontendUrlCommand:
     project_id: UUID
     user_id: UUID
-    frontend_url: Optional[str]
+    frontend_url: str | None
 
 
 @dataclass(frozen=True)
@@ -67,26 +68,26 @@ class UpdateNameCommand:
 class UpdateOauthCommand:
     project_id: UUID
     user_id: UUID
-    incoming_config: Dict[str, Any]
+    incoming_config: Mapping[str, JsonValue]
 
 
 @dataclass(frozen=True)
 class UpdateOriginsCommand:
     project_id: UUID
     user_id: UUID
-    allowed_origins: List[str]
+    allowed_origins: list[str]
 
 
 @dataclass(frozen=True)
 class UpdateProjectClaimsCommand:
     project_id: UUID
     user_id: UUID
-    default_claims: Dict[str, Any]
+    default_claims: Mapping[str, JsonValue]
 
 
 @dataclass(frozen=True)
 class UpdateUserClaimsCommand:
     project_id: UUID
-    tenant_id: Optional[UUID]
+    tenant_id: UUID | None
     user_id: UUID
-    overrides: Dict[str, Any]
+    overrides: Mapping[str, JsonValue]

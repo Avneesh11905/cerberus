@@ -1,8 +1,9 @@
 from dataclasses import dataclass
-from typing import Any, Dict, Sequence
+from collections.abc import Sequence, Mapping
+from pydantic import JsonValue
 
 from src.modules.projects.domain.entities import ProjectEntity
-from src.modules.users.domain.entities import UserProfile
+from src.modules.projects.domain.entities.project_user import ProjectUser
 
 
 @dataclass(frozen=True)
@@ -19,7 +20,7 @@ class GetProjectDTO:
 
 @dataclass(frozen=True)
 class GetProjectClaimsDTO:
-    claims: Dict[str, Any]
+    claims: Mapping[str, JsonValue]
 
 
 @dataclass(frozen=True)
@@ -30,7 +31,7 @@ class GetProjectPublicCredentialsDTO:
 
 @dataclass(frozen=True)
 class GetUserClaimsDTO:
-    claims: Dict[str, Any]
+    claims: Mapping[str, JsonValue]
 
 
 @dataclass(frozen=True)
@@ -40,7 +41,7 @@ class ListProjectsDTO:
 
 @dataclass(frozen=True)
 class ListProjectUsersDTO:
-    users: Sequence[UserProfile]
+    users: Sequence[ProjectUser]
     total: int
 
 
@@ -56,12 +57,12 @@ class RotateJwtSecretDTO:
 
 @dataclass(frozen=True)
 class SetProjectUserActiveStatusDTO:
-    user: UserProfile
+    user: ProjectUser
 
 
 @dataclass(frozen=True)
 class SetTenantUserActiveStatusDTO:
-    users: Sequence[UserProfile]
+    users: Sequence[ProjectUser]
 
 
 @dataclass(frozen=True)
@@ -96,4 +97,4 @@ class UpdateProjectClaimsDTO:
 
 @dataclass(frozen=True)
 class UpdateUserClaimsDTO:
-    user: UserProfile
+    user: ProjectUser

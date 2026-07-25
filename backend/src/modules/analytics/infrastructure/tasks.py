@@ -1,8 +1,8 @@
 import asyncio
 import logging
-from datetime import datetime, timezone
-from typing import Any
+from datetime import datetime, UTC
 from uuid import UUID, uuid4
+from pydantic import JsonValue
 
 from sqlalchemy import text
 
@@ -20,7 +20,7 @@ def record_analytics_event(
     project_id: str | None = None,
     tenant_id: str | None = None,
     user_id: str | None = None,
-    metadata: dict[str, Any] | None = None,
+    metadata: dict[str, JsonValue] | None = None,
 ):
     event = AnalyticsEvent(
         id=uuid4(),
@@ -29,7 +29,7 @@ def record_analytics_event(
         tenant_id=UUID(tenant_id) if tenant_id else None,
         user_id=UUID(user_id) if user_id else None,
         metadata=metadata,
-        timestamp=datetime.now(timezone.utc),
+        timestamp=datetime.now(UTC),
     )
 
     async def _save():

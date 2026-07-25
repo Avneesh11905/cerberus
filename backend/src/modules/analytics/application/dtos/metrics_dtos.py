@@ -1,12 +1,12 @@
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from pydantic import JsonValue
 
 
 @dataclass(frozen=True)
 class ProjectMetricsDTO:
-    data: List[Dict[str, Any]]
+    data: list[dict[str, JsonValue]]
 
 
 @dataclass(frozen=True)
 class TenantMetricsDTO:
-    data: List[Dict[str, Any]]
+    data: list[dict[str, JsonValue]]

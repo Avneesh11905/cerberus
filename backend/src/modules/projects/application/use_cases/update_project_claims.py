@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
 from src.modules.projects.application.commands.project_commands import (
     UpdateProjectClaimsCommand,
@@ -6,6 +6,7 @@ from src.modules.projects.application.commands.project_commands import (
 from src.modules.projects.application.dtos.project_dtos import UpdateProjectClaimsDTO
 from src.modules.projects.application.ports.projects_unit_of_work import ProjectUoWPort
 from src.modules.projects.application.use_cases import BaseProjectUseCase
+from src.shared.application.ports import CachePort
 
 MAX_CLAIM_KEYS = 10
 RESERVED_KEYS = {
@@ -21,11 +22,10 @@ RESERVED_KEYS = {
 
 
 class UpdateProjectClaimsUseCase(BaseProjectUseCase):
-    def __init__(self, uow: ProjectUoWPort, cache):
+    def __init__(self, uow: ProjectUoWPort, cache: CachePort):
         self.uow = uow
         self.cache = cache
         super().__init__()
-        self.cache = cache
 
     async def execute(
         self, command: UpdateProjectClaimsCommand
@@ -41,7 +41,7 @@ class UpdateProjectClaimsUseCase(BaseProjectUseCase):
                 self.uow, command.project_id, command.user_id
             )
             project.default_claims = command.default_claims
-            project.updated_at = datetime.now(timezone.utc)
+            project.updated_at = datetime.now(UTC)
 
             saved = await self.uow.project_command_repo.save(project)
             await self.cache.delete_key(
