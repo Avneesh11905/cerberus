@@ -1,7 +1,9 @@
 import { createFileRoute, redirect, Outlet, Link, useNavigate, useLocation, Navigate } from '@tanstack/react-router'
-import { useAuthStore } from '../store/auth'
+import { useAuthStore, type User } from '../store/auth'
 import { checkInitialSession } from '../lib/auth-check'
-import { LogOut, LayoutDashboard, FolderKanban, Settings, Activity } from 'lucide-react'
+import { isTokenExpired } from '../lib/jwt'
+import { refreshClient } from '../lib/api-client'
+import { LogOut, LayoutDashboard, FolderKanban, Settings, Activity, Shield } from 'lucide-react'
 import clsx from 'clsx'
 import { AnalyticsProvider, useAnalyticsStream } from '../hooks/useAnalyticsStream'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip'
@@ -19,7 +21,31 @@ export const Route = createFileRoute('/_protected')({
   beforeLoad: async ({ location }) => {
     if (typeof window === 'undefined') return;
     const accessToken = useAuthStore.getState().accessToken
-    if (!accessToken) {
+    let isValid = !!accessToken
+
+    if (accessToken && isTokenExpired(accessToken)) {
+      try {
+        const csrfToken = useAuthStore.getState().csrfToken;
+        const { data } = await refreshClient.post<{ access_token: string, csrf_token?: string, user?: User }>(
+          '/auth/refresh',
+          {},
+          { headers: csrfToken ? { 'X-CSRF': csrfToken } : undefined }
+        );
+        const newAccessToken = data.access_token;
+        const newCsrfToken = data?.csrf_token;
+        if (data.user) {
+          useAuthStore.getState().setAuth(newAccessToken, newCsrfToken || '', data.user);
+        } else {
+          useAuthStore.getState().setAccessToken(newAccessToken, newCsrfToken);
+        }
+        isValid = true;
+      } catch (err) {
+        useAuthStore.getState().logout()
+        isValid = false;
+      }
+    }
+
+    if (!isValid) {
       throw redirect({
         to: '/login',
         search: {
@@ -54,7 +80,6 @@ function StreamIndicator() {
 
 function ProtectedLayout() {
   const user = useAuthStore(state => state.user)
-  const isCheckingSession = useAuthStore(state => state.isCheckingSession)
   const logout = useAuthStore(state => state.logout)
   const navigate = useNavigate()
   const location = useLocation()
@@ -62,13 +87,6 @@ function ProtectedLayout() {
 
   const accessToken = useAuthStore(state => state.accessToken)
 
-  if (isCheckingSession) {
-    return (
-      <div className="min-h-screen bg-vanilla flex flex-col items-center justify-center p-4">
-        <div className="w-16 h-16 border-4 border-taupe border-t-terracotta rounded-full animate-spin"></div>
-      </div>
-    )
-  }
 
   if (!accessToken) {
     return <Navigate to="/login" search={{ redirect: location.pathname }} />
@@ -133,6 +151,15 @@ function ProtectedLayout() {
                     <Settings className="w-4 h-4 mr-2" />
                     Settings
                   </DropdownMenuItem>
+                )}
+                {user?.role === 'SUPERADMIN' && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-ochre focus:text-ochre" onClick={() => navigate({ to: '/superadmin' })}>
+                      <Shield className="w-4 h-4 mr-2" />
+                      Superadmin
+                    </DropdownMenuItem>
+                  </>
                 )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="text-terracotta focus:text-vanilla focus:bg-terracotta" onClick={handleLogout}>

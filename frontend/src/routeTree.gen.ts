@@ -18,8 +18,12 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as ProtectedDashboardRouteImport } from './routes/_protected.dashboard'
 import { Route as ProtectedSettingsRouteImport } from './routes/_protected.settings'
+import { Route as ProtectedSuperadminRouteImport } from './routes/_protected.superadmin'
 import { Route as OauthCallbackRouteImport } from './routes/oauth.callback'
 import { Route as ProtectedProjectsIndexRouteImport } from './routes/_protected.projects.index'
+import { Route as ProtectedSuperadminIndexRouteImport } from './routes/_protected.superadmin.index'
+import { Route as ProtectedSuperadminLogsRouteImport } from './routes/_protected.superadmin.logs'
+import { Route as ProtectedSuperadminTenantsRouteImport } from './routes/_protected.superadmin.tenants'
 import { Route as ProtectedProjectsProjectIdSettingsRouteImport } from './routes/_protected.projects.$projectId.settings'
 
 const IndexRoute = IndexRouteImport.update({
@@ -66,6 +70,11 @@ const ProtectedSettingsRoute = ProtectedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => ProtectedRoute,
 } as any)
+const ProtectedSuperadminRoute = ProtectedSuperadminRouteImport.update({
+  id: '/superadmin',
+  path: '/superadmin',
+  getParentRoute: () => ProtectedRoute,
+} as any)
 const OauthCallbackRoute = OauthCallbackRouteImport.update({
   id: '/oauth/callback',
   path: '/oauth/callback',
@@ -76,6 +85,23 @@ const ProtectedProjectsIndexRoute = ProtectedProjectsIndexRouteImport.update({
   path: '/projects/',
   getParentRoute: () => ProtectedRoute,
 } as any)
+const ProtectedSuperadminIndexRoute =
+  ProtectedSuperadminIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => ProtectedSuperadminRoute,
+  } as any)
+const ProtectedSuperadminLogsRoute = ProtectedSuperadminLogsRouteImport.update({
+  id: '/logs',
+  path: '/logs',
+  getParentRoute: () => ProtectedSuperadminRoute,
+} as any)
+const ProtectedSuperadminTenantsRoute =
+  ProtectedSuperadminTenantsRouteImport.update({
+    id: '/tenants',
+    path: '/tenants',
+    getParentRoute: () => ProtectedSuperadminRoute,
+  } as any)
 const ProtectedProjectsProjectIdSettingsRoute =
   ProtectedProjectsProjectIdSettingsRouteImport.update({
     id: '/projects/$projectId/settings',
@@ -92,8 +118,12 @@ export interface FileRoutesByFullPath {
   '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof ProtectedDashboardRoute
   '/settings': typeof ProtectedSettingsRoute
+  '/superadmin': typeof ProtectedSuperadminRouteWithChildren
   '/oauth/callback': typeof OauthCallbackRoute
+  '/superadmin/logs': typeof ProtectedSuperadminLogsRoute
+  '/superadmin/tenants': typeof ProtectedSuperadminTenantsRoute
   '/projects/': typeof ProtectedProjectsIndexRoute
+  '/superadmin/': typeof ProtectedSuperadminIndexRoute
   '/projects/$projectId/settings': typeof ProtectedProjectsProjectIdSettingsRoute
 }
 export interface FileRoutesByTo {
@@ -106,7 +136,10 @@ export interface FileRoutesByTo {
   '/dashboard': typeof ProtectedDashboardRoute
   '/settings': typeof ProtectedSettingsRoute
   '/oauth/callback': typeof OauthCallbackRoute
+  '/superadmin/logs': typeof ProtectedSuperadminLogsRoute
+  '/superadmin/tenants': typeof ProtectedSuperadminTenantsRoute
   '/projects': typeof ProtectedProjectsIndexRoute
+  '/superadmin': typeof ProtectedSuperadminIndexRoute
   '/projects/$projectId/settings': typeof ProtectedProjectsProjectIdSettingsRoute
 }
 export interface FileRoutesById {
@@ -120,8 +153,12 @@ export interface FileRoutesById {
   '/verify-email': typeof VerifyEmailRoute
   '/_protected/dashboard': typeof ProtectedDashboardRoute
   '/_protected/settings': typeof ProtectedSettingsRoute
+  '/_protected/superadmin': typeof ProtectedSuperadminRouteWithChildren
   '/oauth/callback': typeof OauthCallbackRoute
+  '/_protected/superadmin/logs': typeof ProtectedSuperadminLogsRoute
+  '/_protected/superadmin/tenants': typeof ProtectedSuperadminTenantsRoute
   '/_protected/projects/': typeof ProtectedProjectsIndexRoute
+  '/_protected/superadmin/': typeof ProtectedSuperadminIndexRoute
   '/_protected/projects/$projectId/settings': typeof ProtectedProjectsProjectIdSettingsRoute
 }
 export interface FileRouteTypes {
@@ -135,8 +172,12 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/dashboard'
     | '/settings'
+    | '/superadmin'
     | '/oauth/callback'
+    | '/superadmin/logs'
+    | '/superadmin/tenants'
     | '/projects/'
+    | '/superadmin/'
     | '/projects/$projectId/settings'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -149,7 +190,10 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/settings'
     | '/oauth/callback'
+    | '/superadmin/logs'
+    | '/superadmin/tenants'
     | '/projects'
+    | '/superadmin'
     | '/projects/$projectId/settings'
   id:
     | '__root__'
@@ -162,8 +206,12 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/_protected/dashboard'
     | '/_protected/settings'
+    | '/_protected/superadmin'
     | '/oauth/callback'
+    | '/_protected/superadmin/logs'
+    | '/_protected/superadmin/tenants'
     | '/_protected/projects/'
+    | '/_protected/superadmin/'
     | '/_protected/projects/$projectId/settings'
   fileRoutesById: FileRoutesById
 }
@@ -243,6 +291,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedSettingsRouteImport
       parentRoute: typeof ProtectedRoute
     }
+    '/_protected/superadmin': {
+      id: '/_protected/superadmin'
+      path: '/superadmin'
+      fullPath: '/superadmin'
+      preLoaderRoute: typeof ProtectedSuperadminRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
     '/oauth/callback': {
       id: '/oauth/callback'
       path: '/oauth/callback'
@@ -257,6 +312,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedProjectsIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
+    '/_protected/superadmin/': {
+      id: '/_protected/superadmin/'
+      path: '/'
+      fullPath: '/superadmin/'
+      preLoaderRoute: typeof ProtectedSuperadminIndexRouteImport
+      parentRoute: typeof ProtectedSuperadminRoute
+    }
+    '/_protected/superadmin/logs': {
+      id: '/_protected/superadmin/logs'
+      path: '/logs'
+      fullPath: '/superadmin/logs'
+      preLoaderRoute: typeof ProtectedSuperadminLogsRouteImport
+      parentRoute: typeof ProtectedSuperadminRoute
+    }
+    '/_protected/superadmin/tenants': {
+      id: '/_protected/superadmin/tenants'
+      path: '/tenants'
+      fullPath: '/superadmin/tenants'
+      preLoaderRoute: typeof ProtectedSuperadminTenantsRouteImport
+      parentRoute: typeof ProtectedSuperadminRoute
+    }
     '/_protected/projects/$projectId/settings': {
       id: '/_protected/projects/$projectId/settings'
       path: '/projects/$projectId/settings'
@@ -267,9 +343,25 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface ProtectedSuperadminRouteChildren {
+  ProtectedSuperadminLogsRoute: typeof ProtectedSuperadminLogsRoute
+  ProtectedSuperadminTenantsRoute: typeof ProtectedSuperadminTenantsRoute
+  ProtectedSuperadminIndexRoute: typeof ProtectedSuperadminIndexRoute
+}
+
+const ProtectedSuperadminRouteChildren: ProtectedSuperadminRouteChildren = {
+  ProtectedSuperadminLogsRoute: ProtectedSuperadminLogsRoute,
+  ProtectedSuperadminTenantsRoute: ProtectedSuperadminTenantsRoute,
+  ProtectedSuperadminIndexRoute: ProtectedSuperadminIndexRoute,
+}
+
+const ProtectedSuperadminRouteWithChildren =
+  ProtectedSuperadminRoute._addFileChildren(ProtectedSuperadminRouteChildren)
+
 interface ProtectedRouteChildren {
   ProtectedDashboardRoute: typeof ProtectedDashboardRoute
   ProtectedSettingsRoute: typeof ProtectedSettingsRoute
+  ProtectedSuperadminRoute: typeof ProtectedSuperadminRouteWithChildren
   ProtectedProjectsIndexRoute: typeof ProtectedProjectsIndexRoute
   ProtectedProjectsProjectIdSettingsRoute: typeof ProtectedProjectsProjectIdSettingsRoute
 }
@@ -277,6 +369,7 @@ interface ProtectedRouteChildren {
 const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedDashboardRoute: ProtectedDashboardRoute,
   ProtectedSettingsRoute: ProtectedSettingsRoute,
+  ProtectedSuperadminRoute: ProtectedSuperadminRouteWithChildren,
   ProtectedProjectsIndexRoute: ProtectedProjectsIndexRoute,
   ProtectedProjectsProjectIdSettingsRoute:
     ProtectedProjectsProjectIdSettingsRoute,

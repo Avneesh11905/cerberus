@@ -43,7 +43,6 @@ function RegisterPage() {
   const setOtpExpiresAt = useAuthStore(state => state.setOtpExpiresAt)
   const setResendAvailableAt = useAuthStore(state => state.setResendAvailableAt)
   const accessToken = useAuthStore(state => state.accessToken)
-  const isCheckingSession = useAuthStore(state => state.isCheckingSession)
   
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const [authError, setAuthError] = useState<string | null>(null)
@@ -81,7 +80,7 @@ function RegisterPage() {
       setResendAvailableAt(null)
       navigate({ to: '/verify-email' })
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       setAuthError(extractErrorMessage(error, 'Registration failed'))
     }
   })
@@ -117,14 +116,8 @@ function RegisterPage() {
     window.location.href = `${API_URL}/auth/tenant/login/${provider}`
   }
 
-  if (isCheckingSession || accessToken) {
-    return (
-      <AuthLayout title="Authenticating" subtitle="Please wait...">
-        <div className="flex flex-col items-center justify-center p-8 space-y-4">
-          <div className="animate-spin h-10 w-10 border-4 border-slate border-t-transparent rounded-full" />
-        </div>
-      </AuthLayout>
-    )
+  if (accessToken) {
+    return null
   }
 
   return (

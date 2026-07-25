@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { useAuthStore } from '../store/auth'
+import axios from 'axios'
 import { AuthLayout } from '../components/layout/AuthLayout'
 import { apiClient } from '../lib/api-client'
 import { z } from 'zod'
@@ -37,8 +38,12 @@ function OAuthCallbackPage() {
           setAuth('', '', data);
           navigate({ to: '/' })
         }
-      } catch (err: any) {
-        setError(err.response?.data?.detail || 'OAuth authentication failed.')
+      } catch (err: unknown) {
+        if (axios.isAxiosError(err)) {
+          setError(err.response?.data?.detail || 'OAuth authentication failed.')
+        } else {
+          setError('OAuth authentication failed.')
+        }
       }
     }
     

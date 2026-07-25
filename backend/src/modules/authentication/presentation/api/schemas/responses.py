@@ -1,4 +1,5 @@
-from pydantic import BaseModel, ConfigDict
+from typing import Any
+from pydantic import BaseModel, ConfigDict, field_validator
 from uuid import UUID
 
 
@@ -22,6 +23,13 @@ class UserIdentityRes(BaseModel):
     is_active: bool = True
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("email", "picture", mode="before")
+    @classmethod
+    def extract_value(cls, v: Any) -> str | None:
+        if hasattr(v, "value"):
+            return v.value
+        return v
 
 
 class LoginResponse(BaseModel):

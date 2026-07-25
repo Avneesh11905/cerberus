@@ -4,7 +4,6 @@ import { useAuthStore } from '../../store/auth'
 
 export function PublicLayout({ children }: { children: React.ReactNode }) {
   const accessToken = useAuthStore(state => state.accessToken)
-  const isCheckingSession = useAuthStore(state => state.isCheckingSession)
 
   return (
     <div className="min-h-screen bg-vanilla flex flex-col font-sans selection:bg-slate selection:text-vanilla">
@@ -26,8 +25,6 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
               >
                 Go to Dashboard
               </Link>
-            ) : isCheckingSession ? (
-              <div className="w-32 h-9 bg-taupe/10 animate-pulse rounded-md" />
             ) : (
               <>
                 <Link to="/login" className="text-xs sm:text-sm font-bold text-slate hover:text-slate/80 transition-colors whitespace-nowrap">

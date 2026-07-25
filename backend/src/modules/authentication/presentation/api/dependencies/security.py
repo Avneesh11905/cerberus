@@ -98,7 +98,11 @@ async def get_jwt_payload(
 
     jti = payload["jti"]
 
-    keys_to_check = [f"blacklist:{jti}", f"disabled_user:{user.id}"]
+    keys_to_check = [
+        f"blacklist:{jti}",
+        f"disabled_user:{user.id}",
+        f"role_updated:{user.id}",
+    ]
     results = await cache_adapter.mget_strings(keys_to_check)
 
     if results[0]:
@@ -106,6 +110,16 @@ async def get_jwt_payload(
 
     if results[1]:
         raise InvalidTokenException()
+
+    if results[2]:
+        try:
+            updated_at = float(results[2])
+            # If the token was issued before the role was updated, it's invalid
+            iat = float(payload.get("iat", 0))
+            if iat < updated_at:
+                raise InvalidTokenException()
+        except ValueError:
+            pass
 
     # Attach the strongly typed UserIdentity so downstream dependencies can access it if needed
     payload["_user_obj"] = user

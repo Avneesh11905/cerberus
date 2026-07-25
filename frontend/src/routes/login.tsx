@@ -39,7 +39,6 @@ function LoginPage() {
   const navigate = useNavigate()
   const setAuth = useAuthStore(state => state.setAuth)
   const accessToken = useAuthStore(state => state.accessToken)
-  const isCheckingSession = useAuthStore(state => state.isCheckingSession)
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const [authError, setAuthError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
@@ -78,7 +77,7 @@ function LoginPage() {
       setAuth(data.access_token, data.csrf_token, data.user)
       navigate({ to: search.redirect || '/' })
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       setAuthError(extractErrorMessage(error, 'Login failed'))
     }
   })
@@ -116,14 +115,8 @@ function LoginPage() {
     window.location.href = `${API_URL}/auth/tenant/login/${provider}`
   }
 
-  if (isCheckingSession || accessToken) {
-    return (
-      <AuthLayout title="Authenticating" subtitle="Please wait...">
-        <div className="flex flex-col items-center justify-center p-8 space-y-4">
-          <div className="animate-spin h-10 w-10 border-4 border-slate border-t-transparent rounded-full" />
-        </div>
-      </AuthLayout>
-    )
+  if (accessToken) {
+    return null
   }
 
   return (

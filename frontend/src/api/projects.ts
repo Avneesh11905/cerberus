@@ -22,8 +22,8 @@ export interface Project {
 }
 
 export const getProjects = async (): Promise<Project[]> => {
-  const { data } = await apiClient.get<any>('/projects/');
-  return Array.isArray(data) ? data : (data.projects || []);
+  const { data } = await apiClient.get<unknown>('/projects/');
+  return Array.isArray(data) ? data as Project[] : ((data as { projects?: Project[] })?.projects || []);
 };
 
 export const getProject = async (projectId: string): Promise<Project> => {
@@ -75,7 +75,7 @@ export const updateProjectOAuth = async (projectId: string, payload: {
   return data;
 };
 
-export const updateProjectClaims = async (projectId: string, claims: Record<string, any>): Promise<Project> => {
+export const updateProjectClaims = async (projectId: string, claims: Record<string, unknown>): Promise<Project> => {
   const { data } = await apiClient.put<Project>(`/projects/${projectId}/claims`, { claims });
   return data;
 };
@@ -125,17 +125,30 @@ export const getProjectUsers = async (projectId: string, page: number = 1, size:
   return data;
 };
 
-export const updateProjectUserStatus = async (projectId: string, userId: string, isActive: boolean): Promise<any> => {
-  const { data } = await apiClient.put(`/projects/${projectId}/users/${userId}/status`, { is_active: isActive });
+export interface ProjectUserStatusUpdateRes {
+  message: string;
+  user_id: string;
+  is_active: boolean;
+}
+
+export const updateProjectUserStatus = async (projectId: string, userId: string, isActive: boolean): Promise<ProjectUserStatusUpdateRes> => {
+  const { data } = await apiClient.put<ProjectUserStatusUpdateRes>(`/projects/${projectId}/users/${userId}/status`, { is_active: isActive });
   return data;
 };
 
-export const getProjectUserClaims = async (projectId: string, userId: string): Promise<Record<string, any>> => {
-  const { data } = await apiClient.get<Record<string, any>>(`/projects/${projectId}/users/${userId}/claims`);
+export interface UserClaimsRes {
+  user_id: string;
+  default_claims: Record<string, unknown>;
+  user_overrides: Record<string, unknown>;
+  effective_claims: Record<string, unknown>;
+}
+
+export const getProjectUserClaims = async (projectId: string, userId: string): Promise<UserClaimsRes> => {
+  const { data } = await apiClient.get<UserClaimsRes>(`/projects/${projectId}/users/${userId}/claims`);
   return data;
 };
 
-export const updateProjectUserClaims = async (projectId: string, userId: string, overrides: Record<string, any>): Promise<any> => {
-  const { data } = await apiClient.patch(`/projects/${projectId}/users/${userId}/claims`, { overrides });
+export const updateProjectUserClaims = async (projectId: string, userId: string, overrides: Record<string, unknown>): Promise<UserClaimsRes> => {
+  const { data } = await apiClient.patch<UserClaimsRes>(`/projects/${projectId}/users/${userId}/claims`, { overrides });
   return data;
 };

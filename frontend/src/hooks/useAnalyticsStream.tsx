@@ -4,14 +4,33 @@ import { useAuthStore } from '../store/auth'
 import { apiClient, API_URL } from '../lib/api-client'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
 
-type AnalyticsState = {
-  data: any
-  status: 'connecting' | 'connected' | 'error'
-  setData: (data: any) => void
-  setStatus: (status: 'connecting' | 'connected' | 'error') => void
+export interface AnalyticsData {
+  totalRequests: number;
+  activeUsers: number;
+  errorRate: string;
+  avgLatency: string;
+  trends: {
+    totalRequests: string;
+    totalRequestsUp: boolean;
+    activeUsers: string;
+    activeUsersUp: boolean;
+    errorRate: string;
+    errorRateUp: boolean;
+    avgLatency: string;
+    avgLatencyUp: boolean;
+  };
+  timeSeries: { time: string; requests: number }[];
+  endpoints: { name: string; calls: number }[];
 }
 
-const INITIAL_DATA = {
+type AnalyticsState = {
+  data: AnalyticsData
+  status: 'disconnected' | 'connecting' | 'connected' | 'error'
+  setData: (data: AnalyticsData) => void
+  setStatus: (status: 'disconnected' | 'connecting' | 'connected' | 'error') => void
+}
+
+const INITIAL_DATA: AnalyticsData = {
   totalRequests: 0,
   activeUsers: 0,
   errorRate: '0%',
@@ -43,6 +62,7 @@ export const useAnalyticsStream = create<AnalyticsState>((set) => ({
 export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   const abortControllerRef = useRef<AbortController | null>(null)
   const token = useAuthStore(state => state.accessToken)
+  const role = useAuthStore(state => state.user?.role)
   
   const setStatus = useAnalyticsStream(state => state.setStatus)
   const setData = useAnalyticsStream(state => state.setData)
@@ -50,16 +70,45 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!token) return
 
+    const streamUrl = role === 'SUPERADMIN' 
+      ? `${API_URL}/analytics/system/events/stream`
+      : `${API_URL}/analytics/tenants/me/events/stream`
+
     const connect = async () => {
       setStatus('connecting')
       abortControllerRef.current = new AbortController()
 
       try {
-        await fetchEventSource(`${API_URL}/analytics/tenants/me/events/stream`, {
+        await fetchEventSource(streamUrl, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'text/event-stream',
+          },
+          fetch: async (input, init) => {
+            let latestToken = useAuthStore.getState().accessToken;
+            const headers = { ...init?.headers, 'Authorization': `Bearer ${latestToken}` };
+            
+            let response = await fetch(input, { ...init, headers });
+            
+            // If unauthorized, refresh the token and retry once
+            if (response.status === 401) {
+              try {
+                const { refreshClient } = await import('../lib/api-client');
+                const csrfToken = useAuthStore.getState().csrfToken;
+                const refreshRes = await refreshClient.post('/auth/refresh', {}, {
+                  headers: csrfToken ? { 'X-CSRF': csrfToken } : undefined
+                });
+                
+                latestToken = refreshRes.data.access_token;
+                useAuthStore.getState().setAccessToken(latestToken, refreshRes.data.csrf_token);
+                
+                const retryHeaders = { ...init?.headers, 'Authorization': `Bearer ${latestToken}` };
+                response = await fetch(input, { ...init, headers: retryHeaders });
+              } catch (err) {
+                useAuthStore.getState().logout();
+              }
+            }
+            return response;
           },
           openWhenHidden: true,
           signal: abortControllerRef.current.signal,
@@ -89,16 +138,10 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
             }
             console.error('SSE Error:', err)
             setStatus('error')
-
-            if (err instanceof Error && err.message.includes('401')) {
-              apiClient.get('/users/me').catch(() => {})
-              return null;
-            }
-
             return 5000 
           }
         })
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (err.name !== 'AbortError') {
           setStatus('error')
         }
@@ -112,7 +155,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
         abortControllerRef.current.abort()
       }
     }
-  }, [token, setStatus, setData])
+  }, [token, role, setStatus, setData])
 
   return <>{children}</>
 }

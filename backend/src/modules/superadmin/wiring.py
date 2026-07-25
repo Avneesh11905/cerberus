@@ -47,7 +47,7 @@ def get_update_tenant_status_use_case(
 def get_update_tenant_global_role_use_case(
     uow: Annotated[SuperAdminUoWPort, Depends(get_superadmin_uow)],
 ) -> UpdateTenantGlobalRoleUseCase:
-    return UpdateTenantGlobalRoleUseCase(uow=uow)
+    return UpdateTenantGlobalRoleUseCase(uow=uow, cache=app_container.cache_adapter)
 
 
 def get_list_tenant_logs_use_case(

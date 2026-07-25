@@ -1,21 +1,23 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
-import { useAuthStore } from '../store/auth';
+import { useAuthStore, type User } from '../store/auth';
 
-export function extractErrorMessage(error: any, fallback = 'An error occurred'): string {
+export function extractErrorMessage(error: unknown, fallback = 'An error occurred'): string {
   if (!error) return fallback;
   
-  const detail = error.response?.data?.detail;
-  const data = error.response?.data;
+  if (axios.isAxiosError(error)) {
+    const data = error.response?.data;
+    const detail = data?.detail;
 
-  if (Array.isArray(detail) && detail.length > 0 && detail[0].msg) return String(detail[0].msg);
-  if (typeof detail === 'string') return detail;
-  if (typeof detail === 'object' && detail !== null && detail.msg) return String(detail.msg);
+    if (Array.isArray(detail) && detail.length > 0 && detail[0].msg) return String(detail[0].msg);
+    if (typeof detail === 'string') return detail;
+    if (typeof detail === 'object' && detail !== null && detail.msg) return String(detail.msg);
 
-  if (Array.isArray(data) && data.length > 0 && data[0].msg) return String(data[0].msg);
-  if (typeof data === 'object' && data !== null && data.msg) return String(data.msg);
+    if (Array.isArray(data) && data.length > 0 && data[0].msg) return String(data[0].msg);
+    if (typeof data === 'object' && data !== null && data.msg) return String(data.msg);
+  }
 
+  if (error instanceof Error) return error.message;
   if (typeof error === 'string') return error;
-  if (error.message) return String(error.message);
 
   return fallback;
 }
@@ -102,7 +104,7 @@ apiClient.interceptors.response.use(
 
       try {
         const csrfToken = useAuthStore.getState().csrfToken;
-        const { data } = await refreshClient.post<{ access_token: string, csrf_token?: string }>(
+        const { data } = await refreshClient.post<{ access_token: string, csrf_token?: string, user?: User }>(
           '/auth/refresh',
           {},
           {
@@ -112,7 +114,11 @@ apiClient.interceptors.response.use(
 
         const newAccessToken = data.access_token;
         const newCsrfToken = data?.csrf_token;
-        useAuthStore.getState().setAccessToken(newAccessToken, newCsrfToken);
+        if (data.user) {
+          useAuthStore.getState().setAuth(newAccessToken, newCsrfToken || '', data.user);
+        } else {
+          useAuthStore.getState().setAccessToken(newAccessToken, newCsrfToken);
+        }
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         if (newCsrfToken) {
           originalRequest.headers['X-CSRF'] = newCsrfToken;
@@ -126,6 +132,22 @@ apiClient.interceptors.response.use(
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
+      }
+    }
+
+    if (error.response?.status === 403 && !originalRequest.url?.includes('/users/me')) {
+      const accessToken = useAuthStore.getState().accessToken;
+      if (accessToken) {
+        // Use a fresh axios instance to avoid interceptor loops
+        axios.get(`${API_URL}/users/me`, {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        }).then(({ data }) => {
+          const currentUser = useAuthStore.getState().user;
+          if (currentUser && currentUser.role !== data.role) {
+            useAuthStore.getState().setUser(data);
+            window.location.href = '/dashboard';
+          }
+        }).catch(() => {});
       }
     }
 

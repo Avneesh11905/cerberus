@@ -40,7 +40,7 @@ function ProfileTab() {
     resolver: zodResolver(profileSchema),
     defaultValues: { 
       name: user?.name || '',
-      picture: (user as any)?.picture || ''
+      picture: user?.picture || ''
     }
   })
 
@@ -70,7 +70,7 @@ function ProfileTab() {
       setIsSaved(true)
       setTimeout(() => setIsSaved(false), 2000)
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       toast.error(extractErrorMessage(err, 'Failed to update profile'))
     }
   })
@@ -90,7 +90,7 @@ function ProfileTab() {
       setUser({ ...user!, ...data })
       queryClient.invalidateQueries({ queryKey: ['profile'] })
     },
-    onError: (err: any, _newData, context) => {
+    onError: (err: unknown, _newData, context) => {
       if (context?.previousProfile) {
         queryClient.setQueryData(['profile'], context.previousProfile)
       }
@@ -147,7 +147,7 @@ function ProfileTab() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" value={profile?.email?.value || profile?.email || (user?.email as any)?.value || user?.email || ''} disabled className="bg-taupe/10 cursor-not-allowed" />
+              <Input id="email" value={profile?.email || user?.email || ''} disabled className="bg-taupe/10 cursor-not-allowed" />
               <p className="text-xs font-bold text-slate/50">Email cannot be changed via the API directly.</p>
             </div>
             <div className="space-y-2">
@@ -263,7 +263,7 @@ function ChangePasswordCard() {
       queryClient.invalidateQueries({ queryKey: ['profile'] })
       reset()
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       toast.error(extractErrorMessage(err, 'Failed to update password'))
     }
   })
@@ -340,7 +340,7 @@ function ActiveSessionsCard() {
       toast.success('Session revoked')
       queryClient.invalidateQueries({ queryKey: ['sessions'] })
     },
-    onError: (err: any) => toast.error(extractErrorMessage(err, 'Failed to revoke session'))
+    onError: (err: unknown) => toast.error(extractErrorMessage(err, 'Failed to revoke session'))
   })
 
   const revokeAllMutation = useMutation({
@@ -349,7 +349,7 @@ function ActiveSessionsCard() {
       toast.success('All other sessions revoked')
       queryClient.invalidateQueries({ queryKey: ['sessions'] })
     },
-    onError: (err: any) => toast.error(extractErrorMessage(err, 'Failed to revoke all sessions'))
+    onError: (err: unknown) => toast.error(extractErrorMessage(err, 'Failed to revoke all sessions'))
   })
 
   return (
@@ -437,7 +437,7 @@ function DeleteAccountCard() {
       logout()
       navigate({ to: '/login' })
     },
-    onError: (err: any) => toast.error(extractErrorMessage(err, 'Failed to delete account'))
+    onError: (err: unknown) => toast.error(extractErrorMessage(err, 'Failed to delete account'))
   })
 
   return (
@@ -491,7 +491,7 @@ function SettingsPage() {
         <div>
           <h1 className="text-3xl font-display font-bold text-slate tracking-tight">Settings</h1>
           <p className="text-sm font-medium text-slate/60 mt-1">
-            Manage preferences for {user?.name || (user?.email as any)?.value || user?.email}
+            Manage preferences for {user?.name || user?.email}
           </p>
         </div>
       </div>

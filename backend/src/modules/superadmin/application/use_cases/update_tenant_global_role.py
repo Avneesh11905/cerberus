@@ -10,9 +10,13 @@ from src.modules.superadmin.application.ports.superadmin_unit_of_work import (
 from src.modules.superadmin.domain.exceptions import TenantNotFoundException
 
 
+from src.shared.application.ports import CachePort
+import time
+
 class UpdateTenantGlobalRoleUseCase:
-    def __init__(self, uow: SuperAdminUoWPort):
+    def __init__(self, uow: SuperAdminUoWPort, cache: CachePort | None = None):
         self.uow = uow
+        self.cache = cache
 
     async def execute(
         self, command: UpdateTenantGlobalRoleCommand
@@ -33,4 +37,10 @@ class UpdateTenantGlobalRoleUseCase:
 
             tenant.role = command.role
             await self.uow.tenant_repo.save(tenant)
+            
+            if self.cache:
+                await self.cache.set_string(
+                    f"role_updated:{command.tenant_id}", str(time.time()), ttl=86400 * 30
+                )
+                
             return UpdateTenantGlobalRoleDTO(tenant=tenant)

@@ -51,7 +51,7 @@ function ResetPasswordPage() {
       setAuthMessage({ type: 'success', text: 'Password reset successfully! You can now log in.' })
       setTimeout(() => navigate({ to: '/login' }), 2000)
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       setAuthMessage({ type: 'error', text: extractErrorMessage(error, 'Failed to reset password') })
     }
   })

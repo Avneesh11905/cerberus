@@ -27,8 +27,8 @@ class SQLSystemLogRepositoryAdapter(SystemLogRepositoryPort):
             message=orm_model.message,
             source=orm_model.source,
             created_at=orm_model.created_at,
-            file=None,
-            line=None,
+            file=orm_model.file,
+            line=orm_model.line,
         )
 
     async def get_recent_logs(
@@ -39,7 +39,10 @@ class SQLSystemLogRepositoryAdapter(SystemLogRepositoryPort):
     ) -> Sequence[SystemLogEntity]:
         stmt = select(SystemLog)
         if level:
-            stmt = stmt.where(SystemLog.level == level)
+            if level == LogLevel.WARN:
+                stmt = stmt.where(SystemLog.level.in_([level, "WARNING", "warn", "warning"]))
+            else:
+                stmt = stmt.where(SystemLog.level == level)
 
         stmt = stmt.order_by(SystemLog.created_at.desc()).offset(skip).limit(limit)
 
@@ -50,7 +53,10 @@ class SQLSystemLogRepositoryAdapter(SystemLogRepositoryPort):
     async def count_logs(self, level: LogLevel | None = None) -> int:
         stmt = select(func.count(SystemLog.id))
         if level:
-            stmt = stmt.where(SystemLog.level == level)
+            if level == LogLevel.WARN:
+                stmt = stmt.where(SystemLog.level.in_([level, "WARNING", "warn", "warning"]))
+            else:
+                stmt = stmt.where(SystemLog.level == level)
 
         result = await self._session.execute(stmt)
         return result.scalar_one() or 0

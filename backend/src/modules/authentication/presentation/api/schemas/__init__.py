@@ -9,8 +9,8 @@ from .local import (
 )
 from .mixins import _EmailMixin as _EmailMixin
 from .oauth import ExchangeRequest, ExchangeResponse, OAuthPreflightResponse
-from .responses import LoginResponse, MessageResponse, RegisterResponse
-from .session import RefreshResponse, SessionResponse
+from .responses import LoginResponse, MessageResponse, RegisterResponse, RefreshResponse
+from .session import SessionResponse
 
 __all__ = [
     "_EmailMixin",

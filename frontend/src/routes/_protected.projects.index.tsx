@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Plus, ShieldCheck, Activity, CalendarDays, AlertTriangle, Eye, EyeOff, Edit2, Trash2 } from 'lucide-react'
 import { getProjects, createProject, updateProjectName, deleteProject, type Project } from '../api/projects'
 import {
@@ -383,7 +383,7 @@ function ProjectsIndexPage() {
   )
 }
 
-function FolderKanban(props: any) {
+function FolderKanban(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}

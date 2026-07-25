@@ -10,7 +10,11 @@ export const checkInitialSession = (): Promise<string | null> => {
   sessionCheckPromise = refreshClient.post('/auth/refresh')
     .then(res => {
       if (res.data.access_token) {
-        useAuthStore.getState().setAccessToken(res.data.access_token, res.data.csrf_token)
+        if (res.data.user) {
+          useAuthStore.getState().setAuth(res.data.access_token, res.data.csrf_token, res.data.user)
+        } else {
+          useAuthStore.getState().setAccessToken(res.data.access_token, res.data.csrf_token)
+        }
         return res.data.access_token
       }
       return null
@@ -19,9 +23,7 @@ export const checkInitialSession = (): Promise<string | null> => {
       useAuthStore.getState().setAccessToken(null, null)
       return null
     })
-    .finally(() => {
-      useAuthStore.getState().setIsCheckingSession(false)
-    })
+
 
   return sessionCheckPromise;
 }

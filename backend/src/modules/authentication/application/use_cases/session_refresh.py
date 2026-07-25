@@ -1,4 +1,5 @@
 from src.modules.authentication.application.commands import SessionRefreshCommand
+from src.modules.authentication.domain.entities import UserIdentity
 from src.modules.authentication.application.ports import (
     AccessTokenPort,
     ClaimsProviderPort,
@@ -30,7 +31,7 @@ class SessionRefreshUseCase:
 
     async def execute(
         self, command: SessionRefreshCommand
-    ) -> tuple[str | None, str | None]:
+    ) -> tuple[str | None, str | None, UserIdentity | None]:
         async with self.uow:
             """
         Validates the refresh token and returns (new_access_token, new_refresh_token).
@@ -44,7 +45,7 @@ class SessionRefreshUseCase:
                 command.refresh_token, client_meta=command.client_meta
             )
             if not user:
-                return None, None
+                return None, None, None
 
             custom_claims = await self._claims_provider.get_custom_claims(
                 self.uow, user.id
@@ -63,4 +64,4 @@ class SessionRefreshUseCase:
                 extra_claims=combined_claims,
                 private_key_override=private_key_override,
             )
-            return access_token, new_refresh_token
+            return access_token, new_refresh_token, user

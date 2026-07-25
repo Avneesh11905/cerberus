@@ -77,9 +77,6 @@ function RootComponent() {
     select: (ctx) => ctx.queryClient,
   })
 
-  useEffect(() => {
-    checkInitialSession()
-  }, [])
 
   return (
     <html lang="en" className="snap-y snap-proximity scroll-smooth">

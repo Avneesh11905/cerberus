@@ -44,7 +44,6 @@ function VerifyEmailPage() {
   const resendAvailableAt = useAuthStore(state => state.resendAvailableAt)
   const setResendAvailableAt = useAuthStore(state => state.setResendAvailableAt)
   const accessToken = useAuthStore(state => state.accessToken)
-  const isCheckingSession = useAuthStore(state => state.isCheckingSession)
   
   const [authMessage, setAuthMessage] = useState<{ type: 'error' | 'success', text: string } | null>(null)
   const [showCaptchaForResend, setShowCaptchaForResend] = useState(false)
@@ -130,7 +129,7 @@ function VerifyEmailPage() {
       setUnverifiedEmail(null)
       setTimeout(() => navigate({ to: '/login' }), 2000)
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       setAuthMessage({ type: 'error', text: extractErrorMessage(error, 'Verification failed') })
     }
   })
@@ -152,7 +151,7 @@ function VerifyEmailPage() {
       setResendAvailableAt(Date.now() + (data.resend_cooldown_seconds || 60) * 1000)
       setShowCaptchaForResend(false)
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       setAuthMessage({ type: 'error', text: extractErrorMessage(error, 'Failed to resend code') })
       setShowCaptchaForResend(false)
     }
@@ -163,11 +162,11 @@ function VerifyEmailPage() {
     verifyMutation.mutate(data)
   }
 
-  if (isCheckingSession || isRedirecting) {
+  if (isRedirecting) {
     return (
       <AuthLayout 
-        title={isRedirecting ? "Email Verified!" : "Authenticating"} 
-        subtitle={isRedirecting ? "Redirecting to login..." : "Please wait..."}
+        title="Email Verified!" 
+        subtitle="Redirecting to login..."
       >
         <div className="flex flex-col items-center justify-center p-8 space-y-4">
           <div className="animate-spin h-10 w-10 border-4 border-slate border-t-transparent rounded-full" />

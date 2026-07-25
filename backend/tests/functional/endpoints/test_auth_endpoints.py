@@ -293,9 +293,18 @@ async def test_resend_verification_success(client: AsyncClient, mocker):
 
 @pytest.mark.asyncio
 async def test_session_refresh_success(client: AsyncClient, mocker):
+    from src.modules.authentication.domain.entities import UserIdentity
+    import uuid
+    dummy_user = UserIdentity(
+        id=uuid.uuid4(),
+        email="test@example.com",
+        name="Test User",
+        role="TENANT",
+        is_verified=True,
+    )
     mock_execute = mocker.patch(
         "src.modules.authentication.application.use_cases.SessionRefreshUseCase.execute",
-        return_value=("new_access_token", "new_refresh_token"),
+        return_value=("new_access_token", "new_refresh_token", dummy_user),
     )
 
     client.cookies.set("refresh_token", "valid_refresh_token")

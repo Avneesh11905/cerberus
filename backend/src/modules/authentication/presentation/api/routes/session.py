@@ -66,7 +66,7 @@ async def refresh(
         refresh_token=refresh_token,
         client_meta=client_meta,
     )
-    access_token, new_refresh_token = await usecase.execute(command)
+    access_token, new_refresh_token, user = await usecase.execute(command)
 
     if not access_token:
         response.status_code = 401
@@ -84,6 +84,7 @@ async def refresh(
     return RefreshResponse(
         access_token=access_token,
         csrf_token=csrf_token,
+        user=user,
     )
 
 

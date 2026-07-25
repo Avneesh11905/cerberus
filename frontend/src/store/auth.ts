@@ -25,6 +25,7 @@ export interface User {
   role: string;
   is_active: boolean;
   is_verified: boolean;
+  created_at?: string;
 }
 
 interface AuthState {
@@ -43,8 +44,7 @@ interface AuthState {
   resendAvailableAt: number | null;
   setResendAvailableAt: (timestamp: number | null) => void;
   logout: () => void;
-  isCheckingSession: boolean;
-  setIsCheckingSession: (val: boolean) => void;
+  logout: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -57,8 +57,7 @@ export const useAuthStore = create<AuthState>()(
       verifiedEmail: null,
       otpExpiresAt: null,
       resendAvailableAt: null,
-      isCheckingSession: true,
-      setIsCheckingSession: (isCheckingSession) => set({ isCheckingSession }),
+      resendAvailableAt: null,
       setAuth: (accessToken, csrfToken, user) => set({ accessToken, csrfToken, user }),
       setAccessToken: (accessToken, csrfToken) => set((state) => ({ accessToken, csrfToken: csrfToken !== undefined ? csrfToken : state.csrfToken })),
       setUser: (user) => set({ user }),

@@ -15,8 +15,8 @@ import { useAuthStore } from '../store/auth'
 export const Route = createFileRoute('/forgot-password')({
   beforeLoad: () => {
     if (typeof window === 'undefined') return;
-    const { isCheckingSession, accessToken } = useAuthStore.getState();
-    if (isCheckingSession || accessToken) {
+    const { accessToken } = useAuthStore.getState();
+    if (accessToken) {
       throw redirect({ to: '/' })
     }
   },
@@ -45,7 +45,7 @@ function ForgotPasswordPage() {
     onSuccess: () => {
       setAuthMessage({ type: 'success', text: 'If an account exists, a password reset link has been sent to the email.' })
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       setAuthMessage({ type: 'error', text: extractErrorMessage(error, 'Failed to send reset link') })
     }
   })

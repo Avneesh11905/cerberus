@@ -1,3 +1,4 @@
+import React from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useAnalyticsStream } from '../hooks/useAnalyticsStream'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
@@ -11,7 +12,15 @@ export const Route = createFileRoute('/_protected/dashboard')({
 
 
 
-function StatCard({ title, value, icon: Icon, trend, trendUp }: any) {
+interface StatCardProps {
+  title: string;
+  value: string | number | { value: string | number };
+  icon: React.ElementType;
+  trend?: string | { value: string };
+  trendUp?: boolean;
+}
+
+function StatCard({ title, value, icon: Icon, trend, trendUp }: StatCardProps) {
   return (
     <div className="bg-sand rounded-xl border-2 border-taupe p-6 flat-shadow flex flex-col">
       <div className="flex justify-between items-start mb-4">

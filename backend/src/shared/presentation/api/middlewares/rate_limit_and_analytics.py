@@ -1,4 +1,7 @@
 import time
+from src.shared.infrastructure.adapters.logger import AsyncSQLLogger
+
+logger = AsyncSQLLogger("RateLimitMiddleware")
 
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -78,8 +81,8 @@ class RateLimitAndAnalyticsMiddleware(BaseHTTPMiddleware):
 
                 payload = jwt.decode(token, options={"verify_signature": False})
                 project_id = payload.get("project_id")
-            except Exception:
-                pass
+            except Exception as e:
+                await logger.debug(f"Failed to decode JWT for rate limit project extraction: {e}")
         else:
             api_key = request.headers.get("x-cerberus-api-key")
             if api_key:
@@ -89,8 +92,8 @@ class RateLimitAndAnalyticsMiddleware(BaseHTTPMiddleware):
                     key_hash = hashlib.sha256(api_key.encode()).hexdigest()
                     cache_key = f"api_key_hash:{key_hash}"
                     project_id = await self.cache.get_string(cache_key)
-                except Exception:
-                    pass
+                except Exception as e:
+                    await logger.error(f"Failed to fetch API key hash from cache: {e}")
 
         if project_id and getattr(request.app.state, "project_environments", None):
             env = request.app.state.project_environments.get(str(project_id))

@@ -13,7 +13,3 @@ class SessionResponse(BaseModel):
     is_current: bool
     auth_provider: str
 
-
-class RefreshResponse(BaseModel):
-    access_token: str
-    csrf_token: str | None = None

@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Save, Key, Shield, RefreshCw, Trash2, Webhook, Settings2, User, Plus, AlertTriangle, Check, Pencil, Eye, EyeOff } from 'lucide-react'
 import { getProject, updateProjectName, updateProjectEnvironment, updateProjectFrontendUrl, updateProjectOrigins, updateProjectOAuth, rotateApiKey, rotateJwtSecret, getProjectSecrets, type Project, type Environment } from '../api/projects'
+import axios from 'axios'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../components/ui/card'
 import { Button, CopyButton, DownloadButton } from '../components/ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs'
@@ -167,10 +168,10 @@ function ProjectSettingsPage() {
       setGeneralSaved(true)
       setTimeout(() => setGeneralSaved(false), 2000)
       fetchProject(false)
-    } catch (err: any) {
-      if (err.response?.status === 422 && Array.isArray(err.response?.data?.detail)) {
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error) && error.response?.status === 422 && Array.isArray(error.response?.data?.detail)) {
         const errors: Record<string, string> = {}
-        err.response.data.detail.forEach((d: any) => {
+        error.response.data.detail.forEach((d: any) => {
           const field = d.loc[d.loc.length - 1]
           if (field === 'frontend_url') {
             errors.frontendUrl = d.msg
@@ -180,7 +181,7 @@ function ProjectSettingsPage() {
         })
         setGeneralErrors(errors)
       } else {
-        toast.error(extractErrorMessage(err, 'Failed to update general settings'))
+        toast.error(extractErrorMessage(error, 'Failed to update general settings'))
       }
     } finally {
       setSavingGeneral(false)
@@ -199,11 +200,11 @@ function ProjectSettingsPage() {
       await updateProjectName(projectId, name)
       setIsEditingName(false)
       fetchProject(false)
-    } catch (err: any) {
-      if (err.response?.status === 422 && Array.isArray(err.response?.data?.detail)) {
-         toast.error(err.response.data.detail[0]?.msg || 'Invalid project name')
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error) && error.response?.status === 422 && error.response?.data?.detail?.[0]?.msg) {
+         toast.error(error.response.data.detail[0].msg)
       } else {
-         toast.error(extractErrorMessage(err, 'Failed to update name'))
+         toast.error(extractErrorMessage(error, 'Failed to update name'))
       }
     } finally {
       setSavingName(false)
@@ -225,11 +226,11 @@ function ProjectSettingsPage() {
       await updateProjectOrigins(projectId, updatedOrigins)
       setAllowedOrigins(updatedOrigins)
       setNewOrigin('')
-    } catch (err: any) {
-      if (err.response?.status === 422 && Array.isArray(err.response?.data?.detail)) {
-        setOriginError(err.response.data.detail[0]?.msg || 'Invalid URL format')
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error) && error.response?.status === 422 && error.response?.data?.detail?.[0]?.msg) {
+        setOriginError(error.response.data.detail[0].msg)
       } else {
-        toast.error(extractErrorMessage(err, 'Failed to add origin'))
+        toast.error(extractErrorMessage(error, 'Failed to add origin'))
       }
     } finally {
       setSavingOrigins(false)
@@ -329,13 +330,13 @@ function ProjectSettingsPage() {
       setClaimsSaved(true)
       setTimeout(() => setClaimsSaved(false), 2000)
       fetchProject(false)
-    } catch (err: any) {
-      if (err instanceof SyntaxError) {
+    } catch (error: unknown) {
+      if (error instanceof SyntaxError) {
         setClaimsError('Invalid JSON format')
-      } else if (err.response?.status === 422 && Array.isArray(err.response?.data?.detail)) {
-        setClaimsError(err.response.data.detail[0]?.msg || 'Validation error')
+      } else if (axios.isAxiosError(error) && error.response?.status === 422 && error.response?.data?.detail?.[0]?.msg) {
+        setClaimsError(error.response.data.detail[0].msg)
       } else {
-        toast.error(extractErrorMessage(err, 'Failed to update claims'))
+        toast.error(extractErrorMessage(error, 'Failed to update claims'))
       }
     } finally {
       setSavingClaims(false)
@@ -441,10 +442,10 @@ function ProjectSettingsPage() {
       }
       setIsProviderModalOpen(false)
       fetchProject(false)
-    } catch (err: any) {
-      if (err.response?.status === 422 && Array.isArray(err.response?.data?.detail)) {
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error) && error.response?.status === 422 && Array.isArray(error.response?.data?.detail)) {
         const errors: Record<string, string> = {}
-        err.response.data.detail.forEach((d: any) => {
+        error.response.data.detail.forEach((d: any) => {
           if (d.loc.length >= 4 && d.loc[1] === 'oauth_config') {
             const provider = d.loc[2]
             const field = d.loc[3]
@@ -456,7 +457,7 @@ function ProjectSettingsPage() {
         })
         setAuthErrors(errors)
       } else {
-        toast.error(extractErrorMessage(err, 'Failed to update auth settings'))
+        toast.error(extractErrorMessage(error, 'Failed to update auth settings'))
       }
     } finally {
       setSavingAuth(false)
@@ -508,8 +509,8 @@ function ProjectSettingsPage() {
       }
       setProviderToDelete(null)
       fetchProject(false)
-    } catch (err: any) {
-      toast.error(extractErrorMessage(err, 'Failed to remove provider'))
+    } catch (error: unknown) {
+      toast.error(extractErrorMessage(error, 'Failed to save provider'))
     } finally {
       setSavingAuth(false)
     }
@@ -528,10 +529,10 @@ function ProjectSettingsPage() {
                 <div className="flex items-center gap-2 h-9">
                   <Input 
                     value={name}
-                    onChange={(e: any) => setName(e.target.value)}
+                    onChange={(e) => setName(e.target.value)}
                     className="text-3xl font-display font-black tracking-tight text-slate h-full py-0 px-2 -ml-2 bg-taupe/10 border-slate/20 max-w-75"
                     autoFocus
-                    onKeyDown={(e: any) => {
+                    onKeyDown={(e) => {
                       if (e.key === 'Enter') handleUpdateName()
                       if (e.key === 'Escape') {
                         setName(project.name)
@@ -601,7 +602,7 @@ function ProjectSettingsPage() {
                   <Input 
                     id="frontendUrl" 
                     value={frontendUrl} 
-                    onChange={(e: any) => { setFrontendUrl(e.target.value); setGeneralErrors({ ...generalErrors, frontendUrl: '' }) }} 
+                    onChange={(e) => { setFrontendUrl(e.target.value); setGeneralErrors({ ...generalErrors, frontendUrl: '' }) }} 
                     placeholder="https://myapp.com"
                     className={generalErrors.frontendUrl ? "border-terracotta focus-visible:ring-terracotta" : ""}
                   />
@@ -686,8 +687,8 @@ function ProjectSettingsPage() {
                     await updateProjectEnvironment(projectId, newEnv)
                     setEnvironment(newEnv)
                     fetchProject(false)
-                  } catch (err: any) {
-                    toast.error(extractErrorMessage(err, 'Failed to update environment'))
+                  } catch (error: unknown) {
+                    toast.error(extractErrorMessage(error, 'Failed to update environment'))
                   } finally {
                     setShowEnvConfirm(false)
                   }
@@ -784,8 +785,8 @@ function ProjectSettingsPage() {
                   <Input 
                     placeholder="https://myapp.com"
                     value={newOrigin}
-                    onChange={(e: any) => { setNewOrigin(e.target.value); setOriginError('') }}
-                    onKeyDown={(e: any) => e.key === 'Enter' && handleAddOrigin()}
+                    onChange={(e) => { setNewOrigin(e.target.value); setOriginError('') }}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddOrigin()}
                     disabled={allowedOrigins.length >= 5}
                     className={originError ? "border-terracotta focus-visible:ring-terracotta" : ""}
                   />
@@ -1111,7 +1112,7 @@ function ProjectSettingsPage() {
               <Label>Client ID</Label>
               <Input 
                 value={modalClientId} 
-                onChange={(e: any) => {
+                onChange={(e) => {
                   setModalClientId(e.target.value)
                   if (modalProvider) {
                     setAuthErrors({ ...authErrors, [`${modalProvider}_client_id`]: '' })
@@ -1128,7 +1129,7 @@ function ProjectSettingsPage() {
               <Input 
                 type="password"
                 value={modalClientSecret} 
-                onChange={(e: any) => {
+                onChange={(e) => {
                   setModalClientSecret(e.target.value)
                   if (modalProvider) {
                     setAuthErrors({ ...authErrors, [`${modalProvider}_client_secret`]: '' })
