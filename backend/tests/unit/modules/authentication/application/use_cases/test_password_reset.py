@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, patch, MagicMock
 import pytest
 from uuid import uuid4
 
@@ -28,7 +28,7 @@ def mocks():
         "rate_limiter": AsyncMock(),
         "turnstile": AsyncMock(),
         "hasher": AsyncMock(),
-        "analytics": AsyncMock(),
+        "analytics": MagicMock(),
     }
 
 

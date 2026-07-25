@@ -40,11 +40,5 @@ Thumbs.db
 /coverage.json
 
 # MarkDown
-/AUDIT_REPORT.md
-/BACKEND_UNDERSTANDING.md
-/IMPLEMENTATION_PLAN.md
-/files.txt
 /test_*
 /scratch
-/api_reference.md
-/workflows.md
