@@ -21,7 +21,7 @@ export const Route = createFileRoute('/oauth/callback')({
 function OAuthCallbackPage() {
   const search = Route.useSearch()
   const navigate = useNavigate()
-  const setAuth = useAuthStore(state => state.setAuth)
+  const setAuth = useAuthStore((state) => state.setAuth)
   const [error, setError] = useState<string | null>(search.error || null)
 
   useEffect(() => {
@@ -29,13 +29,15 @@ function OAuthCallbackPage() {
       try {
         if (search.code) {
           // Redeem the one-time exchange code for session cookies and user info
-          const { data } = await apiClient.post('/auth/exchange', { code: search.code });
-          setAuth(data.access_token, data.csrf_token, data.user);
+          const { data } = await apiClient.post('/auth/exchange', {
+            code: search.code,
+          })
+          setAuth(data.access_token, data.csrf_token, data.user)
           navigate({ to: '/' })
         } else {
           // Fallback if accessed without code but session exists
-          const { data } = await apiClient.get('/users/me');
-          setAuth('', '', data);
+          const { data } = await apiClient.get('/users/me')
+          setAuth('', '', data)
           navigate({ to: '/' })
         }
       } catch (err: unknown) {
@@ -46,19 +48,27 @@ function OAuthCallbackPage() {
         }
       }
     }
-    
+
     if (!error) {
-       completeLogin()
+      completeLogin()
     }
   }, [search, navigate, setAuth, error])
 
   return (
-    <AuthLayout title="Authenticating" subtitle="Please wait while we log you in...">
+    <AuthLayout
+      title="Authenticating"
+      subtitle="Please wait while we log you in..."
+    >
       <div className="flex flex-col items-center justify-center p-8 space-y-4">
         {error ? (
           <div className="flex flex-col items-center gap-4 w-full max-w-sm">
-            <p className="text-terracotta text-sm font-bold text-center">{error}</p>
-            <Button onClick={() => navigate({ to: '/login' })} className="w-full mt-4">
+            <p className="text-terracotta text-sm font-bold text-center">
+              {error}
+            </p>
+            <Button
+              onClick={() => navigate({ to: '/login' })}
+              className="w-full mt-4"
+            >
               Back to Login
             </Button>
           </div>

@@ -38,13 +38,11 @@ async def get_tenant_analytics(
             status_code=403, detail="You can only access your own metrics."
         )
 
-    metrics = (
-        await use_case.execute(
-            GetTenantMetricsQuery(
-                tenant_id=tenant_id, start_date=start_date, end_date=end_date
-            ),
-        )
-    ).data
+    result = await use_case.execute(
+        GetTenantMetricsQuery(
+            tenant_id=tenant_id, start_date=start_date, end_date=end_date
+        ),
+    )
     return QueryAnalyticsResponse(
-        metrics=[MetricResponse.model_validate(m) for m in metrics]
+        metrics=[MetricResponse.model_validate(m) for m in result.metrics]
     )

@@ -14,10 +14,12 @@ export default defineConfig(({ mode }) => {
   return {
     resolve: { tsconfigPaths: true },
     server: {
-      allowedHosts: env.ALLOWED_HOSTS ? env.ALLOWED_HOSTS.split(',') : undefined,
+      allowedHosts: env.ALLOWED_HOSTS
+        ? env.ALLOWED_HOSTS.split(',')
+        : undefined,
     },
     optimizeDeps: {
-      include: ['react', 'react-dom', '@tanstack/react-router', 'lucide-react']
+      include: ['react', 'react-dom', '@tanstack/react-router', 'lucide-react'],
     },
     plugins: [
       devtools(),

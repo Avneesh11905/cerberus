@@ -13,7 +13,7 @@ class GetProjectMetricsUseCase:
 
     async def execute(self, query: GetProjectMetricsQuery) -> ProjectMetricsDTO:
         async with self.uow:
-            data = await self.uow.analytics_repo.get_project_metrics(
+            result = await self.uow.analytics_repo.get_project_metrics(
                 query.project_id, query.start_date, query.end_date
             )
-            return ProjectMetricsDTO(data=data)
+            return ProjectMetricsDTO(metrics=result["metrics"], totals=result["totals"])

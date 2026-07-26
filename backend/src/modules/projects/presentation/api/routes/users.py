@@ -14,6 +14,7 @@ from src.modules.projects.application.commands.project_commands import (
 from src.modules.projects.application.queries.project_queries import (
     GetUserClaimsQuery,
     ListProjectUsersQuery,
+    ListTenantUsersQuery,
 )
 from src.modules.projects.presentation.api.schemas import (
     PaginatedProjectUsersRes,
@@ -25,12 +26,41 @@ from src.modules.projects.presentation.api.schemas import (
 from src.modules.projects.wiring import (
     GetUserClaimsUseCaseDep,
     ListProjectUsersUseCaseDep,
+    ListTenantUsersUseCaseDep,
     SetProjectUserActiveStatusUseCaseDep,
     SetTenantUserActiveStatusUseCaseDep,
     UpdateUserClaimsUseCaseDep,
 )
 
 router = APIRouter()
+
+
+@router.get("/users", response_model=PaginatedProjectUsersRes)
+async def list_tenant_users(
+    usecase: ListTenantUsersUseCaseDep,
+    user: RequireTenantRoleDep,
+    page: int = 1,
+    size: int = 50,
+    search: str | None = None,
+):
+    """List paginated users across all projects for the tenant."""
+    skip = (page - 1) * size
+    dto = await usecase.execute(
+        ListTenantUsersQuery(
+            tenant_id=user.id,
+            skip=skip,
+            limit=size,
+            search=search,
+        ),
+    )
+    users = dto.users
+    total = dto.total
+    return PaginatedProjectUsersRes(
+        items=[UserProfileRes.model_validate(u) for u in users],
+        total=total,
+        page=page,
+        size=size,
+    )
 
 
 @router.get("/{project_id}/users", response_model=PaginatedProjectUsersRes)

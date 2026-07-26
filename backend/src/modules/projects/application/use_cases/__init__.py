@@ -9,6 +9,7 @@ from .get_project_public_credentials import (
 )
 from .get_user_claims import GetUserClaimsUseCase as GetUserClaimsUseCase
 from .list_project_users import ListProjectUsersUseCase as ListProjectUsersUseCase
+from .list_tenant_users import ListTenantUsersUseCase as ListTenantUsersUseCase
 from .list_projects import ListProjectsUseCase as ListProjectsUseCase
 from .rotate_api_key import RotateApiKeyUseCase as RotateApiKeyUseCase
 from .rotate_jwt_secret import RotateJwtSecretUseCase as RotateJwtSecretUseCase
@@ -36,6 +37,7 @@ __all__ = [
     "GetProjectUseCase",
     "GetProjectPublicCredentialsUseCase",
     "ListProjectUsersUseCase",
+    "ListTenantUsersUseCase",
     "ListProjectsUseCase",
     "RotateApiKeyUseCase",
     "RotateJwtSecretUseCase",

@@ -1,50 +1,52 @@
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { create } from 'zustand'
+import { persist, createJSONStorage } from 'zustand/middleware'
 
 // Safe storage for SSR environments (TanStack Start)
 const safeStorage = {
   getItem: (name: string) => {
-    if (typeof window === 'undefined') return null;
-    return window.localStorage.getItem(name);
+    if (typeof window === 'undefined') return null
+    return window.localStorage.getItem(name)
   },
   setItem: (name: string, value: string) => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem(name, value);
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(name, value)
   },
   removeItem: (name: string) => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.removeItem(name);
+    if (typeof window === 'undefined') return
+    window.localStorage.removeItem(name)
   },
-};
+}
 
 export interface User {
-  id: string;
-  email: string;
-  name?: string;
-  picture?: string;
-  role: string;
-  is_active: boolean;
-  is_verified: boolean;
-  created_at?: string;
+  id: string
+  email: string
+  name?: string
+  picture?: string
+  role: string
+  is_active: boolean
+  is_verified: boolean
+  created_at?: string
 }
 
 interface AuthState {
-  accessToken: string | null;
-  csrfToken: string | null;
-  user: User | null;
-  setAuth: (accessToken: string, csrfToken: string, user: User) => void;
-  setAccessToken: (accessToken: string | null, csrfToken?: string | null) => void;
-  setUser: (user: User) => void;
-  unverifiedEmail: string | null;
-  setUnverifiedEmail: (email: string | null) => void;
-  verifiedEmail: string | null;
-  setVerifiedEmail: (email: string | null) => void;
-  otpExpiresAt: number | null;
-  setOtpExpiresAt: (timestamp: number | null) => void;
-  resendAvailableAt: number | null;
-  setResendAvailableAt: (timestamp: number | null) => void;
-  logout: () => void;
-  logout: () => void;
+  accessToken: string | null
+  csrfToken: string | null
+  user: User | null
+  setAuth: (accessToken: string, csrfToken: string, user: User) => void
+  setAccessToken: (
+    accessToken: string | null,
+    csrfToken?: string | null,
+  ) => void
+  setUser: (user: User) => void
+  unverifiedEmail: string | null
+  setUnverifiedEmail: (email: string | null) => void
+  verifiedEmail: string | null
+  setVerifiedEmail: (email: string | null) => void
+  otpExpiresAt: number | null
+  setOtpExpiresAt: (timestamp: number | null) => void
+  resendAvailableAt: number | null
+  setResendAvailableAt: (timestamp: number | null) => void
+  logout: () => void
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -57,15 +59,28 @@ export const useAuthStore = create<AuthState>()(
       verifiedEmail: null,
       otpExpiresAt: null,
       resendAvailableAt: null,
-      resendAvailableAt: null,
-      setAuth: (accessToken, csrfToken, user) => set({ accessToken, csrfToken, user }),
-      setAccessToken: (accessToken, csrfToken) => set((state) => ({ accessToken, csrfToken: csrfToken !== undefined ? csrfToken : state.csrfToken })),
+      setAuth: (accessToken, csrfToken, user) =>
+        set({ accessToken, csrfToken, user }),
+      setAccessToken: (accessToken, csrfToken) =>
+        set((state) => ({
+          accessToken,
+          csrfToken: csrfToken !== undefined ? csrfToken : state.csrfToken,
+        })),
       setUser: (user) => set({ user }),
       setUnverifiedEmail: (unverifiedEmail) => set({ unverifiedEmail }),
       setVerifiedEmail: (verifiedEmail) => set({ verifiedEmail }),
       setOtpExpiresAt: (otpExpiresAt) => set({ otpExpiresAt }),
       setResendAvailableAt: (resendAvailableAt) => set({ resendAvailableAt }),
-      logout: () => set({ accessToken: null, csrfToken: null, user: null, unverifiedEmail: null, verifiedEmail: null, otpExpiresAt: null, resendAvailableAt: null }),
+      logout: () =>
+        set({
+          accessToken: null,
+          csrfToken: null,
+          user: null,
+          unverifiedEmail: null,
+          verifiedEmail: null,
+          otpExpiresAt: null,
+          resendAvailableAt: null,
+        }),
     }),
     {
       name: 'cerberus-auth',
@@ -83,6 +98,6 @@ export const useAuthStore = create<AuthState>()(
       // or we can persist both. The access token is usually short-lived.
       // We will persist both for now, but rely on the API client's 401 interceptor
       // to refresh it if it's expired.
-    }
-  )
-);
+    },
+  ),
+)

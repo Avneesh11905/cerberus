@@ -23,7 +23,6 @@ celery_app.conf.update(
     enable_utc=True,
     broker_connection_retry_on_startup=True,
     task_routes={
-        "aggregate_analytics": {"queue": "analytics"},
         "purge_old_events": {"queue": "analytics"},
         "record_analytics_event": {"queue": "analytics"},
         "clean_old_system_logs": {"queue": "analytics"},
@@ -45,10 +44,7 @@ celery_app.conf.beat_schedule = {
         "task": "clean_old_system_logs",
         "schedule": crontab(minute=0, hour=2),  # Runs daily at 2 AM UTC
     },
-    "aggregate-analytics-daily": {
-        "task": "aggregate_analytics",
-        "schedule": crontab(minute=15, hour=0),  # Runs daily at 12:15 AM UTC
-    },
+    # aggregate_analytics removed — metrics are now kept live via real-time UPSERTs in record_analytics_event
     "purge-old-analytics-events-daily": {
         "task": "purge_old_events",
         "schedule": crontab(minute=30, hour=0),  # Runs daily at 12:30 AM UTC

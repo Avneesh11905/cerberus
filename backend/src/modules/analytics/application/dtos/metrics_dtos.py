@@ -1,12 +1,13 @@
-from dataclasses import dataclass
-from pydantic import JsonValue
+from dataclasses import dataclass, field
 
 
 @dataclass(frozen=True)
 class ProjectMetricsDTO:
-    data: list[dict[str, JsonValue]]
+    metrics: list
+    totals: dict = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
 class TenantMetricsDTO:
-    data: list[dict[str, JsonValue]]
+    metrics: list
+    totals: dict = field(default_factory=dict)

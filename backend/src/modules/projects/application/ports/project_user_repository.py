@@ -22,6 +22,16 @@ class ProjectUserRepositoryPort(Protocol):
         """Fetch a paginated list of users for a specific project and the total count."""
         ...
 
+    async def list_tenant_users(
+        self,
+        tenant_id: UUID,
+        skip: int = 0,
+        limit: int = 100,
+        search: str | None = None,
+    ) -> tuple[Sequence[ProjectUser], int]:
+        """Fetch a paginated list of users across all projects for a specific tenant and the total count."""
+        ...
+
     async def update_user_status(
         self, project_id: UUID, user_id: UUID, is_active: bool
     ) -> ProjectUser | None:

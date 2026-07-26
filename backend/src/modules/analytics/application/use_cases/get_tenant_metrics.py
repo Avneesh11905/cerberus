@@ -13,7 +13,7 @@ class GetTenantMetricsUseCase:
 
     async def execute(self, query: GetTenantMetricsQuery) -> TenantMetricsDTO:
         async with self.uow:
-            data = await self.uow.analytics_repo.get_tenant_metrics(
+            result = await self.uow.analytics_repo.get_tenant_metrics(
                 query.tenant_id, query.start_date, query.end_date
             )
-            return TenantMetricsDTO(data=data)
+            return TenantMetricsDTO(metrics=result["metrics"], totals=result["totals"])

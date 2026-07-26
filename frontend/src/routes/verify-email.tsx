@@ -10,7 +10,11 @@ import { apiClient, extractErrorMessage } from '../lib/api-client'
 import { useAuthStore } from '../store/auth'
 import { AuthLayout } from '../components/layout/AuthLayout'
 import { Input } from '../components/ui/input'
-import { InputOTP, InputOTPGroup, InputOTPSlot } from '../components/ui/input-otp'
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from '../components/ui/input-otp'
 import { Button } from '../components/ui/button'
 import { Label } from '../components/ui/label'
 
@@ -36,16 +40,21 @@ type VerifyData = z.infer<typeof verifySchema>
 
 function VerifyEmailPage() {
   const navigate = useNavigate()
-  const unverifiedEmail = useAuthStore(state => state.unverifiedEmail)
-  const setUnverifiedEmail = useAuthStore(state => state.setUnverifiedEmail)
-  const setVerifiedEmail = useAuthStore(state => state.setVerifiedEmail)
-  const otpExpiresAt = useAuthStore(state => state.otpExpiresAt)
-  const setOtpExpiresAt = useAuthStore(state => state.setOtpExpiresAt)
-  const resendAvailableAt = useAuthStore(state => state.resendAvailableAt)
-  const setResendAvailableAt = useAuthStore(state => state.setResendAvailableAt)
-  const accessToken = useAuthStore(state => state.accessToken)
-  
-  const [authMessage, setAuthMessage] = useState<{ type: 'error' | 'success', text: string } | null>(null)
+  const unverifiedEmail = useAuthStore((state) => state.unverifiedEmail)
+  const setUnverifiedEmail = useAuthStore((state) => state.setUnverifiedEmail)
+  const setVerifiedEmail = useAuthStore((state) => state.setVerifiedEmail)
+  const otpExpiresAt = useAuthStore((state) => state.otpExpiresAt)
+  const setOtpExpiresAt = useAuthStore((state) => state.setOtpExpiresAt)
+  const resendAvailableAt = useAuthStore((state) => state.resendAvailableAt)
+  const setResendAvailableAt = useAuthStore(
+    (state) => state.setResendAvailableAt,
+  )
+  const accessToken = useAuthStore((state) => state.accessToken)
+
+  const [authMessage, setAuthMessage] = useState<{
+    type: 'error' | 'success'
+    text: string
+  } | null>(null)
   const [showCaptchaForResend, setShowCaptchaForResend] = useState(false)
   const [countdown, setCountdown] = useState(0)
   const [timeLeft, setTimeLeft] = useState<number | null>(null)
@@ -64,7 +73,10 @@ function VerifyEmailPage() {
     }
 
     const calculateCountdown = () => {
-      const remaining = Math.max(0, Math.floor((resendAvailableAt - Date.now()) / 1000))
+      const remaining = Math.max(
+        0,
+        Math.floor((resendAvailableAt - Date.now()) / 1000),
+      )
       setCountdown(remaining)
       return remaining
     }
@@ -84,7 +96,10 @@ function VerifyEmailPage() {
     if (!otpExpiresAt) return
 
     const calculateTimeLeft = () => {
-      const remaining = Math.max(0, Math.floor((otpExpiresAt - Date.now()) / 1000))
+      const remaining = Math.max(
+        0,
+        Math.floor((otpExpiresAt - Date.now()) / 1000),
+      )
       setTimeLeft(remaining)
       return remaining
     }
@@ -106,13 +121,19 @@ function VerifyEmailPage() {
     return `${m}:${s.toString().padStart(2, '0')}`
   }
 
-  const { control, register, handleSubmit, formState: { errors }, watch } = useForm<VerifyData>({
+  const {
+    control,
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+  } = useForm<VerifyData>({
     resolver: zodResolver(verifySchema),
     defaultValues: {
-      email: unverifiedEmail || ''
-    }
+      email: unverifiedEmail || '',
+    },
   })
-  
+
   const formEmail = watch('email')
 
   const verifyMutation = useMutation({
@@ -130,31 +151,42 @@ function VerifyEmailPage() {
       setTimeout(() => navigate({ to: '/login' }), 2000)
     },
     onError: (error: unknown) => {
-      setAuthMessage({ type: 'error', text: extractErrorMessage(error, 'Verification failed') })
-    }
+      setAuthMessage({
+        type: 'error',
+        text: extractErrorMessage(error, 'Verification failed'),
+      })
+    },
   })
 
   const resendMutation = useMutation({
-    mutationFn: async ({ email, token }: { email: string, token: string }) => {
-      if (!token) throw new Error("Please complete the captcha to resend")
+    mutationFn: async ({ email, token }: { email: string; token: string }) => {
+      if (!token) throw new Error('Please complete the captcha to resend')
       const response = await apiClient.post('/auth/verify-email/resend', {
         email: email,
-        turnstile_token: token
+        turnstile_token: token,
       })
       return response.data
     },
     onSuccess: (data) => {
-      setAuthMessage({ type: 'success', text: 'A new code has been sent to your email.' })
+      setAuthMessage({
+        type: 'success',
+        text: 'A new code has been sent to your email.',
+      })
       if (data.expires_in_seconds) {
         setOtpExpiresAt(Date.now() + data.expires_in_seconds * 1000)
       }
-      setResendAvailableAt(Date.now() + (data.resend_cooldown_seconds || 60) * 1000)
+      setResendAvailableAt(
+        Date.now() + (data.resend_cooldown_seconds || 60) * 1000,
+      )
       setShowCaptchaForResend(false)
     },
     onError: (error: unknown) => {
-      setAuthMessage({ type: 'error', text: extractErrorMessage(error, 'Failed to resend code') })
+      setAuthMessage({
+        type: 'error',
+        text: extractErrorMessage(error, 'Failed to resend code'),
+      })
       setShowCaptchaForResend(false)
-    }
+    },
   })
 
   const onSubmit = (data: VerifyData) => {
@@ -164,10 +196,7 @@ function VerifyEmailPage() {
 
   if (isRedirecting) {
     return (
-      <AuthLayout 
-        title="Email Verified!" 
-        subtitle="Redirecting to login..."
-      >
+      <AuthLayout title="Email Verified!" subtitle="Redirecting to login...">
         <div className="flex flex-col items-center justify-center p-8 space-y-4">
           <div className="animate-spin h-10 w-10 border-4 border-slate border-t-transparent rounded-full" />
         </div>
@@ -176,20 +205,36 @@ function VerifyEmailPage() {
   }
 
   return (
-    <AuthLayout title="Verify your Email" subtitle="Enter your email and the 6-digit code">
+    <AuthLayout
+      title="Verify your Email"
+      subtitle="Enter your email and the 6-digit code"
+    >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" placeholder="you@example.com" {...register('email')} />
-          {errors.email && <p className="text-terracotta text-sm font-medium">{errors.email.message}</p>}
+          <Input
+            id="email"
+            type="email"
+            placeholder="you@example.com"
+            {...register('email')}
+          />
+          {errors.email && (
+            <p className="text-terracotta text-sm font-medium">
+              {errors.email.message}
+            </p>
+          )}
         </div>
 
         <div className="space-y-2">
           <div className="flex justify-between items-end">
             <Label htmlFor="token">6-Digit OTP</Label>
             {timeLeft !== null && (
-              <span className={`text-xs font-medium ${timeLeft > 0 ? 'text-sage' : 'text-terracotta'}`}>
-                {timeLeft > 0 ? `Code expires in ${formatTime(timeLeft)}` : 'Code expired'}
+              <span
+                className={`text-xs font-medium ${timeLeft > 0 ? 'text-sage' : 'text-terracotta'}`}
+              >
+                {timeLeft > 0
+                  ? `Code expires in ${formatTime(timeLeft)}`
+                  : 'Code expired'}
               </span>
             )}
           </div>
@@ -211,22 +256,28 @@ function VerifyEmailPage() {
               )}
             />
           </div>
-          {errors.token && <p className="text-terracotta text-sm font-medium">{errors.token.message}</p>}
+          {errors.token && (
+            <p className="text-terracotta text-sm font-medium">
+              {errors.token.message}
+            </p>
+          )}
         </div>
 
         {authMessage && (
-          <div className={`p-3 rounded-md border text-sm font-bold text-center ${
-            authMessage.type === 'error' 
-              ? 'bg-terracotta/10 border-terracotta/20 text-terracotta' 
-              : 'bg-sage/10 border-sage/20 text-sage'
-          }`}>
+          <div
+            className={`p-3 rounded-md border text-sm font-bold text-center ${
+              authMessage.type === 'error'
+                ? 'bg-terracotta/10 border-terracotta/20 text-terracotta'
+                : 'bg-sage/10 border-sage/20 text-sage'
+            }`}
+          >
             {authMessage.text}
           </div>
         )}
 
-        <Button 
-          type="submit" 
-          className="w-full mt-4" 
+        <Button
+          type="submit"
+          className="w-full mt-4"
           disabled={verifyMutation.isPending}
         >
           {verifyMutation.isPending ? 'Verifying...' : 'Verify Email'}
@@ -235,12 +286,18 @@ function VerifyEmailPage() {
         <div className="mt-6 text-center text-sm font-medium text-slate min-h-10 flex items-center justify-center">
           {showCaptchaForResend ? (
             <div className="flex justify-center w-full">
-              <span className="text-sm font-medium text-slate">Verifying...</span>
-              <Turnstile 
-                siteKey={(import.meta.env.VITE_TURNSTILE_SITE_KEY || '').replace(/^["']|["']$/g, '').trim() || '1x00000000000000000000AA'} 
+              <span className="text-sm font-medium text-slate">
+                Verifying...
+              </span>
+              <Turnstile
+                siteKey={
+                  (import.meta.env.VITE_TURNSTILE_SITE_KEY || '')
+                    .replace(/^["']|["']$/g, '')
+                    .trim() || '1x00000000000000000000AA'
+                }
                 onSuccess={(token) => {
                   if (formEmail) {
-                    resendMutation.mutate({ email: formEmail, token: token });
+                    resendMutation.mutate({ email: formEmail, token: token })
                   }
                 }}
                 options={{ size: 'invisible' }}
@@ -249,11 +306,14 @@ function VerifyEmailPage() {
           ) : (
             <div>
               Didn't receive a code?{' '}
-              <button 
+              <button
                 type="button"
                 onClick={() => {
                   if (!formEmail) {
-                    setAuthMessage({ type: 'error', text: 'Please enter your email above to resend the code.' })
+                    setAuthMessage({
+                      type: 'error',
+                      text: 'Please enter your email above to resend the code.',
+                    })
                     return
                   }
                   setShowCaptchaForResend(true)
@@ -261,7 +321,11 @@ function VerifyEmailPage() {
                 disabled={resendMutation.isPending || countdown > 0}
                 className="text-slate hover:underline font-bold disabled:opacity-50 disabled:no-underline"
               >
-                {resendMutation.isPending ? 'Sending...' : (countdown > 0 ? `Resend (${countdown}s)` : 'Resend')}
+                {resendMutation.isPending
+                  ? 'Sending...'
+                  : countdown > 0
+                    ? `Resend (${countdown}s)`
+                    : 'Resend'}
               </button>
             </div>
           )}

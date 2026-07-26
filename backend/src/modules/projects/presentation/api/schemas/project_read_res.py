@@ -24,7 +24,7 @@ class ProjectReadRes(BaseModel):
     allowed_origins: list[str]
     environment: Literal["development", "production"]
     frontend_url: str | None = None
-    default_claims: dict[str, JsonValue] = {}
+    default_claims: dict[str, JsonValue] | None = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -42,7 +42,16 @@ class ProjectReadRes(BaseModel):
     def validate_oauth_config(cls, v) -> dict[str, MaskedProviderConfig]:
         return mask_oauth_config(v)
 
+    @field_validator("default_claims", mode="before")
+    @classmethod
+    def coerce_default_claims(cls, v: object) -> dict:
+        """NULL in the DB means no custom claims — treat as empty dict."""
+        if v is None:
+            return {}
+        return v  # type: ignore[return-value]
+
     @field_validator("frontend_url", mode="before")
+    @classmethod
     def extract_frontend_url(cls, v: object) -> str | None:
         if hasattr(v, "value"):
             val = getattr(v, "value")

@@ -30,13 +30,11 @@ async def get_project_analytics(
     start_date: date = Query(default_factory=lambda: date.today() - timedelta(days=30)),
     end_date: date = Query(default_factory=lambda: date.today()),
 ):
-    metrics = (
-        await use_case.execute(
-            GetProjectMetricsQuery(
-                project_id=project_id, start_date=start_date, end_date=end_date
-            ),
-        )
-    ).data
+    result = await use_case.execute(
+        GetProjectMetricsQuery(
+            project_id=project_id, start_date=start_date, end_date=end_date
+        ),
+    )
     return QueryAnalyticsResponse(
-        metrics=[MetricResponse.model_validate(m) for m in metrics]
+        metrics=[MetricResponse.model_validate(m) for m in result.metrics]
     )

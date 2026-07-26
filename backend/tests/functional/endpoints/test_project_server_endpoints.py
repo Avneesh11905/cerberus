@@ -4,7 +4,7 @@ import pytest
 from httpx import AsyncClient
 
 from src.modules.authentication.presentation.api.dependencies.project import (
-    get_required_project_id,
+    get_optional_project_id,
 )
 from src.modules.projects.application.dtos.project_dtos import (
     GetUserClaimsDTO,
@@ -21,9 +21,15 @@ def override_project_id_dep():
     from src import app
 
     mock_id = uuid.uuid4()
-    app.dependency_overrides[get_required_project_id] = lambda: mock_id
+    # Override get_optional_project_id (the inner dep) so the full chain is
+    # short-circuited. Overriding only get_required_project_id is not enough
+    # because FastAPI resolves sub-dependencies first; get_optional_project_id
+    # would still run, find no API key, and return None -> 401.
+    app.dependency_overrides[get_optional_project_id] = lambda: mock_id
     yield mock_id
-    app.dependency_overrides.clear()
+    # Only remove this specific override, not all overrides (the client fixture
+    # also installs UoW overrides that must survive for the test teardown).
+    app.dependency_overrides.pop(get_optional_project_id, None)
 
 
 @pytest.mark.asyncio

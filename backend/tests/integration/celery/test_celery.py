@@ -44,9 +44,6 @@ async def test_celery_app_config():
     assert "clean-old-system-logs-daily" in schedule
     assert schedule["clean-old-system-logs-daily"]["task"] == "clean_old_system_logs"
 
-    assert "aggregate-analytics-daily" in schedule
-    assert schedule["aggregate-analytics-daily"]["task"] == "aggregate_analytics"
-
     assert "purge-old-analytics-events-daily" in schedule
     assert schedule["purge-old-analytics-events-daily"]["task"] == "purge_old_events"
 

@@ -14,9 +14,7 @@ from src.modules.authorization.presentation.api.dependencies.roles import (
 router = APIRouter(prefix="/system/events", tags=["Analytics Events"])
 
 
-@router.get(
-    "/stream",
-)
+@router.get("/stream")
 async def system_analytics_stream(
     request: Request,
     user: RequireSuperAdminRoleDep,
@@ -29,20 +27,29 @@ async def system_analytics_stream(
         )
         import dataclasses
 
+        # ── Phase 1: Short-lived DB fetch — open, query, close ────────────────
+        # The use case manages its own UoW internally
         use_case = GetSystemAnalyticsUseCase(uow=uow)
-
         initial_data = await use_case.execute()
+
+        # We enter the UoW context explicitly here to fetch the timeseries,
+        # ensuring the session is closed before the long-lived SSE stream.
+        async with uow:
+            timeseries = await uow.analytics_repo.get_global_timeseries(days=30)
+
+        # Session is now closed and returned to the pool.
+        payload = dataclasses.asdict(initial_data)
+        payload["metrics"] = timeseries
+
         yield ServerSentEvent(
-            event="system_metrics_update",
-            data=json.dumps(dataclasses.asdict(initial_data)),
+            data=json.dumps(payload),
         )
 
+        # ── Phase 2: Long-lived Redis pub/sub — no DB connection held ─────────
         channel = "analytics:system:global"
         try:
             async for data in subscriber.subscribe(channel):
-                yield ServerSentEvent(
-                    event="system_metrics_update", data=json.dumps(data)
-                )
+                yield ServerSentEvent(data=json.dumps(data))
         except asyncio.CancelledError:
             pass
 

@@ -39,3 +39,11 @@ class ListProjectUsersQuery:
     skip: int = 0
     limit: int = 20
     search: str | None = None
+
+
+@dataclass(frozen=True)
+class ListTenantUsersQuery:
+    tenant_id: UUID
+    skip: int = 0
+    limit: int = 20
+    search: str | None = None

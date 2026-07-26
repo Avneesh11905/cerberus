@@ -13,6 +13,7 @@ from src.modules.projects.application.use_cases import (
     GetUserClaimsUseCase,
     ListProjectsUseCase,
     ListProjectUsersUseCase,
+    ListTenantUsersUseCase,
     RotateApiKeyUseCase,
     RotateJwtSecretUseCase,
     SetProjectUserActiveStatusUseCase,
@@ -124,6 +125,12 @@ def get_list_project_users_use_case(
     return ListProjectUsersUseCase(uow=uow)
 
 
+def get_list_tenant_users_use_case(
+    uow: Annotated[ProjectUoWPort, Depends(get_project_uow)],
+) -> ListTenantUsersUseCase:
+    return ListTenantUsersUseCase(uow=uow)
+
+
 def get_set_project_user_active_status_use_case(
     uow: Annotated[ProjectUoWPort, Depends(get_project_uow)],
 ) -> SetProjectUserActiveStatusUseCase:
@@ -201,6 +208,10 @@ RotateJwtSecretUseCaseDep = Annotated[
 
 ListProjectUsersUseCaseDep = Annotated[
     ListProjectUsersUseCase, Depends(get_list_project_users_use_case)
+]
+
+ListTenantUsersUseCaseDep = Annotated[
+    ListTenantUsersUseCase, Depends(get_list_tenant_users_use_case)
 ]
 
 SetProjectUserActiveStatusUseCaseDep = Annotated[

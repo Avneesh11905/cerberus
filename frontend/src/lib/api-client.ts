@@ -1,28 +1,37 @@
-import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
-import { useAuthStore, type User } from '../store/auth';
+import axios from 'axios'
+import type { AxiosError, InternalAxiosRequestConfig } from 'axios'
+import { useAuthStore } from '../store/auth'
+import type { User } from '../store/auth'
 
-export function extractErrorMessage(error: unknown, fallback = 'An error occurred'): string {
-  if (!error) return fallback;
-  
+export function extractErrorMessage(
+  error: unknown,
+  fallback = 'An error occurred',
+): string {
+  if (!error) return fallback
+
   if (axios.isAxiosError(error)) {
-    const data = error.response?.data;
-    const detail = data?.detail;
+    const data = error.response?.data
+    const detail = data?.detail
 
-    if (Array.isArray(detail) && detail.length > 0 && detail[0].msg) return String(detail[0].msg);
-    if (typeof detail === 'string') return detail;
-    if (typeof detail === 'object' && detail !== null && detail.msg) return String(detail.msg);
+    if (Array.isArray(detail) && detail.length > 0 && detail[0].msg)
+      return String(detail[0].msg)
+    if (typeof detail === 'string') return detail
+    if (typeof detail === 'object' && detail !== null && detail.msg)
+      return String(detail.msg)
 
-    if (Array.isArray(data) && data.length > 0 && data[0].msg) return String(data[0].msg);
-    if (typeof data === 'object' && data !== null && data.msg) return String(data.msg);
+    if (Array.isArray(data) && data.length > 0 && data[0].msg)
+      return String(data[0].msg)
+    if (typeof data === 'object' && data !== null && data.msg)
+      return String(data.msg)
   }
 
-  if (error instanceof Error) return error.message;
-  if (typeof error === 'string') return error;
+  if (error instanceof Error) return error.message
+  if (typeof error === 'string') return error
 
-  return fallback;
+  return fallback
 }
 
-export const API_URL = 'http://localhost:8000/v1' ;
+export const API_URL = 'http://localhost:8000/v1'
 
 export const apiClient = axios.create({
   baseURL: API_URL,
@@ -32,40 +41,40 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-});
+})
 
-let isRefreshing = false;
+let isRefreshing = false
 let failedQueue: Array<{
-  resolve: (value?: unknown) => void;
-  reject: (reason?: unknown) => void;
-}> = [];
+  resolve: (value?: unknown) => void
+  reject: (reason?: unknown) => void
+}> = []
 
 const processQueue = (error: Error | null, token: string | null = null) => {
   failedQueue.forEach((prom) => {
     if (error) {
-      prom.reject(error);
+      prom.reject(error)
     } else {
-      prom.resolve(token);
+      prom.resolve(token)
     }
-  });
-  failedQueue = [];
-};
+  })
+  failedQueue = []
+}
 
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const { accessToken, csrfToken } = useAuthStore.getState();
+    const { accessToken, csrfToken } = useAuthStore.getState()
     if (accessToken && config.headers) {
-      config.headers.Authorization = `Bearer ${accessToken}`;
+      config.headers.Authorization = `Bearer ${accessToken}`
     }
     if (csrfToken && config.headers) {
-      config.headers['X-CSRF'] = csrfToken;
+      config.headers['X-CSRF'] = csrfToken
     }
-    return config;
+    return config
   },
   (error) => {
-    return Promise.reject(error);
-  }
-);
+    return Promise.reject(error)
+  },
+)
 
 export const refreshClient = axios.create({
   baseURL: API_URL,
@@ -75,82 +84,105 @@ export const refreshClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-});
+})
 
 apiClient.interceptors.response.use(
   (response) => {
-    return response;
+    return response
   },
   async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
-    const isAuthRoute = originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/verify-email') || originalRequest.url?.includes('/auth/refresh') || originalRequest.url?.includes('/auth/password');
+    const originalRequest = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean
+    }
+    const isAuthRoute =
+      originalRequest.url?.includes('/auth/login') ||
+      originalRequest.url?.includes('/auth/verify-email') ||
+      originalRequest.url?.includes('/auth/refresh') ||
+      originalRequest.url?.includes('/auth/password')
 
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isAuthRoute) {
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      !isAuthRoute
+    ) {
       if (isRefreshing) {
         return new Promise(function (resolve, reject) {
-          failedQueue.push({ resolve, reject });
+          failedQueue.push({ resolve, reject })
         })
           .then((token) => {
-            originalRequest.headers.Authorization = 'Bearer ' + token;
-            return apiClient(originalRequest);
+            originalRequest.headers.Authorization = 'Bearer ' + token
+            return apiClient(originalRequest)
           })
           .catch((err) => {
-            return Promise.reject(err);
-          });
+            return Promise.reject(err)
+          })
       }
 
-      originalRequest._retry = true;
-      isRefreshing = true;
+      originalRequest._retry = true
+      isRefreshing = true
 
       try {
-        const csrfToken = useAuthStore.getState().csrfToken;
-        const { data } = await refreshClient.post<{ access_token: string, csrf_token?: string, user?: User }>(
+        const csrfToken = useAuthStore.getState().csrfToken
+        const { data } = await refreshClient.post<{
+          access_token: string
+          csrf_token?: string
+          user?: User
+        }>(
           '/auth/refresh',
           {},
           {
-            headers: csrfToken ? { 'X-CSRF': csrfToken } : undefined
-          }
-        );
+            headers: csrfToken ? { 'X-CSRF': csrfToken } : undefined,
+          },
+        )
 
-        const newAccessToken = data.access_token;
-        const newCsrfToken = data?.csrf_token;
+        const newAccessToken = data.access_token
+        const newCsrfToken = data?.csrf_token
         if (data.user) {
-          useAuthStore.getState().setAuth(newAccessToken, newCsrfToken || '', data.user);
+          useAuthStore
+            .getState()
+            .setAuth(newAccessToken, newCsrfToken || '', data.user)
         } else {
-          useAuthStore.getState().setAccessToken(newAccessToken, newCsrfToken);
+          useAuthStore.getState().setAccessToken(newAccessToken, newCsrfToken)
         }
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
         if (newCsrfToken) {
-          originalRequest.headers['X-CSRF'] = newCsrfToken;
+          originalRequest.headers['X-CSRF'] = newCsrfToken
         }
 
-        processQueue(null, newAccessToken);
-        return apiClient(originalRequest);
+        processQueue(null, newAccessToken)
+        return apiClient(originalRequest)
       } catch (refreshError) {
-        processQueue(refreshError as Error, null);
-        useAuthStore.getState().logout();
-        return Promise.reject(refreshError);
+        processQueue(refreshError as Error, null)
+        useAuthStore.getState().logout()
+        return Promise.reject(refreshError)
       } finally {
-        isRefreshing = false;
+        isRefreshing = false
       }
     }
 
-    if (error.response?.status === 403 && !originalRequest.url?.includes('/users/me')) {
-      const accessToken = useAuthStore.getState().accessToken;
+    if (
+      error.response?.status === 403 &&
+      !originalRequest.url?.includes('/users/me')
+    ) {
+      const accessToken = useAuthStore.getState().accessToken
       if (accessToken) {
         // Use a fresh axios instance to avoid interceptor loops
-        axios.get(`${API_URL}/users/me`, {
-          headers: { Authorization: `Bearer ${accessToken}` }
-        }).then(({ data }) => {
-          const currentUser = useAuthStore.getState().user;
-          if (currentUser && currentUser.role !== data.role) {
-            useAuthStore.getState().setUser(data);
-            window.location.href = '/dashboard';
-          }
-        }).catch(() => {});
+        axios
+          .get(`${API_URL}/users/me`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          })
+          .then(({ data }) => {
+            const currentUser = useAuthStore.getState().user
+            if (currentUser && currentUser.role !== data.role) {
+              useAuthStore.getState().setUser(data)
+              window.location.href = '/dashboard'
+            }
+          })
+          .catch(() => {})
       }
     }
 
-    return Promise.reject(error);
-  }
-);
+    return Promise.reject(error)
+  },
+)

@@ -12,13 +12,28 @@ from src.modules.authorization.presentation.api.dependencies.roles import (
 )
 from src.modules.analytics.wiring import GetTenantMetricsUseCaseDeps
 
-# Removed {tenant_id} from the path to prevent IDOR (Insecure Direct Object Reference)
 router = APIRouter(prefix="/tenants/me/events", tags=["Analytics Events"])
 
 
-@router.get(
-    "/stream",
-)
+def _serialize_metric(m) -> dict:
+    """Serialize ORM model or plain dict to a JSON-safe dict."""
+    if isinstance(m, dict):
+        row = m
+    else:
+        row = {
+            "date": str(m.date) if m.date else None,
+            "api_requests": m.api_requests or 0,
+            "login_successes": m.login_successes or 0,
+            "login_failures": m.login_failures or 0,
+            "registrations": m.registrations or 0,
+            "active_users": m.active_users or 0,
+        }
+    if row.get("date") and not isinstance(row["date"], str):
+        row["date"] = str(row["date"])
+    return row
+
+
+@router.get("/stream")
 async def tenant_analytics_stream(
     request: Request,
     user: RequireTenantRoleDep,
@@ -29,28 +44,29 @@ async def tenant_analytics_stream(
         from src.modules.analytics.application.queries.metrics_queries import (
             GetTenantMetricsQuery,
         )
-        import dataclasses
         from datetime import date, timedelta
 
-        initial_data = await get_metrics_use_case.execute(
+        # ── Phase 1: Short-lived DB fetch ─────────────────────────────────────
+        # The use case opens and closes the UoW internally (async with self.uow).
+        # After execute() returns the session is committed and returned to pool.
+        result = await get_metrics_use_case.execute(
             GetTenantMetricsQuery(
                 tenant_id=user.id,
                 start_date=date.today() - timedelta(days=30),
                 end_date=date.today(),
             )
         )
+        metrics = [_serialize_metric(m) for m in result.metrics]
+
         yield ServerSentEvent(
-            event="tenant_metrics_update",
-            data=json.dumps(dataclasses.asdict(initial_data)),
+            data=json.dumps({"metrics": metrics, "totals": result.totals}),
         )
 
-        # The channel is strictly tied to the authenticated user's ID
+        # ── Phase 2: Long-lived Redis pub/sub — no DB connection held ─────────
         channel = f"analytics:tenant:{user.id}"
         try:
             async for data in subscriber.subscribe(channel):
-                yield ServerSentEvent(
-                    event="tenant_metrics_update", data=json.dumps(data)
-                )
+                yield ServerSentEvent(data=json.dumps(data))
         except asyncio.CancelledError:
             pass
 

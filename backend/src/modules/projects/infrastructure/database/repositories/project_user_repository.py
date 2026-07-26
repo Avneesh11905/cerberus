@@ -74,6 +74,42 @@ class SQLProjectUserRepositoryAdapter:
         users = [self._to_profile(row[0]) for row in rows]
         return users, total
 
+    async def list_tenant_users(
+        self,
+        tenant_id: UUID,
+        skip: int = 0,
+        limit: int = 100,
+        search: str | None = None,
+    ) -> tuple[Sequence[ProjectUser], int]:
+        from src.modules.projects.infrastructure.models import Project
+
+        stmt = (
+            select(User, func.count().over().label("total"))
+            .options(selectinload(User.oauth_accounts))
+            .join(Project, User.project_id == Project.id)
+            .where(Project.tenant_id == tenant_id)
+        )
+
+        if search:
+            stmt = stmt.where(
+                or_(
+                    User.email.ilike(f"%{search}%"),
+                    User.name.ilike(f"%{search}%"),
+                )
+            )
+
+        stmt = stmt.order_by(User.email.asc()).offset(skip).limit(limit)
+
+        result = await self._session.execute(stmt)
+        rows = result.all()
+
+        if not rows:
+            return [], 0
+
+        total = rows[0].total
+        users = [self._to_profile(row[0]) for row in rows]
+        return users, total
+
     async def update_user_status(
         self, project_id: UUID, user_id: UUID, is_active: bool
     ) -> ProjectUser | None:

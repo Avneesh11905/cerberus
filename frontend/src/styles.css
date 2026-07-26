@@ -5,13 +5,13 @@
 
 :root {
   /* Earthy Slate & Cream Palette */
-  --vanilla-cream: #FAEED1;
-  --warm-sand: #DED0B6;
-  --taupe: #B2A59B;
+  --vanilla-cream: #faeed1;
+  --warm-sand: #ded0b6;
+  --taupe: #b2a59b;
   --slate: #607274;
-  --terracotta: #9C5B5B;
-  --sage: #6B7F6B;
-  --ochre: #B89B5E;
+  --terracotta: #9c5b5b;
+  --sage: #6b7f6b;
+  --ochre: #b89b5e;
 
   /* Shadcn CSS Variables */
   --background: var(--vanilla-cream);
@@ -34,7 +34,7 @@
   --input: var(--taupe);
   --ring: var(--slate);
   --radius: 0.25rem;
-  
+
   /* Sidebar Variables */
   --sidebar-background: var(--vanilla-cream);
   --sidebar-foreground: var(--slate);
@@ -44,39 +44,10 @@
   --sidebar-accent-foreground: var(--slate);
   --sidebar-border: var(--taupe);
   --sidebar-ring: var(--slate);
-}
 
-.dark {
-  /* We are enforcing a Single Light-Earthy Theme (Cream Core Flat 2.0).
-     We map dark mode to the same variables to prevent OS preferences from breaking the theme. */
-  --background: var(--vanilla-cream);
-  --foreground: var(--slate);
-  --card: var(--warm-sand);
-  --card-foreground: var(--slate);
-  --popover: var(--vanilla-cream);
-  --popover-foreground: var(--slate);
-  --primary: var(--slate);
-  --primary-foreground: var(--vanilla-cream);
-  --secondary: var(--warm-sand);
-  --secondary-foreground: var(--slate);
-  --muted: var(--warm-sand);
-  --muted-foreground: var(--taupe);
-  --accent: var(--warm-sand);
-  --accent-foreground: var(--slate);
-  --destructive: var(--terracotta);
-  --destructive-foreground: var(--vanilla-cream);
-  --border: var(--taupe);
-  --input: var(--taupe);
-  --ring: var(--slate);
-  
-  --sidebar-background: var(--vanilla-cream);
-  --sidebar-foreground: var(--slate);
-  --sidebar-primary: var(--slate);
-  --sidebar-primary-foreground: var(--vanilla-cream);
-  --sidebar-accent: var(--warm-sand);
-  --sidebar-accent-foreground: var(--slate);
-  --sidebar-border: var(--taupe);
-  --sidebar-ring: var(--slate);
+  /* Shadows */
+  --shadow-primary: var(--slate);
+  --shadow-secondary: var(--taupe);
 }
 
 @theme inline {
@@ -113,7 +84,7 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  
+
   /* Extended Palette for Tailwind utility classes (e.g. bg-terracotta) */
   --color-vanilla: var(--vanilla-cream);
   --color-sand: var(--warm-sand);
@@ -124,7 +95,9 @@
   --color-ochre: var(--ochre);
 }
 
-html, body, #app {
+html,
+body,
+#app {
   min-height: 100%;
 }
 
@@ -150,13 +123,21 @@ body {
 
 /* Marquee Utilities */
 @keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-33.333333%); }
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-33.333333%);
+  }
 }
 
 @keyframes marquee-reverse {
-  0% { transform: translateX(-33.333333%); }
-  100% { transform: translateX(0); }
+  0% {
+    transform: translateX(-33.333333%);
+  }
+  100% {
+    transform: translateX(0);
+  }
 }
 
 .animate-marquee {
@@ -176,29 +157,39 @@ body {
 }
 
 .mask-edges {
-  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-  -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 10%,
+    black 90%,
+    transparent
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 10%,
+    black 90%,
+    transparent
+  );
 }
 
 /* Flat 2.0 Base Utilities */
 .flat-card {
   @apply bg-sand border border-taupe;
-  box-shadow: 4px 4px 0px 0px var(--slate);
+  box-shadow: 4px 4px 0px 0px var(--shadow-primary);
 }
 
 .flat-card-dark {
   @apply bg-slate border border-taupe text-vanilla;
-  box-shadow: 4px 4px 0px 0px var(--taupe);
+  box-shadow: 4px 4px 0px 0px var(--shadow-secondary);
 }
 
-
-
 .flat-shadow-slate {
-  box-shadow: 4px 4px 0px 0px var(--slate);
+  box-shadow: 4px 4px 0px 0px var(--shadow-primary);
 }
 
 .flat-shadow-taupe {
-  box-shadow: 4px 4px 0px 0px var(--taupe);
+  box-shadow: 4px 4px 0px 0px var(--shadow-secondary);
 }
 
 /* Custom Scrollbar */
@@ -235,8 +226,8 @@ html {
 }
 
 /* Prism Editor Overrides for Neo-brutalist Theme */
-pre[class*="language-"],
-code[class*="language-"] {
+pre[class*='language-'],
+code[class*='language-'] {
   text-shadow: none !important;
 }
 

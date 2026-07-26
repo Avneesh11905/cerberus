@@ -8,8 +8,8 @@ from .users import router as users_router
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
 
+router.include_router(server_router)
+router.include_router(users_router)
 router.include_router(projects_router)
 router.include_router(settings_router)
 router.include_router(keys_router)
-router.include_router(server_router)
-router.include_router(users_router)

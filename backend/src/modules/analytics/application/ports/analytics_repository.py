@@ -12,12 +12,12 @@ class AnalyticsRepositoryPort(Protocol):
 
     async def get_project_metrics(
         self, project_id: UUID, start_date: date, end_date: date
-    ) -> list:
+    ) -> dict:
         """Returns daily project metrics for a date range."""
         ...
 
     async def get_tenant_metrics(
         self, tenant_id: UUID, start_date: date, end_date: date
-    ) -> list:
+    ) -> dict:
         """Returns daily tenant metrics for a date range."""
         ...

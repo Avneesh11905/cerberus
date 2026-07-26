@@ -13,6 +13,7 @@ class UserProfileRes(BaseModel):
     project_id: UUID | None = None
     name: str | None = None
     picture: str | None = None
+    role: str | None = None
     receive_updates: bool
     login_methods: list[str]
     model_config = ConfigDict(from_attributes=True)

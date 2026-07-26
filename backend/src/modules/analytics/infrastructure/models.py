@@ -25,9 +25,13 @@ class AnalyticsEventModel(Base):
     metadata_payload = Column(JSONB, nullable=True)
 
 
-class DailyProjectMetricModel(Base):
-    __tablename__ = "daily_project_metrics"
-    __table_args__ = (UniqueConstraint("project_id", "date", name="uq_project_date"),)
+class LiveProjectMetricModel(Base):
+    """Real-time per-day project metrics. Kept continuously up-to-date via UPSERT on every event."""
+
+    __tablename__ = "live_project_metrics"
+    __table_args__ = (
+        UniqueConstraint("project_id", "date", name="uq_live_project_date"),
+    )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     project_id = Column(UUID(as_uuid=True), nullable=False, index=True)
@@ -41,9 +45,13 @@ class DailyProjectMetricModel(Base):
     emails_failed = Column(Integer, default=0, nullable=False)
 
 
-class DailyTenantMetricModel(Base):
-    __tablename__ = "daily_tenant_metrics"
-    __table_args__ = (UniqueConstraint("tenant_id", "date", name="uq_tenant_date"),)
+class LiveTenantMetricModel(Base):
+    """Real-time per-day tenant metrics. Kept continuously up-to-date via UPSERT on every event."""
+
+    __tablename__ = "live_tenant_metrics"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "date", name="uq_live_tenant_date"),
+    )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id = Column(UUID(as_uuid=True), nullable=False, index=True)
@@ -58,9 +66,11 @@ class DailyTenantMetricModel(Base):
     projects_created = Column(Integer, default=0, nullable=False)
 
 
-class DailySystemMetricModel(Base):
-    __tablename__ = "daily_system_metrics"
-    __table_args__ = (UniqueConstraint("date", name="uq_system_date"),)
+class LiveSystemMetricModel(Base):
+    """Real-time per-day system-level metrics. Kept continuously up-to-date via UPSERT on every event."""
+
+    __tablename__ = "live_system_metrics"
+    __table_args__ = (UniqueConstraint("date", name="uq_live_system_date"),)
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     date = Column(Date, nullable=False, index=True)

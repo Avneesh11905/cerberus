@@ -50,7 +50,6 @@ class CreateProjectUseCase(BaseProjectUseCase):
                 event_type="PROJECT_CREATED",
                 tenant_id=command.user_id,
                 project_id=project_id,
-                user_id=command.user_id,
             )
 
             return CreateProjectDTO(
