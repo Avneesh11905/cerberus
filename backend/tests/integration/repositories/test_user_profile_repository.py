@@ -148,13 +148,15 @@ async def test_delete_user(
     refresh_repo_mock.revoke_all_for_user.assert_called_with(setup_users["user_id"])
 
     profile = await repo.get_profile(setup_users["user_id"])
-    assert profile is None
+    assert profile is not None
+    assert profile.is_active is False
 
     await repo.delete_user(setup_users["tenant_id"])
     refresh_repo_mock.revoke_all_for_user.assert_called_with(setup_users["tenant_id"])
 
     tenant_profile = await repo.get_profile(setup_users["tenant_id"])
-    assert tenant_profile is None
+    assert tenant_profile is not None
+    assert tenant_profile.is_active is False
 
     # Non existent
     await repo.delete_user(uuid4())

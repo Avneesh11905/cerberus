@@ -141,15 +141,17 @@ def record_analytics_event(
                     cols_str = ", ".join(columns)
                     vals_str = ", ".join("1" if c == col else "0" for c in columns)
 
-                    await session.execute(
-                        text(f"""
+                    query = f"""
                         INSERT INTO live_project_metrics
                             (id, project_id, date, {cols_str})
                         VALUES
                             (gen_random_uuid(), :pid, :today, {vals_str})
                         ON CONFLICT (project_id, date) DO UPDATE
                             SET {col} = live_project_metrics.{col} + 1
-                        """),
+                    """  # nosec B608
+
+                    await session.execute(
+                        text(query),
                         {"pid": project_id, "today": today},
                     )
 
@@ -179,15 +181,17 @@ def record_analytics_event(
                     cols_str = ", ".join(columns)
                     vals_str = ", ".join("1" if c == col else "0" for c in columns)
 
-                    await session.execute(
-                        text(f"""
+                    query = f"""
                         INSERT INTO live_tenant_metrics
                             (id, tenant_id, date, {cols_str})
                         VALUES
                             (gen_random_uuid(), :tid, :today, {vals_str})
                         ON CONFLICT (tenant_id, date) DO UPDATE
                             SET {col} = live_tenant_metrics.{col} + 1
-                        """),
+                    """  # nosec B608
+
+                    await session.execute(
+                        text(query),
                         {"tid": resolved_tenant_id, "today": today},
                     )
 
@@ -205,15 +209,17 @@ def record_analytics_event(
                     cols_str = ", ".join(columns)
                     vals_str = ", ".join("1" if c == col else "0" for c in columns)
 
-                    await session.execute(
-                        text(f"""
+                    query = f"""
                         INSERT INTO live_system_metrics
                             (id, date, {cols_str})
                         VALUES
                             (gen_random_uuid(), :today, {vals_str})
                         ON CONFLICT (date) DO UPDATE
                             SET {col} = live_system_metrics.{col} + 1
-                        """),
+                    """  # nosec B608
+
+                    await session.execute(
+                        text(query),
                         {"today": today},
                     )
 

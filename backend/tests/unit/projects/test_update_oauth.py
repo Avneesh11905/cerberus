@@ -6,7 +6,9 @@ from src.modules.projects.application.use_cases.update_oauth import UpdateOauthU
 from src.modules.projects.application.commands.project_commands import (
     UpdateOauthCommand,
 )
-from src.modules.projects.domain.exceptions.project_error import ProjectError
+from src.modules.projects.domain.exceptions.project_validation_error import (
+    ProjectValidationError,
+)
 from src.modules.projects.domain.entities.project_entity import ProjectEntity
 
 
@@ -94,10 +96,10 @@ async def test_update_oauth_missing_client_id(use_case, uow):
         incoming_config={"google": {"enabled": True, "client_secret": "google_secret"}},
     )
 
-    with pytest.raises(ProjectError) as exc:
+    with pytest.raises(ProjectValidationError) as exc:
         await use_case.execute(command)
 
-    assert "Client ID is required" in str(exc.value)
+    assert "Client ID is required" in exc.value.errors[0]["msg"]
 
 
 @pytest.mark.asyncio
@@ -127,10 +129,10 @@ async def test_update_oauth_missing_client_secret_and_no_old_secret(use_case, uo
         },
     )
 
-    with pytest.raises(ProjectError) as exc:
+    with pytest.raises(ProjectValidationError) as exc:
         await use_case.execute(command)
 
-    assert "Client Secret is required" in str(exc.value)
+    assert "Client Secret is required" in exc.value.errors[0]["msg"]
 
 
 @pytest.mark.asyncio

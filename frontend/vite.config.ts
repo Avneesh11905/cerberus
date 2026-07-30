@@ -26,6 +26,7 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       tanstackStart({
         server: {
+          // @ts-expect-error: preset is supported by Nitro but missing in types
           preset: 'vercel',
         },
       }),

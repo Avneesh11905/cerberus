@@ -318,11 +318,14 @@ async def rate_limit_exception_handler(
         headers=headers,
     )
 
-async def project_validation_exception_handler(
+
+async def project_validation_handler(
     request: Request, exc: ProjectValidationError
 ) -> JSONResponse:
     """Handles project validation errors matching FastAPI's RequestValidationError format."""
-    await logger.warning(f"Project Validation Error at {request.url.path}: {exc.errors}")
+    await logger.warning(
+        f"Project Validation Error at {request.url.path}: {exc.errors}"
+    )
     return build_error_response(status.HTTP_422_UNPROCESSABLE_CONTENT, exc.errors)
 
 
@@ -332,7 +335,7 @@ def register_exception_handlers(app: FastAPI):
     app.add_exception_handler(RequestValidationError, validation_exception_handler)  # type: ignore
     app.add_exception_handler(AuthBaseException, auth_domain_exception_handler)  # type: ignore
     app.add_exception_handler(UserBaseException, user_domain_exception_handler)  # type: ignore
-    app.add_exception_handler(ProjectValidationError, project_validation_exception_handler)  # type: ignore
+    app.add_exception_handler(ProjectValidationError, project_validation_handler)  # type: ignore
     app.add_exception_handler(ProjectError, project_domain_exception_handler)  # type: ignore
     app.add_exception_handler(
         SuperadminBaseException,

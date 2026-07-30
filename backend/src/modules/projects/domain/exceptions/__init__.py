@@ -3,4 +3,9 @@ from .project_not_found_error import ProjectNotFoundError as ProjectNotFoundErro
 from .project_forbidden_error import ProjectForbiddenError as ProjectForbiddenError
 from .project_validation_error import ProjectValidationError as ProjectValidationError
 
-__all__ = ["ProjectError", "ProjectNotFoundError", "ProjectForbiddenError", "ProjectValidationError"]
+__all__ = [
+    "ProjectError",
+    "ProjectNotFoundError",
+    "ProjectForbiddenError",
+    "ProjectValidationError",
+]

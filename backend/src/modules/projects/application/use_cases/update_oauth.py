@@ -74,7 +74,9 @@ class UpdateOauthUseCase(BaseProjectUseCase):
                         )
 
                     if errors:
-                        from src.modules.projects.domain.exceptions import ProjectValidationError
+                        from src.modules.projects.domain.exceptions import (
+                            ProjectValidationError,
+                        )
 
                         raise ProjectValidationError(errors)
 
