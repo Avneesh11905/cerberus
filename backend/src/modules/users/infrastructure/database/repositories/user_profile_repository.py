@@ -135,12 +135,13 @@ class SQLUserProfileRepositoryAdapter(UserProfileRepositoryPort):
         )
 
     async def delete_user(self, user_id: UUID) -> None:
-        """Hard delete a user (cascades to projects, oauth, tokens)."""
+        """Soft delete a user."""
         result = await self._session.execute(select(User).where(User.id == user_id))
         user = result.scalar_one_or_none()
         if user:
             await self._refresh_repo.revoke_all_for_user(user_id)
-            await self._session.delete(user)
+            user.is_active = False
+            user.deleted_at = datetime.now(UTC)
             await self._session.flush()
             return
 
@@ -152,5 +153,6 @@ class SQLUserProfileRepositoryAdapter(UserProfileRepositoryPort):
         tenant = tenant_res.scalar_one_or_none()
         if tenant:
             await self._refresh_repo.revoke_all_for_user(user_id)
-            await self._session.delete(tenant)
+            tenant.is_active = False
+            tenant.deleted_at = datetime.now(UTC)
             await self._session.flush()

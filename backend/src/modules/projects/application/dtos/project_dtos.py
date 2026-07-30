@@ -37,6 +37,7 @@ class GetUserClaimsDTO:
 @dataclass(frozen=True)
 class ListProjectsDTO:
     projects: Sequence[ProjectEntity]
+    total: int
 
 
 @dataclass(frozen=True)

@@ -4,14 +4,26 @@ Backfill live metrics tables from raw analytics_events.
 Runs the same UPSERT logic as record_analytics_event Celery task but
 processes all historical rows already in analytics_events.
 
-Usage (inside the backend container):
-  python scripts/backfill_analytics.py
+Usage:
+  # Inside the container (recommended — has correct DB hostname):
+  docker exec cerberus-cerb-fastapi-1 python scripts/backfill_analytics.py
+
+  # From the host (needs --env-file to supply DB URL):
+  uv run scripts/backfill_analytics.py
 """
 
 import asyncio
 import logging
-from datetime import date
+import sys
+from pathlib import Path
 
+# Ensure the backend root (the folder containing 'src/') is on the path so
+# that `from src.xxx import yyy` works when running the script directly with
+# `python scripts/backfill_analytics.py` or `uv run scripts/backfill_analytics.py`.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from datetime import date
+from src.core.database import AsyncSessionLocal
 from sqlalchemy import text
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
@@ -43,10 +55,70 @@ _SYSTEM_EVENT_MAP = {
     "JWT_KEY_ROTATED": "jwt_key_rotations",
 }
 
+# How many events to commit in a single transaction (tune as needed)
+BATCH_SIZE = 500
+
+# All columns for each live metrics table (must match DB schema exactly)
+_PROJECT_COLS = [
+    "api_requests", "login_successes", "login_failures",
+    "registrations", "active_users", "emails_sent", "emails_failed",
+]
+_TENANT_COLS = [
+    "api_requests", "login_successes", "login_failures",
+    "registrations", "active_users", "emails_sent", "emails_failed",
+    "projects_created",
+]
+_SYSTEM_COLS = [
+    "tenants_onboarded", "tenant_suspensions", "api_key_rotations", "jwt_key_rotations",
+]
+
+
+def _project_upsert(col: str) -> str:
+    """
+    UPSERT into live_project_metrics.
+    Inserts a full row of zeros then increments only `col`.
+    Uses `excluded` so the target col is always bumped by exactly 1,
+    regardless of whether it was a fresh INSERT or an existing row.
+    """
+    all_cols = ", ".join(_PROJECT_COLS)
+    zeros = ", ".join("0" for _ in _PROJECT_COLS)
+    return f"""
+        INSERT INTO live_project_metrics
+            (id, project_id, date, {all_cols})
+        VALUES
+            (gen_random_uuid(), :pid, :day, {zeros})
+        ON CONFLICT (project_id, date) DO UPDATE
+            SET {col} = live_project_metrics.{col} + 1
+    """
+
+
+def _tenant_upsert(col: str) -> str:
+    all_cols = ", ".join(_TENANT_COLS)
+    zeros = ", ".join("0" for _ in _TENANT_COLS)
+    return f"""
+        INSERT INTO live_tenant_metrics
+            (id, tenant_id, date, {all_cols})
+        VALUES
+            (gen_random_uuid(), :tid, :day, {zeros})
+        ON CONFLICT (tenant_id, date) DO UPDATE
+            SET {col} = live_tenant_metrics.{col} + 1
+    """
+
+
+def _system_upsert(col: str) -> str:
+    all_cols = ", ".join(_SYSTEM_COLS)
+    zeros = ", ".join("0" for _ in _SYSTEM_COLS)
+    return f"""
+        INSERT INTO live_system_metrics
+            (id, date, {all_cols})
+        VALUES
+            (gen_random_uuid(), :day, {zeros})
+        ON CONFLICT (date) DO UPDATE
+            SET {col} = live_system_metrics.{col} + 1
+    """
+
 
 async def backfill():
-    from src.core.database import AsyncSessionLocal  # noqa: PLC0415
-
     async with AsyncSessionLocal() as session:
         # ── Fetch all raw events ──────────────────────────────────────────────
         logger.info("Fetching all raw analytics events …")
@@ -77,10 +149,15 @@ async def backfill():
                 project_to_tenant[pid] = tid
         logger.info("Resolved %d project→tenant mappings", len(project_to_tenant))
 
-        processed = 0
-        errors = 0
+    # ── Process events in isolated per-event savepoints ───────────────────────
+    # Each event is wrapped in a SAVEPOINT so a single failure only rolls back
+    # that one event, never the whole batch.
+    processed = 0
+    errors = 0
+    batch_num = 0
 
-        for row in rows:
+    async with AsyncSessionLocal() as session:
+        for i, row in enumerate(rows):
             event_type = row.event_type
             project_id = str(row.project_id) if row.project_id else None
             tenant_id = str(row.tenant_id) if row.tenant_id else None
@@ -90,19 +167,13 @@ async def backfill():
                 project_to_tenant.get(project_id) if project_id else None
             )
 
+            await session.execute(text("SAVEPOINT sp_event"))
             try:
                 # Project-level UPSERT
                 if project_id and event_type in _PROJECT_EVENT_MAP:
                     col = _PROJECT_EVENT_MAP[event_type]
                     await session.execute(
-                        text(f"""
-                        INSERT INTO live_project_metrics
-                            (id, project_id, date, {col})
-                        VALUES
-                            (gen_random_uuid(), :pid, :day, 1)
-                        ON CONFLICT (project_id, date) DO UPDATE
-                            SET {col} = live_project_metrics.{col} + 1
-                        """),
+                        text(_project_upsert(col)),
                         {"pid": project_id, "day": day},
                     )
 
@@ -114,14 +185,7 @@ async def backfill():
                 ):
                     col = _TENANT_EVENT_MAP[event_type]
                     await session.execute(
-                        text(f"""
-                        INSERT INTO live_tenant_metrics
-                            (id, tenant_id, date, {col})
-                        VALUES
-                            (gen_random_uuid(), :tid, :day, 1)
-                        ON CONFLICT (tenant_id, date) DO UPDATE
-                            SET {col} = live_tenant_metrics.{col} + 1
-                        """),
+                        text(_tenant_upsert(col)),
                         {"tid": resolved_tenant_id, "day": day},
                     )
 
@@ -129,24 +193,31 @@ async def backfill():
                 if event_type in _SYSTEM_EVENT_MAP:
                     col = _SYSTEM_EVENT_MAP[event_type]
                     await session.execute(
-                        text(f"""
-                        INSERT INTO live_system_metrics
-                            (id, date, {col})
-                        VALUES
-                            (gen_random_uuid(), :day, 1)
-                        ON CONFLICT (date) DO UPDATE
-                            SET {col} = live_system_metrics.{col} + 1
-                        """),
+                        text(_system_upsert(col)),
                         {"day": day},
                     )
 
+                await session.execute(text("RELEASE SAVEPOINT sp_event"))
                 processed += 1
+
             except Exception as exc:  # noqa: BLE001
-                logger.warning("Error on event %s/%s: %s", event_type, row.id, exc)
+                await session.execute(text("ROLLBACK TO SAVEPOINT sp_event"))
+                await session.execute(text("RELEASE SAVEPOINT sp_event"))
+                logger.warning("Skipped event %s/%s: %s", event_type, row.id, exc)
                 errors += 1
 
+            # Commit in batches to avoid holding a huge transaction in memory
+            if (i + 1) % BATCH_SIZE == 0:
+                await session.commit()
+                batch_num += 1
+                logger.info(
+                    "  … committed batch %d (%d/%d events, %d errors so far)",
+                    batch_num, i + 1, len(rows), errors,
+                )
+
+        # Commit any remainder
         await session.commit()
-        logger.info("✅ Backfill complete: %d processed, %d errors", processed, errors)
+        logger.info("✅ Backfill complete: %d processed, %d skipped", processed, errors)
 
         # ── Print final row counts ────────────────────────────────────────────
         for table in (

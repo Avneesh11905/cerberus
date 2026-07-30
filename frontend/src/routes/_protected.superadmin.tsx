@@ -2,7 +2,6 @@ import {
   createFileRoute,
   redirect,
   Outlet,
-  Link,
   useLocation,
   useRouter,
 } from '@tanstack/react-router'
@@ -38,7 +37,7 @@ function SuperadminLayout() {
   ]
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto flex flex-col gap-8 w-full">
       <div className="flex items-center gap-4">
         <Button 
           variant="outline" 
@@ -66,11 +65,11 @@ function SuperadminLayout() {
             : location.pathname.startsWith(item.href)
 
           return (
-            <Link
+            <span
               key={item.name}
-              to={item.href}
+              onClick={() => router.navigate({ to: item.href })}
               className={clsx(
-                'flex items-center gap-2 px-6 py-3 font-semibold transition-colors border-b-2 -mb-[2px]',
+                'flex items-center gap-2 px-6 py-3 font-semibold transition-colors border-b-2 -mb-0.5 cursor-pointer',
                 isActive
                   ? 'border-ochre text-ochre'
                   : 'border-transparent text-slate/70 hover:text-slate hover:bg-taupe/10',
@@ -78,7 +77,7 @@ function SuperadminLayout() {
             >
               <item.icon className="w-4 h-4" />
               {item.name}
-            </Link>
+            </span>
           )
         })}
       </div>

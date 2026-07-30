@@ -114,7 +114,7 @@ function SuperadminAnalyticsPage() {
   // projects_created
 
   return (
-    <div className="space-y-8 max-w-7xl">
+    <div className="max-w-7xl mx-auto flex flex-col gap-8 w-full">
 
       {/* ── Header ────────────────────────────────────────────────────── */}
       <div>

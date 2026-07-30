@@ -29,10 +29,10 @@ interface StatCardProps {
 
 function StatCard({ title, value, icon: Icon, subtitle }: StatCardProps) {
   return (
-    <div className="bg-vanilla rounded-xl border-2 border-slate p-6 shadow-[4px_4px_0px_rgba(30,41,59,1)] flex flex-col">
+    <div className="bg-sand rounded-xl border-2 border-slate p-6 shadow-[4px_4px_0px_rgba(30,41,59,1)] flex flex-col">
       <div className="flex justify-between items-start mb-4">
         <h3 className="text-slate font-bold">{title}</h3>
-        <div className="p-2 bg-vanilla rounded-lg border-2 border-slate">
+        <div className="p-2 bg-taupe/10 rounded-lg border-2 border-slate">
           <Icon className="w-5 h-5 text-slate" />
         </div>
       </div>
@@ -64,7 +64,7 @@ function DashboardPage() {
     : '0%'
 
   return (
-    <div className="max-w-7xl mx-auto flex flex-col gap-8">
+    <div className="max-w-7xl mx-auto flex flex-col gap-8 w-full">
       <div className="flex justify-between items-end">
         <div className="flex items-center gap-4">
           <Button
@@ -123,7 +123,7 @@ function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Chart — API Requests over time */}
-        <div className="lg:col-span-2 bg-vanilla rounded-xl border-2 border-slate p-6 shadow-[4px_4px_0px_rgba(30,41,59,1)]">
+        <div className="lg:col-span-2 bg-sand rounded-xl border-2 border-slate p-6 shadow-[4px_4px_0px_rgba(30,41,59,1)]">
           <h2 className="text-xl font-bold text-slate mb-6">API Traffic — Last 30 Days</h2>
           {timeSeries.length === 0 ? (
             <div className="h-80 flex items-center justify-center text-slate/40 font-medium">
@@ -172,7 +172,7 @@ function DashboardPage() {
         </div>
 
         {/* Side Chart — Logins vs Registrations */}
-        <div className="bg-vanilla rounded-xl border-2 border-slate p-6 shadow-[4px_4px_0px_rgba(30,41,59,1)]">
+        <div className="bg-sand rounded-xl border-2 border-slate p-6 shadow-[4px_4px_0px_rgba(30,41,59,1)]">
           <h2 className="text-xl font-bold text-slate mb-6">Auth Activity</h2>
           {timeSeries.length === 0 ? (
             <div className="h-80 flex items-center justify-center text-slate/40 font-medium text-center text-sm">

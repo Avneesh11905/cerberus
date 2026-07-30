@@ -1,6 +1,5 @@
 import {
   createFileRoute,
-  Link,
   redirect,
   useNavigate,
 } from '@tanstack/react-router'
@@ -10,12 +9,12 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation } from '@tanstack/react-query'
 import { Turnstile } from '@marsidev/react-turnstile'
-import { Eye, EyeOff } from 'lucide-react'
 
 import { apiClient, API_URL, extractErrorMessage } from '../lib/api-client'
 import { useAuthStore } from '../store/auth'
 import { AuthLayout } from '../components/layout/AuthLayout'
 import { Input } from '../components/ui/input'
+import { PasswordInput } from '../components/ui/password-input'
 import { Button } from '../components/ui/button'
 import { Label } from '../components/ui/label'
 import { GoogleIcon, GithubIcon } from '../components/ui/icons'
@@ -46,7 +45,6 @@ function LoginPage() {
   const accessToken = useAuthStore((state) => state.accessToken)
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const [authError, setAuthError] = useState<string | null>(null)
-  const [showPassword, setShowPassword] = useState(false)
 
   const [pendingAction, setPendingAction] = useState<
     'login' | 'google' | 'github' | null
@@ -159,29 +157,17 @@ function LoginPage() {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Password</Label>
-            <Link
-              to="/forgot-password"
-              className="text-sm text-slate font-bold hover:underline"
+            <span
+              onClick={() => navigate({ to: '/forgot-password' })}
+              className="text-sm text-slate font-bold hover:underline cursor-pointer"
             >
               Forgot password?
-            </Link>
+            </span>
           </div>
-          <div className="relative">
-            <Input
+            <PasswordInput
               id="password"
-              type={showPassword ? 'text' : 'password'}
-              className="pr-10"
               {...register('password')}
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate/50 hover:text-slate transition-colors"
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
-            >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
-          </div>
           {errors.password && (
             <p className="text-terracotta text-sm font-medium">
               {errors.password.message}
@@ -277,9 +263,9 @@ function LoginPage() {
 
         <div className="mt-6 text-center text-sm font-medium text-slate">
           Don't have an account?{' '}
-          <Link to="/register" className="text-slate hover:underline font-bold">
+          <span onClick={() => navigate({ to: '/register' })} className="text-slate hover:underline font-bold cursor-pointer">
             Sign up
-          </Link>
+          </span>
         </div>
       </form>
     </AuthLayout>

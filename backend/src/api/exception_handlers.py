@@ -37,7 +37,7 @@ from src.modules.superadmin.domain.exceptions import (
 from src.modules.users.domain.exceptions import UserBaseException, UserNotFoundException
 from src.shared.infrastructure.adapters import AsyncSQLLogger
 
-logger = AsyncSQLLogger("ExceptionHandlers")
+logger = AsyncSQLLogger(__name__)
 
 
 class ExceptionMetadata(BaseModel):

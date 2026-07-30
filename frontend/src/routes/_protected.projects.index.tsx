@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useRouter } from '@tanstack/react-router'
+import { createFileRoute, useRouter } from '@tanstack/react-router'
 import React, { useState, useEffect } from 'react'
 import {
   Plus,
@@ -11,6 +11,10 @@ import {
   Edit2,
   Trash2,
   ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  RefreshCcw,
 } from 'lucide-react'
 import {
   getProjects,
@@ -24,6 +28,7 @@ import {
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
+  ContextMenuSeparator,
 } from '../components/ui/context-menu'
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card'
 import { Button, CopyButton, DownloadButton } from '../components/ui/button'
@@ -51,6 +56,9 @@ function ProjectsIndexPage() {
   const router = useRouter()
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [size] = useState(20)
+  const [total, setTotal] = useState(0)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [newProjectName, setNewProjectName] = useState('')
   const [creating, setCreating] = useState(false)
@@ -106,8 +114,9 @@ function ProjectsIndexPage() {
   const fetchProjects = async () => {
     try {
       setLoading(true)
-      const data = await getProjects()
-      setProjects(data)
+      const data = await getProjects({ page, size })
+      setProjects(data.items)
+      setTotal(data.total)
     } catch (err) {
       toast.error(extractErrorMessage(err, 'Failed to fetch projects'))
     } finally {
@@ -117,7 +126,7 @@ function ProjectsIndexPage() {
 
   useEffect(() => {
     fetchProjects()
-  }, [])
+  }, [page, size])
 
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -175,9 +184,12 @@ function ProjectsIndexPage() {
   }
 
   return (
-    <div className="flex flex-col gap-8 max-w-6xl mx-auto w-full">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-4">
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <div className="w-full min-h-[calc(100vh-100px)] pb-10 flex flex-col px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto flex flex-col gap-8 w-full">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-6">
+              <div className="flex items-center gap-4">
           <Button 
             variant="outline" 
             size="icon" 
@@ -407,12 +419,19 @@ function ProjectsIndexPage() {
           {(projects || []).map((project) => (
             <ContextMenu key={project.id}>
               <ContextMenuTrigger asChild>
-                <Link
-                  to="/projects/$projectId"
-                  params={{ projectId: project.id }}
-                  className="block group h-full outline-none focus-visible:ring-2 focus-visible:ring-slate"
+                <div
+                  onClick={() => router.navigate({ to: '/projects/$projectId', params: { projectId: project.id } })}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      router.navigate({ to: '/projects/$projectId', params: { projectId: project.id } })
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  className="block group h-full outline-none focus-visible:ring-2 focus-visible:ring-slate cursor-pointer"
                 >
-                  <Card className="relative overflow-hidden flex flex-col justify-between h-full hover:bg-sand/80 transition-all duration-300 ease-out cursor-pointer group-hover:-translate-y-1 group-hover:shadow-[4px_4px_0px_0px_var(--taupe)]">
+                  <Card className="relative overflow-hidden flex flex-col justify-between h-full hover:bg-sand/80 transition-all duration-300 ease-out group-hover:-translate-y-1 group-hover:shadow-[4px_4px_0px_0px_var(--taupe)]">
                     <CardHeader className="pb-4">
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-none border-2 border-slate text-xs font-bold uppercase bg-vanilla text-slate">
@@ -448,9 +467,19 @@ function ProjectsIndexPage() {
                       </div>
                     </CardContent>
                   </Card>
-                </Link>
+                </div>
               </ContextMenuTrigger>
               <ContextMenuContent className="w-48 bg-vanilla border-2 border-slate rounded-xl shadow-[4px_4px_0px_rgba(96,114,116,1)] overflow-hidden p-1 z-60">
+                <ContextMenuItem
+                  className="font-bold cursor-pointer rounded-lg px-3 py-2 hover:bg-sand focus:bg-sand"
+                  onClick={() => {
+                    navigator.clipboard.writeText(project.id)
+                    toast.success('Project ID copied to clipboard')
+                  }}
+                >
+                  <Copy className="w-4 h-4 mr-2" /> Copy Project ID
+                </ContextMenuItem>
+                <ContextMenuSeparator className="bg-slate/10 my-1" />
                 <ContextMenuItem
                   className="font-bold cursor-pointer rounded-lg px-3 py-2 hover:bg-sand focus:bg-sand"
                   onClick={() => {
@@ -469,6 +498,36 @@ function ProjectsIndexPage() {
               </ContextMenuContent>
             </ContextMenu>
           ))}
+        </div>
+      )}
+
+      {total > size && (
+        <div className="flex items-center justify-between mt-8">
+          <p className="text-sm font-medium text-slate/70">
+            Showing {Math.min((page - 1) * size + 1, total)} to {Math.min(page * size, total)} of {total} projects
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="border-2 border-slate"
+            >
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(p => p + 1)}
+              disabled={page * size >= total}
+              className="border-2 border-slate"
+            >
+              Next
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+          </div>
         </div>
       )}
 
@@ -558,7 +617,24 @@ function ProjectsIndexPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+        </div>
+      </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent className="w-64 bg-vanilla border-2 border-slate rounded-xl shadow-[4px_4px_0px_rgba(96,114,116,1)] p-1 z-60">
+        <ContextMenuItem
+          className="font-bold cursor-pointer rounded-lg px-3 py-2 hover:bg-sand focus:bg-sand"
+          onClick={() => setIsDialogOpen(true)}
+        >
+          <Plus className="w-4 h-4 mr-2" /> Create New Project
+        </ContextMenuItem>
+        <ContextMenuItem
+          className="font-bold cursor-pointer rounded-lg px-3 py-2 hover:bg-sand focus:bg-sand"
+          onClick={() => fetchProjects()}
+        >
+          <RefreshCcw className="w-4 h-4 mr-2" /> Refresh Projects List
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   )
 }
 

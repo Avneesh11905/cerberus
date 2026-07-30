@@ -193,37 +193,39 @@ class LocalVerifyEmailUseCase:
                     "Redis cleanup after email verification failed — keys will expire naturally via TTL"
                 )
 
-            # Send the welcome email
-            await self._email_sender.send_welcome_email(
-                user.email.value,
-                user.name,
-                tenant_id=user.id if not command.project_id else None,
-                project_id=command.project_id,
-            )
+        # Send the welcome email
+        await self._email_sender.send_welcome_email(
+            user.email.value,
+            user.name,
+            tenant_id=user.id if not command.project_id else None,
+            project_id=command.project_id,
+        )
 
-            await self._logger.info(f"User {user.id} email verified successfully")
+        await self._logger.info(f"User {user.id} email verified successfully")
 
+        self._analytics.record_event(
+            event_type="REGISTRATION",
+            event_id=user.id,
+            project_id=command.project_id,
+            tenant_id=user.id if not command.project_id else None,
+            user_id=user.id if command.project_id else None,
+            metadata=dataclasses.asdict(command.client_meta)
+            if command.client_meta
+            else None,
+        )
+
+        if not command.project_id:
             self._analytics.record_event(
-                project_id=command.project_id,
-                tenant_id=user.id if not command.project_id else None,
-                event_type="REGISTRATION",
-                user_id=user.id if command.project_id else None,
+                event_type="TENANT_ONBOARDED",
+                event_id=user.id,
+                tenant_id=user.id,
+                user_id=user.id,
                 metadata=dataclasses.asdict(command.client_meta)
                 if command.client_meta
                 else None,
             )
 
-            if not command.project_id:
-                self._analytics.record_event(
-                    tenant_id=user.id,
-                    event_type="TENANT_ONBOARDED",
-                    user_id=user.id,
-                    metadata=dataclasses.asdict(command.client_meta)
-                    if command.client_meta
-                    else None,
-                )
+        if command.is_challenged:
+            await self._rate_limiter.record_success(limit_key)
 
-            if command.is_challenged:
-                await self._rate_limiter.record_success(limit_key)
-
-            return user, token
+        return user, token

@@ -80,13 +80,14 @@ async def _resolve_tenant_id_for_project(session, project_id: str) -> str | None
 @celery_app.task(name="record_analytics_event")
 def record_analytics_event(
     event_type: str,
+    event_id: str | None = None,
     project_id: str | None = None,
     tenant_id: str | None = None,
     user_id: str | None = None,
     metadata: dict[str, JsonValue] | None = None,
 ):
     event = AnalyticsEvent(
-        id=uuid4(),
+        id=UUID(event_id) if event_id else uuid4(),
         event_type=EventType(event_type),
         project_id=UUID(project_id) if project_id else None,
         tenant_id=UUID(tenant_id) if tenant_id else None,
@@ -99,9 +100,14 @@ def record_analytics_event(
         from src.modules.analytics.infrastructure.database.repositories.analytics_uow import (
             SQLAnalyticsUnitOfWork,
         )
+        from sqlalchemy.exc import IntegrityError
 
         async with SQLAnalyticsUnitOfWork() as uow:
-            await uow.analytics_repo.save_event(event)
+            try:
+                await uow.analytics_repo.save_event(event)
+            except IntegrityError:
+                logger.info(f"Duplicate event {event.id} skipped (idempotent)")
+                return
 
         today = date.today()
 
@@ -121,12 +127,18 @@ def record_analytics_event(
                 # ── Project-level UPSERT ───────────────────────────────────────────
                 if project_id and event_type in _PROJECT_EVENT_MAP:
                     col = _PROJECT_EVENT_MAP[event_type]
+                    
+                    # Ensure all NOT NULL columns have a default of 0 when inserting a new row
+                    columns = ["api_requests", "login_successes", "login_failures", "registrations", "emails_sent", "emails_failed", "active_users"]
+                    cols_str = ", ".join(columns)
+                    vals_str = ", ".join("1" if c == col else "0" for c in columns)
+
                     await session.execute(
                         text(f"""
                         INSERT INTO live_project_metrics
-                            (id, project_id, date, {col})
+                            (id, project_id, date, {cols_str})
                         VALUES
-                            (gen_random_uuid(), :pid, :today, 1)
+                            (gen_random_uuid(), :pid, :today, {vals_str})
                         ON CONFLICT (project_id, date) DO UPDATE
                             SET {col} = live_project_metrics.{col} + 1
                         """),
@@ -144,12 +156,18 @@ def record_analytics_event(
                     and event_type in _TENANT_EVENT_MAP
                 ):
                     col = _TENANT_EVENT_MAP[event_type]
+                    
+                    # Ensure all NOT NULL columns have a default of 0 when inserting a new row
+                    columns = ["api_requests", "login_successes", "login_failures", "registrations", "emails_sent", "emails_failed", "projects_created", "active_users"]
+                    cols_str = ", ".join(columns)
+                    vals_str = ", ".join("1" if c == col else "0" for c in columns)
+                    
                     await session.execute(
                         text(f"""
                         INSERT INTO live_tenant_metrics
-                            (id, tenant_id, date, {col})
+                            (id, tenant_id, date, {cols_str})
                         VALUES
-                            (gen_random_uuid(), :tid, :today, 1)
+                            (gen_random_uuid(), :tid, :today, {vals_str})
                         ON CONFLICT (tenant_id, date) DO UPDATE
                             SET {col} = live_tenant_metrics.{col} + 1
                         """),
@@ -159,12 +177,18 @@ def record_analytics_event(
                 # ── System-level UPSERT ────────────────────────────────────────────
                 if event_type in _SYSTEM_EVENT_MAP:
                     col = _SYSTEM_EVENT_MAP[event_type]
+                    
+                    # Ensure all NOT NULL columns have a default of 0 when inserting a new row
+                    columns = ["tenants_onboarded", "tenant_suspensions", "api_key_rotations", "jwt_key_rotations"]
+                    cols_str = ", ".join(columns)
+                    vals_str = ", ".join("1" if c == col else "0" for c in columns)
+
                     await session.execute(
                         text(f"""
                         INSERT INTO live_system_metrics
-                            (id, date, {col})
+                            (id, date, {cols_str})
                         VALUES
-                            (gen_random_uuid(), :today, 1)
+                            (gen_random_uuid(), :today, {vals_str})
                         ON CONFLICT (date) DO UPDATE
                             SET {col} = live_system_metrics.{col} + 1
                         """),
@@ -179,9 +203,10 @@ def record_analytics_event(
                 )
 
         # ── Broadcast SSE via Redis Pub/Sub ───────────────────────────────────────
-        from src.core.container import app_container
+        from redis.asyncio import Redis
+        from src.core.config import get_settings
+        from src.shared.infrastructure.adapters import RedisEventPublisherAdapter
 
-        publisher = app_container.event_publisher_adapter
         event_data = {
             "event_type": event_type,
             "project_id": project_id,
@@ -191,15 +216,17 @@ def record_analytics_event(
             "timestamp": event.timestamp.isoformat(),
         }
 
-        if project_id:
-            await publisher.publish(f"analytics:project:{project_id}", event_data)
-        if project_id and resolved_tenant_id:
-            # Fan-out to tenant channel — only for project events
-            await publisher.publish(
-                f"analytics:tenant:{resolved_tenant_id}", event_data
-            )
-        if event_type in _SYSTEM_SSE_EVENTS:
-            await publisher.publish("analytics:system:global", event_data)
+        async with Redis.from_url(get_settings().database.CACHE_URL, decode_responses=True) as redis_client:
+            publisher = RedisEventPublisherAdapter(redis_client=redis_client)
+            if project_id:
+                await publisher.publish(f"analytics:project:{project_id}", event_data)
+            if project_id and resolved_tenant_id:
+                # Fan-out to tenant channel — only for project events
+                await publisher.publish(
+                    f"analytics:tenant:{resolved_tenant_id}", event_data
+                )
+            if event_type in _SYSTEM_SSE_EVENTS:
+                await publisher.publish("analytics:system:global", event_data)
 
     try:
         loop = asyncio.get_running_loop()

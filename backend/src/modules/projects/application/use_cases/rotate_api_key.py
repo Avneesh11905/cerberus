@@ -34,11 +34,11 @@ class RotateApiKeyUseCase(BaseProjectUseCase):
             project.updated_at = datetime.now(UTC)
             await self.uow.project_command_repo.save(project)
 
-            self.analytics.record_event(
-                event_type="API_KEY_ROTATED",
-                project_id=command.project_id,
-                tenant_id=project.tenant_id,
-                user_id=command.user_id,
-            )
+        self.analytics.record_event(
+            event_type="API_KEY_ROTATED",
+            project_id=command.project_id,
+            tenant_id=project.tenant_id,
+            user_id=command.user_id,
+        )
 
-            return RotateApiKeyDTO(api_key_plaintext=api_key_plaintext)
+        return RotateApiKeyDTO(api_key_plaintext=api_key_plaintext)

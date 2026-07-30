@@ -217,6 +217,7 @@ class SQLUserCommandRepositoryAdapter(UserCommandRepositoryPort):
         user = result.scalar_one_or_none()
         if user:
             user.deleted_at = None
+            user.is_active = True
         else:
             tenant = await self._session.execute(
                 select(Tenant).where(Tenant.id == user_id)
@@ -224,6 +225,7 @@ class SQLUserCommandRepositoryAdapter(UserCommandRepositoryPort):
             tenant_obj = tenant.scalar_one_or_none()
             if tenant_obj:
                 tenant_obj.deleted_at = None
+                tenant_obj.is_active = True
 
     async def update_role(self, user_id: UUID, role: GlobalRole) -> None:
         """Persist a role change for a tenant. Used for admin self-heal recovery."""

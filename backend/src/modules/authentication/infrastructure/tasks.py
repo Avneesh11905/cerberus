@@ -8,7 +8,7 @@ from src.core.celery_app import celery_app
 from src.core.config import get_settings
 from src.shared.infrastructure.adapters import AsyncSQLLogger
 
-logger = AsyncSQLLogger("BackgroundTasks")
+logger = AsyncSQLLogger(__name__)
 
 
 async def run_clean_expired_tokens():
@@ -55,7 +55,7 @@ async def run_clean_unverified_and_deleted_users():
             encryption_adapter=app_container.encryption_adapter,
             cache=app_container.cache_adapter,
         ) as uow:
-            count_users = await uow.user_maintenance_repo.delete_unverified_users(
+            count_users = await uow.user_maintenance_repo.cleanup_unverified_users(
                 hours_old=24
             )
             if count_users:
@@ -76,7 +76,7 @@ async def run_clean_unverified_and_deleted_users():
             encryption_adapter=app_container.encryption_adapter,
             cache=app_container.cache_adapter,
         ) as uow:
-            count_soft_deleted = await uow.user_maintenance_repo.hard_delete_users(
+            count_soft_deleted = await uow.user_maintenance_repo.cleanup_soft_deleted_users(
                 days_old=get_settings().account.RETENTION_DAYS
             )
             if count_soft_deleted:
@@ -98,8 +98,9 @@ def clean_unverified_and_deleted_users():
         asyncio.run(run_clean_unverified_and_deleted_users())
 
 
-@celery_app.task(name="dispatch_email_task")
+@celery_app.task(name="dispatch_email_task", bind=True)
 def dispatch_email_task(
+    self,
     to_email: str,
     subject: str,
     html_content: str,
@@ -113,12 +114,14 @@ def dispatch_email_task(
         app_container.email_client.send_email(to_email, subject, html_content)
         app_container.analytics_adapter.record_event(
             event_type="EMAIL_SENT",
+            event_id=self.request.id,
             tenant_id=UUID(tenant_id) if tenant_id else None,
             project_id=UUID(project_id) if project_id else None,
         )
     except Exception as e:
         app_container.analytics_adapter.record_event(
             event_type="EMAIL_FAILED",
+            event_id=self.request.id,
             tenant_id=UUID(tenant_id) if tenant_id else None,
             project_id=UUID(project_id) if project_id else None,
         )

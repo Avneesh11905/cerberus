@@ -32,7 +32,7 @@ class ProviderMetadata(BaseModel):
     )
 
 
-logger = AsyncSQLLogger("OAuthRegistry")
+logger = AsyncSQLLogger(__name__)
 
 
 class OAuthRegistry:

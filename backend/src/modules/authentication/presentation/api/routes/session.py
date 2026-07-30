@@ -77,9 +77,7 @@ async def refresh(
     if new_refresh_token:
         set_refresh_token_cookie(response, new_refresh_token)
 
-    # Derive the CSRF token the same way set_refresh_token_cookie does
     active_refresh_token = new_refresh_token if new_refresh_token else refresh_token
-
     csrf_token = generate_csrf_token(active_refresh_token)
 
     return RefreshResponse(

@@ -1,7 +1,8 @@
 from collections.abc import Sequence
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, func
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.projects.application.ports import ProjectQueryRepositoryPort
@@ -62,6 +63,22 @@ class SQLProjectQueryRepositoryAdapter(ProjectQueryRepositoryPort):
         )
         models = result.scalars().all()
         return [self._to_entity(m) for m in models]
+
+    async def get_paginated_for_tenant(self, tenant_id: UUID, skip: int, limit: int) -> tuple[Sequence[ProjectEntity], int]:
+        count_result = await self._session.execute(
+            select(func.count()).select_from(ProjectModel).where(ProjectModel.tenant_id == tenant_id)
+        )
+        total = count_result.scalar() or 0
+
+        result = await self._session.execute(
+            select(ProjectModel)
+            .where(ProjectModel.tenant_id == tenant_id)
+            .order_by(ProjectModel.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+        items = [self._to_entity(model) for model in result.scalars().all()]
+        return items, total
 
     async def get_private_key(self, project_id: UUID) -> str | None:
         result = await self._session.execute(

@@ -17,7 +17,9 @@ from src.modules.projects.presentation.api.schemas import (
     ProjectCreateReq,
     ProjectCreateRes,
     ProjectReadRes,
+    PaginatedProjectsRes,
 )
+from fastapi import Query
 from src.modules.projects.wiring import (
     CreateProjectUseCaseDep,
     DeleteProjectUseCaseDep,
@@ -50,15 +52,23 @@ async def create_project(
     )
 
 
-@router.get("/", response_model=list[ProjectReadRes])
+@router.get("/", response_model=PaginatedProjectsRes)
 async def list_projects(
     usecase: ListProjectsUseCaseDep,
     user: RequireTenantRoleDep,
+    page: int = Query(1, ge=1),
+    size: int = Query(20, ge=1, le=100),
 ):
     """List all projects owned by the authenticated tenant."""
-    dto = await usecase.execute(ListProjectsQuery(user_id=user.id))
-    projects = dto.projects
-    return [ProjectReadRes.model_validate(p) for p in projects]
+    skip = (page - 1) * size
+    dto = await usecase.execute(ListProjectsQuery(user_id=user.id, skip=skip, limit=size))
+    
+    return PaginatedProjectsRes(
+        items=[ProjectReadRes.model_validate(p) for p in dto.projects],
+        total=dto.total,
+        page=page,
+        size=size,
+    )
 
 
 @router.get("/{project_id}", response_model=ProjectReadRes)

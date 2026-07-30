@@ -1,12 +1,11 @@
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import {
   getTenants,
   updateTenantStatus,
   updateTenantRole,
 } from '../api/superadmin'
-import type { User } from '../store/auth'
 import {
   Table,
   TableBody,
@@ -25,6 +24,13 @@ import {
   DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu'
 import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+  ContextMenuSeparator,
+} from '../components/ui/context-menu'
+import {
   MoreHorizontal,
   Search,
   Shield,
@@ -32,6 +38,8 @@ import {
   UserX,
   UserCheck,
   BarChart,
+  Copy,
+  RefreshCcw,
 } from 'lucide-react'
 import { Input } from '../components/ui/input'
 import { toast } from 'sonner'
@@ -53,7 +61,7 @@ function SuperadminTenantsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['superadmin-tenants', page, search],
     queryFn: () => getTenants(page, 50, search || undefined),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   })
 
   const statusMutation = useMutation({
@@ -87,9 +95,12 @@ function SuperadminTenantsPage() {
   }
 
   return (
-    <div className="space-y-6 pt-4">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-6">
-        <div>
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <div className="space-y-6 pt-4 w-full h-full min-h-[calc(100vh-100px)] px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto w-full">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-6">
+              <div>
           <h2 className="text-xl font-bold text-slate">Tenant Management</h2>
           <p className="text-sm font-semibold text-slate/60 mt-1">
             Manage global access and roles for all users.
@@ -107,11 +118,11 @@ function SuperadminTenantsPage() {
         </form>
       </div>
 
-      <div className="bg-vanilla border-2 border-taupe/30 rounded-xl overflow-hidden shadow-sm">
-        <Table>
-          <TableHeader className="bg-sand/30">
+      <div className="bg-vanilla border-2 border-taupe/30 rounded-xl overflow-hidden shadow-sm mt-6">
+            <Table>
+              <TableHeader className="bg-sand/30">
             <TableRow className="border-taupe/30 hover:bg-transparent">
-              <TableHead className="font-bold text-slate w-[250px]">
+              <TableHead className="font-bold text-slate w-62.5">
                 Tenant
               </TableHead>
               <TableHead className="font-bold text-slate">Role</TableHead>
@@ -119,7 +130,7 @@ function SuperadminTenantsPage() {
               <TableHead className="font-bold text-slate hidden md:table-cell">
                 Joined
               </TableHead>
-              <TableHead className="text-right font-bold text-slate w-[100px]">
+              <TableHead className="text-right font-bold text-slate w-25">
                 Actions
               </TableHead>
             </TableRow>
@@ -159,15 +170,21 @@ function SuperadminTenantsPage() {
               </TableRow>
             ) : (
               data?.items.map((tenant) => (
-                <TableRow
-                  key={tenant.id}
-                  className="border-taupe/20 hover:bg-sand/30 transition-colors"
-                >
-                  <TableCell>
+                <ContextMenu key={tenant.id}>
+                  <ContextMenuTrigger asChild>
+                    <TableRow
+                      className="border-taupe/20 hover:bg-sand/30 transition-colors"
+                    >
+                      <TableCell>
                     <div className="font-semibold text-slate truncate">
-                      {tenant.name || tenant.email}
+                      {tenant.name || 'Unnamed User'}
                     </div>
-                    <div className="text-xs text-slate/60 font-mono mt-0.5">
+                    {tenant.email && (
+                      <div className="text-xs text-slate/70 mt-0.5 truncate font-semibold">
+                        {tenant.email}
+                      </div>
+                    )}
+                    <div className="text-xs text-slate/50 font-mono mt-0.5">
                       {tenant.id}
                     </div>
                   </TableCell>
@@ -276,6 +293,63 @@ function SuperadminTenantsPage() {
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
+                </ContextMenuTrigger>
+                <ContextMenuContent className="w-56 bg-vanilla border-2 border-slate rounded-xl shadow-[4px_4px_0px_rgba(96,114,116,1)] p-1 z-60">
+                  <ContextMenuItem
+                    className="font-bold cursor-pointer rounded-lg px-3 py-2 hover:bg-sand focus:bg-sand"
+                    onClick={() => {
+                      navigator.clipboard.writeText(tenant.id)
+                      toast.success('Tenant ID copied to clipboard')
+                    }}
+                  >
+                    <Copy className="w-4 h-4 mr-2" /> Copy Tenant ID
+                  </ContextMenuItem>
+                  <ContextMenuSeparator className="bg-slate/10 my-1" />
+                  <ContextMenuItem
+                    className="font-bold cursor-pointer rounded-lg px-3 py-2 hover:bg-sand focus:bg-sand"
+                    onClick={() =>
+                      router.navigate({
+                        to: '/superadmin/tenants/$tenantId/analytics',
+                        params: { tenantId: tenant.id },
+                      })
+                    }
+                  >
+                    <BarChart className="w-4 h-4 mr-2" /> View Analytics
+                  </ContextMenuItem>
+                  <ContextMenuItem
+                    className="font-bold cursor-pointer rounded-lg px-3 py-2 hover:bg-sand focus:bg-sand"
+                    onClick={() =>
+                      statusMutation.mutate({
+                        id: tenant.id,
+                        isActive: !tenant.is_active,
+                      })
+                    }
+                    disabled={statusMutation.isPending}
+                  >
+                    {tenant.is_active ? (
+                      <><UserX className="w-4 h-4 mr-2 text-terracotta" /> <span className="text-terracotta">Disable Tenant</span></>
+                    ) : (
+                      <><UserCheck className="w-4 h-4 mr-2 text-sage" /> <span className="text-sage">Enable Tenant</span></>
+                    )}
+                  </ContextMenuItem>
+                  <ContextMenuItem
+                    className="font-bold cursor-pointer rounded-lg px-3 py-2 hover:bg-sand focus:bg-sand"
+                    onClick={() =>
+                      roleMutation.mutate({
+                        id: tenant.id,
+                        role: tenant.role === 'SUPERADMIN' ? 'USER' : 'SUPERADMIN',
+                      })
+                    }
+                    disabled={roleMutation.isPending}
+                  >
+                    {tenant.role === 'SUPERADMIN' ? (
+                      <><ShieldOff className="w-4 h-4 mr-2 text-ochre" /> Revoke Superadmin</>
+                    ) : (
+                      <><Shield className="w-4 h-4 mr-2 text-ochre" /> Promote to Superadmin</>
+                    )}
+                  </ContextMenuItem>
+                </ContextMenuContent>
+              </ContextMenu>
               ))
             )}
           </TableBody>
@@ -310,6 +384,17 @@ function SuperadminTenantsPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+      </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent className="w-56 bg-vanilla border-2 border-slate rounded-xl shadow-[4px_4px_0px_rgba(96,114,116,1)] p-1 z-60">
+        <ContextMenuItem
+          className="font-bold cursor-pointer rounded-lg px-3 py-2 hover:bg-sand focus:bg-sand"
+          onClick={() => queryClient.invalidateQueries({ queryKey: ['superadmin-tenants'] })}
+        >
+          <RefreshCcw className="w-4 h-4 mr-2" /> Refresh Tenants
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   )
 }

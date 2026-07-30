@@ -8,7 +8,7 @@ from src.core.config.auth import RateLimitSettings
 from src.shared.application.ports import AnalyticsEventPort, RateLimiterPort, CachePort
 from src.shared.infrastructure.adapters.logger import AsyncSQLLogger
 
-logger = AsyncSQLLogger("RateLimitMiddleware")
+logger = AsyncSQLLogger(__name__)
 
 
 def parse_rate(rate_str: str) -> tuple[int, int]:

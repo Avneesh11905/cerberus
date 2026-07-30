@@ -46,7 +46,7 @@ function SuperadminTenantAnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full min-h-[400px]">
+      <div className="flex items-center justify-center h-full min-h-100">
         <Activity className="w-8 h-8 animate-spin text-terracotta" />
       </div>
     )
@@ -69,7 +69,7 @@ function SuperadminTenantAnalyticsPage() {
     metrics.length > 0 ? metrics[metrics.length - 1].active_users : 0
 
   return (
-    <div className="container max-w-7xl mx-auto px-4 py-12">
+    <div className="max-w-7xl mx-auto flex flex-col gap-8 w-full">
       <div className="mb-6">
         <Button
           variant="outline"
@@ -146,7 +146,7 @@ function SuperadminTenantAnalyticsPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-8">
-        <Card className="bg-vanilla h-[500px] flex flex-col border-2 border-slate shadow-[8px_8px_0px_rgba(30,41,59,1)]">
+        <Card className="bg-vanilla h-125 flex flex-col border-2 border-slate shadow-[8px_8px_0px_rgba(30,41,59,1)]">
           <CardHeader>
             <CardTitle>30-Day Activity</CardTitle>
           </CardHeader>

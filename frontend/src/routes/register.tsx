@@ -1,6 +1,5 @@
 import {
   createFileRoute,
-  Link,
   redirect,
   useNavigate,
 } from '@tanstack/react-router'
@@ -10,12 +9,12 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation } from '@tanstack/react-query'
 import { Turnstile } from '@marsidev/react-turnstile'
-import { Eye, EyeOff } from 'lucide-react'
 
 import { apiClient, API_URL, extractErrorMessage } from '../lib/api-client'
 import { useAuthStore } from '../store/auth'
 import { AuthLayout } from '../components/layout/AuthLayout'
 import { Input } from '../components/ui/input'
+import { PasswordInput } from '../components/ui/password-input'
 import { Button } from '../components/ui/button'
 import { Label } from '../components/ui/label'
 import { GoogleIcon, GithubIcon } from '../components/ui/icons'
@@ -55,7 +54,6 @@ function RegisterPage() {
 
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const [authError, setAuthError] = useState<string | null>(null)
-  const [showPassword, setShowPassword] = useState(false)
 
   const [pendingAction, setPendingAction] = useState<
     'register' | 'google' | 'github' | null
@@ -175,23 +173,11 @@ function RegisterPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label htmlFor="password">Password</Label>
-            <div className="relative">
-              <Input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Min. 8 chars"
-                className="pr-10"
-                {...register('password')}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate/50 hover:text-slate transition-colors"
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-              >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
+            <PasswordInput
+              id="password"
+              placeholder="Min. 8 chars"
+              {...register('password')}
+            />
             {errors.password && (
               <p className="text-terracotta text-xs font-medium">
                 {errors.password.message}
@@ -201,23 +187,11 @@ function RegisterPage() {
 
           <div className="space-y-1.5">
             <Label htmlFor="confirmPassword">Confirm Password</Label>
-            <div className="relative">
-              <Input
-                id="confirmPassword"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Confirm"
-                className="pr-10"
-                {...register('confirmPassword')}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate/50 hover:text-slate transition-colors"
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-              >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
+            <PasswordInput
+              id="confirmPassword"
+              placeholder="Confirm"
+              {...register('confirmPassword')}
+            />
             {errors.confirmPassword && (
               <p className="text-terracotta text-xs font-medium">
                 {errors.confirmPassword.message}
@@ -314,9 +288,9 @@ function RegisterPage() {
 
         <div className="mt-6 text-center text-sm font-medium text-slate">
           Already have an account?{' '}
-          <Link to="/login" className="text-slate hover:underline font-bold">
+          <span onClick={() => navigate({ to: '/login' })} className="text-slate hover:underline font-bold cursor-pointer">
             Log in
-          </Link>
+          </span>
         </div>
       </form>
     </AuthLayout>

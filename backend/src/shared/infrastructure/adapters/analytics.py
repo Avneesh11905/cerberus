@@ -8,13 +8,16 @@ class CeleryAnalyticsAdapter:
     def record_event(
         self,
         event_type: str,
+        event_id: UUID | None = None,
         project_id: UUID | None = None,
         tenant_id: UUID | None = None,
         user_id: UUID | None = None,
         metadata: dict[str, JsonValue] | None = None,
     ) -> None:
+        from uuid import uuid4
         kwargs: dict[str, JsonValue] = {
             "event_type": event_type,
+            "event_id": str(event_id) if event_id else str(uuid4()),
         }
         if project_id:
             kwargs["project_id"] = str(project_id)

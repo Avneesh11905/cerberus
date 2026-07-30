@@ -42,6 +42,15 @@ import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
 import { Checkbox } from '../components/ui/checkbox'
 import { GoogleIcon, GithubIcon } from '../components/ui/icons'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '../components/ui/dialog'
 
 export const Route = createFileRoute('/_protected/settings')({
   component: SettingsPage,
@@ -225,7 +234,40 @@ function ProfileTab() {
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="flex justify-end pt-2">
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={updateProfileMutation.isPending}
+              >
+                <AnimatePresence mode="wait">
+                  {isSaved ? (
+                    <motion.div
+                      key="saved"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="flex items-center gap-2"
+                    >
+                      <Check className="w-4 h-4" /> Saved!
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="save"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                    >
+                      {updateProfileMutation.isPending
+                        ? 'Saving...'
+                        : 'Save Changes'}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </Button>
+            </div>
+
+            <div className="space-y-2 pt-6 border-t-2 border-taupe/20">
               <Label>Account Details</Label>
               <div className="flex flex-wrap gap-6 p-4 rounded-xl bg-vanilla border-2 border-taupe/30">
                 <div className="flex flex-col gap-1.5">
@@ -279,38 +321,6 @@ function ProfileTab() {
               </div>
             </div>
           </CardContent>
-          <CardFooter className="flex justify-end border-t-2 border-taupe/20 pt-6">
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={updateProfileMutation.isPending}
-            >
-              <AnimatePresence mode="wait">
-                {isSaved ? (
-                  <motion.div
-                    key="saved"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="flex items-center gap-2"
-                  >
-                    <Check className="w-4 h-4" /> Saved!
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="save"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                  >
-                    {updateProfileMutation.isPending
-                      ? 'Saving...'
-                      : 'Save Changes'}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </Button>
-          </CardFooter>
         </form>
       </Card>
     </div>
@@ -604,6 +614,7 @@ function ActiveSessionsCard() {
 function DeleteAccountCard() {
   const logout = useAuthStore((state) => state.logout)
   const navigate = useNavigate()
+  const [isOpen, setIsOpen] = useState(false)
 
   const deleteMutation = useMutation({
     mutationFn: deleteMe,
@@ -617,36 +628,48 @@ function DeleteAccountCard() {
   })
 
   return (
-    <Card className="bg-terracotta/10 border-2 border-terracotta shadow-[4px_4px_0px_var(--terracotta)]">
+    <Card className="border-terracotta overflow-hidden relative">
       <CardHeader>
-        <CardTitle className="text-terracotta flex items-center gap-2">
-          <AlertTriangle className="w-6 h-6" />
-          Danger Zone
-        </CardTitle>
-        <CardDescription className="text-terracotta/80 font-bold text-sm">
-          Permanently delete your account and all associated data. This action
-          cannot be undone.
+        <CardTitle className="text-terracotta">Danger Zone</CardTitle>
+        <CardDescription>
+          Deactivate your account. You will have 28 days to recover it by logging in again before it is permanently deleted.
         </CardDescription>
       </CardHeader>
-      <CardFooter className="border-t-2 border-terracotta/20 pt-6">
-        <Button
-          variant="destructive"
-          onClick={() => {
-            if (
-              window.confirm(
-                'Are you absolutely sure you want to delete your account? This is irreversible.',
-              )
-            ) {
-              deleteMutation.mutate()
-            }
-          }}
-          disabled={deleteMutation.isPending}
-          className="flex items-center gap-2"
-        >
-          <Trash2 className="w-4 h-4" />
-          {deleteMutation.isPending ? 'Deleting...' : 'Delete Account'}
-        </Button>
-      </CardFooter>
+      <CardContent>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogTrigger asChild>
+            <Button variant="destructive">
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete Account
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle className="text-terracotta flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5" />
+                Delete Account
+              </DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete your account? Your account will be deactivated and soft-deleted. You can recover it at any time within the next 28 days simply by logging back in. After 28 days, your account and all associated data will be permanently lost.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="mt-6 flex gap-3 sm:justify-end">
+              <Button variant="outline" onClick={() => setIsOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  deleteMutation.mutate()
+                }}
+                disabled={deleteMutation.isPending}
+              >
+                {deleteMutation.isPending ? 'Deleting...' : 'Yes, delete my account'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </CardContent>
     </Card>
   )
 }
@@ -664,32 +687,32 @@ function SecurityTab() {
 function SettingsPage() {
   const [activeTab, setActiveTab] = useState<'profile' | 'security'>('profile')
   const user = useAuthStore((state) => state.user)
+  const navigate = useNavigate()
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 pb-20">
-      <div className="flex items-center gap-3 mb-6">
-        <Button 
-          variant="outline" 
-          size="icon" 
-          className="border-2 border-slate w-10 h-10 rounded-xl"
-          onClick={() => router.navigate({ to: '/dashboard' })}
-        >
-          <ArrowLeft className="w-5 h-5 text-slate" />
-        </Button>
-        <Settings className="w-8 h-8 text-slate" />
-        <div>
-          <h1 className="text-3xl font-display font-bold text-slate tracking-tight">
-            Settings
-          </h1>
-          <p className="text-sm font-medium text-slate/60 mt-1">
-            Manage preferences for {user?.name || user?.email}
-          </p>
+    <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-8 w-full">
+      {/* Left Column (Header + Sidebar) */}
+      <div className="w-full md:w-64 shrink-0 flex flex-col gap-8">
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="outline" 
+            size="icon"
+            className="border-2 border-slate w-10 h-10 rounded-xl shrink-0"
+            onClick={() => navigate({ to: '/dashboard' })}
+          >
+            <ArrowLeft className="w-5 h-5 text-slate" />
+          </Button>
+          <div>
+            <h1 className="text-3xl font-display font-bold text-slate tracking-tight">
+              Settings
+            </h1>
+            <p className="text-sm font-medium text-slate/60 mt-1 line-clamp-1">
+              Manage preferences for {user?.name || user?.email}
+            </p>
+          </div>
         </div>
-      </div>
 
-      <div className="flex flex-col md:flex-row gap-8">
-        {/* Sidebar */}
-        <div className="w-full md:w-64 shrink-0 flex flex-col gap-2">
+        <div className="flex flex-col gap-2">
           <button
             onClick={() => setActiveTab('profile')}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all text-left ${activeTab === 'profile' ? 'bg-slate text-vanilla flat-shadow-taupe border-2 border-slate' : 'bg-transparent text-slate hover:bg-taupe/10 border-2 border-transparent hover:border-taupe/20'}`}
@@ -705,17 +728,17 @@ function SettingsPage() {
             Security
           </button>
         </div>
+      </div>
 
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          {activeTab === 'profile' ? (
-            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <ProfileTab />
-            </div>
-          ) : (
-            <SecurityTab />
-          )}
-        </div>
+      {/* Right Column (Content) */}
+      <div className="flex-1 min-w-0">
+        {activeTab === 'profile' ? (
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <ProfileTab />
+          </div>
+        ) : (
+          <SecurityTab />
+        )}
       </div>
     </div>
   )

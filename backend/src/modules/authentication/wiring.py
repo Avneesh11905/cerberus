@@ -39,7 +39,7 @@ def get_local_register_usecase(
     return LocalRegisterUseCase(
         uow=uow,
         hasher=app_container.password_hasher,
-        logger=AsyncSQLLogger("RegisterLocalUseCase"),
+        logger=AsyncSQLLogger(LocalRegisterUseCase.__module__),
         email_sender=app_container.auth_email_sender,
         cache=app_container.cache_adapter,
         rate_limiter=app_container.rate_limiter,
@@ -56,7 +56,7 @@ def get_local_login_usecase(
     return LocalLoginUseCase(
         uow=uow,
         hasher=app_container.password_hasher,
-        logger=AsyncSQLLogger("LoginLocalUseCase"),
+        logger=AsyncSQLLogger(LocalLoginUseCase.__module__),
         email_sender=app_container.auth_email_sender,
         access_token=app_container.access_token_adapter,
         claims_provider=app_container.claims_provider,
@@ -74,7 +74,7 @@ def get_password_change_usecase(
     return PasswordChangeUseCase(
         uow=uow,
         hasher=app_container.password_hasher,
-        logger=AsyncSQLLogger("PasswordChangeUseCase"),
+        logger=AsyncSQLLogger(PasswordChangeUseCase.__module__),
     )
 
 
@@ -109,7 +109,7 @@ def get_local_resend_verification_usecase(
 
     return LocalResendVerificationUseCase(
         uow=uow,
-        logger=AsyncSQLLogger("LocalResendVerificationUseCase"),
+        logger=AsyncSQLLogger(LocalResendVerificationUseCase.__module__),
         email_sender=app_container.auth_email_sender,
         cache=app_container.cache_adapter,
         rate_limiter=app_container.rate_limiter,
@@ -124,7 +124,7 @@ def get_local_verify_email_usecase(
     return LocalVerifyEmailUseCase(
         uow=uow,
         cache=app_container.cache_adapter,
-        logger=AsyncSQLLogger("LocalVerifyEmailUseCase"),
+        logger=AsyncSQLLogger(LocalVerifyEmailUseCase.__module__),
         email_sender=app_container.auth_email_sender,
         rate_limiter=app_container.rate_limiter,
         turnstile=app_container.turnstile_adapter,

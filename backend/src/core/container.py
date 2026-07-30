@@ -124,7 +124,7 @@ class AppContainer:
             email_client=self.email_client,
             from_email=self.config.email.FROM,
             templates_dir=Path(__file__).parent.parent / "templates" / "emails",
-            logger=AsyncSQLLogger("EmailSender"),
+            logger=AsyncSQLLogger(AuthEmailSenderAdapter.__module__),
             proj_name="Cerberus",
             template_name=self.config.email.TEMPLATE_NAME,
             frontend_url=self.config.url.FRONTEND_URL,

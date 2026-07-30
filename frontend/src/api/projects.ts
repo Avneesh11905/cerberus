@@ -24,11 +24,21 @@ export interface Project {
   jwt_secret_last_rotated?: string
 }
 
-export const getProjects = async (): Promise<Project[]> => {
-  const { data } = await apiClient.get<unknown>('/projects/')
-  return Array.isArray(data)
-    ? (data as Project[])
-    : (data as { projects?: Project[] })?.projects || []
+export interface PaginatedProjectsRes {
+  items: Project[]
+  total: number
+  page: number
+  size: number
+}
+
+export const getProjects = async (params?: {
+  page: number
+  size: number
+}): Promise<PaginatedProjectsRes> => {
+  const { data } = await apiClient.get<PaginatedProjectsRes>('/projects/', {
+    params,
+  })
+  return data
 }
 
 export const getProject = async (projectId: string): Promise<Project> => {

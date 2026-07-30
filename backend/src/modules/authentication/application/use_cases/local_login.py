@@ -282,14 +282,14 @@ class LocalLoginUseCase:
             if command.is_challenged:
                 await self._rate_limiter.record_success(limit_key)
 
-            self._analytics.record_event(
-                project_id=command.project_id,
-                tenant_id=user.id if not command.project_id else None,
-                event_type="LOGIN_SUCCESS",
-                user_id=user.id if command.project_id else None,
-                metadata=dataclasses.asdict(command.client_meta)
-                if command.client_meta
-                else None,
-            )
+        self._analytics.record_event(
+            project_id=command.project_id,
+            tenant_id=user.id if not command.project_id else None,
+            event_type="LOGIN_SUCCESS",
+            user_id=user.id if command.project_id else None,
+            metadata=dataclasses.asdict(command.client_meta)
+            if command.client_meta
+            else None,
+        )
 
-            return user, token, access_token
+        return user, token, access_token

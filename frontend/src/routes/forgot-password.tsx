@@ -1,10 +1,9 @@
 import {
   createFileRoute,
-  Link,
-  redirect,
   useNavigate,
+  redirect,
 } from '@tanstack/react-router'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -116,9 +115,9 @@ function ForgotPasswordPage() {
 
         <div className="mt-6 text-center text-sm font-medium text-slate">
           Remembered your password?{' '}
-          <Link to="/login" className="text-slate hover:underline font-bold">
+          <span onClick={() => navigate({ to: '/login' })} className="text-slate hover:underline font-bold cursor-pointer">
             Log in
-          </Link>
+          </span>
         </div>
       </form>
     </AuthLayout>

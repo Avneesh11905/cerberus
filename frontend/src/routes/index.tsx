@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { PublicLayout } from '../components/layout/PublicLayout'
 import { Server, Users, Key, ShieldCheck, ArrowRight } from 'lucide-react'
 import { useAuthStore } from '../store/auth'
@@ -9,8 +9,7 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { Observer } from 'gsap/Observer'
 import { ScrollToPlugin } from 'gsap/ScrollToPlugin'
-import { buttonVariants, Button } from '../components/ui/button'
-import { cn } from '../lib/utils'
+import { Button } from '../components/ui/button'
 
 gsap.registerPlugin(ScrollTrigger, Observer, ScrollToPlugin)
 

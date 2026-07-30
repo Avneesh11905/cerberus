@@ -3,6 +3,7 @@ Module: SQL System Log Repository Adapter
 """
 
 from collections.abc import Sequence
+from datetime import datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -36,6 +37,8 @@ class SQLSystemLogRepositoryAdapter(SystemLogRepositoryPort):
         skip: int = 0,
         limit: int = 100,
         level: LogLevel | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
     ) -> Sequence[SystemLogEntity]:
         stmt = select(SystemLog)
         if level:
@@ -45,6 +48,10 @@ class SQLSystemLogRepositoryAdapter(SystemLogRepositoryPort):
                 )
             else:
                 stmt = stmt.where(SystemLog.level == level)
+        if start_date:
+            stmt = stmt.where(SystemLog.created_at >= start_date)
+        if end_date:
+            stmt = stmt.where(SystemLog.created_at <= end_date)
 
         stmt = stmt.order_by(SystemLog.created_at.desc()).offset(skip).limit(limit)
 
@@ -52,7 +59,12 @@ class SQLSystemLogRepositoryAdapter(SystemLogRepositoryPort):
         orm_models = result.scalars().all()
         return [self._to_entity(model) for model in orm_models]
 
-    async def count_logs(self, level: LogLevel | None = None) -> int:
+    async def count_logs(
+        self, 
+        level: LogLevel | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+    ) -> int:
         stmt = select(func.count(SystemLog.id))
         if level:
             if level == LogLevel.WARN:
@@ -61,6 +73,10 @@ class SQLSystemLogRepositoryAdapter(SystemLogRepositoryPort):
                 )
             else:
                 stmt = stmt.where(SystemLog.level == level)
+        if start_date:
+            stmt = stmt.where(SystemLog.created_at >= start_date)
+        if end_date:
+            stmt = stmt.where(SystemLog.created_at <= end_date)
 
         result = await self._session.execute(stmt)
         return result.scalar_one() or 0

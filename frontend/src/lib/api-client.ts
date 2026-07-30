@@ -86,6 +86,50 @@ export const refreshClient = axios.create({
   },
 })
 
+export const refreshToken = async (): Promise<string> => {
+  if (isRefreshing) {
+    return new Promise<string>((resolve, reject) => {
+      failedQueue.push({ resolve: resolve as any, reject })
+    })
+  }
+
+  isRefreshing = true
+
+  try {
+    const csrfToken = useAuthStore.getState().csrfToken
+    const { data } = await refreshClient.post<{
+      access_token: string
+      csrf_token?: string
+      user?: User
+    }>(
+      '/auth/refresh',
+      {},
+      {
+        headers: csrfToken ? { 'X-CSRF': csrfToken } : undefined,
+      },
+    )
+
+    const newAccessToken = data.access_token
+    const newCsrfToken = data?.csrf_token
+    if (data.user) {
+      useAuthStore
+        .getState()
+        .setAuth(newAccessToken, newCsrfToken || '', data.user)
+    } else {
+      useAuthStore.getState().setAccessToken(newAccessToken, newCsrfToken)
+    }
+
+    processQueue(null, newAccessToken)
+    return newAccessToken
+  } catch (refreshError) {
+    processQueue(refreshError as Error, null)
+    useAuthStore.getState().logout()
+    return Promise.reject(refreshError)
+  } finally {
+    isRefreshing = false
+  }
+}
+
 apiClient.interceptors.response.use(
   (response) => {
     return response
@@ -120,44 +164,16 @@ apiClient.interceptors.response.use(
       }
 
       originalRequest._retry = true
-      isRefreshing = true
-
       try {
-        const csrfToken = useAuthStore.getState().csrfToken
-        const { data } = await refreshClient.post<{
-          access_token: string
-          csrf_token?: string
-          user?: User
-        }>(
-          '/auth/refresh',
-          {},
-          {
-            headers: csrfToken ? { 'X-CSRF': csrfToken } : undefined,
-          },
-        )
-
-        const newAccessToken = data.access_token
-        const newCsrfToken = data?.csrf_token
-        if (data.user) {
-          useAuthStore
-            .getState()
-            .setAuth(newAccessToken, newCsrfToken || '', data.user)
-        } else {
-          useAuthStore.getState().setAccessToken(newAccessToken, newCsrfToken)
-        }
+        const newAccessToken = await refreshToken()
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
+        const newCsrfToken = useAuthStore.getState().csrfToken
         if (newCsrfToken) {
           originalRequest.headers['X-CSRF'] = newCsrfToken
         }
-
-        processQueue(null, newAccessToken)
         return apiClient(originalRequest)
       } catch (refreshError) {
-        processQueue(refreshError as Error, null)
-        useAuthStore.getState().logout()
         return Promise.reject(refreshError)
-      } finally {
-        isRefreshing = false
       }
     }
 

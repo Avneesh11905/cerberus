@@ -81,9 +81,13 @@ export const getSystemLogs = async (
   page: number = 1,
   limit: number = 100,
   level?: string,
+  startDate?: string,
+  endDate?: string,
 ) => {
   const params: Record<string, unknown> = { page, limit }
   if (level) params.level = level
+  if (startDate) params.start_date = startDate
+  if (endDate) params.end_date = endDate
   const { data } = await apiClient.get<PaginatedSystemLogRes>(
     '/superadmin/logs',
     { params },

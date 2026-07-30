@@ -13,6 +13,7 @@ from .project_secrets_res import ProjectSecretsRes
 from .project_user_status_update_req import ProjectUserStatusUpdateReq
 from .project_user_status_update_res import ProjectUserStatusUpdateRes
 from .paginated_project_users_res import PaginatedProjectUsersRes
+from .paginated_projects_res import PaginatedProjectsRes
 from .project_rotate_api_key_res import ProjectRotateApiKeyRes
 from .project_rotate_rsa_keys_res import ProjectRotateRsaKeysRes
 from .project_default_claims_req import ProjectDefaultClaimsReq
@@ -23,6 +24,7 @@ from .user_claims_res import UserClaimsRes
 __all__ = [
     "OAuthProviderRes",
     "PaginatedProjectUsersRes",
+    "PaginatedProjectsRes",
     "ProjectCreateReq",
     "ProjectCreateRes",
     "ProjectDefaultClaimsReq",

@@ -21,12 +21,18 @@ import { Route as ProtectedSettingsRouteImport } from './routes/_protected.setti
 import { Route as ProtectedSuperadminRouteImport } from './routes/_protected.superadmin'
 import { Route as OauthCallbackRouteImport } from './routes/oauth.callback'
 import { Route as ProtectedProjectsIndexRouteImport } from './routes/_protected.projects.index'
+import { Route as ProtectedProjectsProjectIdRouteImport } from './routes/_protected.projects.$projectId'
 import { Route as ProtectedSuperadminIndexRouteImport } from './routes/_protected.superadmin.index'
 import { Route as ProtectedSuperadminLogsRouteImport } from './routes/_protected.superadmin.logs'
 import { Route as ProtectedSuperadminTenantsRouteImport } from './routes/_protected.superadmin.tenants'
 import { Route as ProtectedUsersIndexRouteImport } from './routes/_protected.users.index'
 import { Route as ProtectedProjectsProjectIdIndexRouteImport } from './routes/_protected.projects.$projectId.index'
-import { Route as ProtectedProjectsProjectIdSettingsRouteImport } from './routes/_protected.projects.$projectId.settings'
+import { Route as ProtectedProjectsProjectIdAnalyticsRouteImport } from './routes/_protected.projects.$projectId.analytics'
+import { Route as ProtectedProjectsProjectIdAuthRouteImport } from './routes/_protected.projects.$projectId.auth'
+import { Route as ProtectedProjectsProjectIdClaimsRouteImport } from './routes/_protected.projects.$projectId.claims'
+import { Route as ProtectedProjectsProjectIdGeneralRouteImport } from './routes/_protected.projects.$projectId.general'
+import { Route as ProtectedProjectsProjectIdSecurityRouteImport } from './routes/_protected.projects.$projectId.security'
+import { Route as ProtectedProjectsProjectIdUsersRouteImport } from './routes/_protected.projects.$projectId.users'
 import { Route as ProtectedSuperadminTenantsTenantIdAnalyticsRouteImport } from './routes/_protected.superadmin.tenants_.$tenantId.analytics'
 
 const IndexRoute = IndexRouteImport.update({
@@ -88,6 +94,12 @@ const ProtectedProjectsIndexRoute = ProtectedProjectsIndexRouteImport.update({
   path: '/projects/',
   getParentRoute: () => ProtectedRoute,
 } as any)
+const ProtectedProjectsProjectIdRoute =
+  ProtectedProjectsProjectIdRouteImport.update({
+    id: '/projects/$projectId',
+    path: '/projects/$projectId',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
 const ProtectedSuperadminIndexRoute =
   ProtectedSuperadminIndexRouteImport.update({
     id: '/',
@@ -112,15 +124,45 @@ const ProtectedUsersIndexRoute = ProtectedUsersIndexRouteImport.update({
 } as any)
 const ProtectedProjectsProjectIdIndexRoute =
   ProtectedProjectsProjectIdIndexRouteImport.update({
-    id: '/projects/$projectId/',
-    path: '/projects/$projectId/',
-    getParentRoute: () => ProtectedRoute,
+    id: '/',
+    path: '/',
+    getParentRoute: () => ProtectedProjectsProjectIdRoute,
   } as any)
-const ProtectedProjectsProjectIdSettingsRoute =
-  ProtectedProjectsProjectIdSettingsRouteImport.update({
-    id: '/projects/$projectId/settings',
-    path: '/projects/$projectId/settings',
-    getParentRoute: () => ProtectedRoute,
+const ProtectedProjectsProjectIdAnalyticsRoute =
+  ProtectedProjectsProjectIdAnalyticsRouteImport.update({
+    id: '/analytics',
+    path: '/analytics',
+    getParentRoute: () => ProtectedProjectsProjectIdRoute,
+  } as any)
+const ProtectedProjectsProjectIdAuthRoute =
+  ProtectedProjectsProjectIdAuthRouteImport.update({
+    id: '/auth',
+    path: '/auth',
+    getParentRoute: () => ProtectedProjectsProjectIdRoute,
+  } as any)
+const ProtectedProjectsProjectIdClaimsRoute =
+  ProtectedProjectsProjectIdClaimsRouteImport.update({
+    id: '/claims',
+    path: '/claims',
+    getParentRoute: () => ProtectedProjectsProjectIdRoute,
+  } as any)
+const ProtectedProjectsProjectIdGeneralRoute =
+  ProtectedProjectsProjectIdGeneralRouteImport.update({
+    id: '/general',
+    path: '/general',
+    getParentRoute: () => ProtectedProjectsProjectIdRoute,
+  } as any)
+const ProtectedProjectsProjectIdSecurityRoute =
+  ProtectedProjectsProjectIdSecurityRouteImport.update({
+    id: '/security',
+    path: '/security',
+    getParentRoute: () => ProtectedProjectsProjectIdRoute,
+  } as any)
+const ProtectedProjectsProjectIdUsersRoute =
+  ProtectedProjectsProjectIdUsersRouteImport.update({
+    id: '/users',
+    path: '/users',
+    getParentRoute: () => ProtectedProjectsProjectIdRoute,
   } as any)
 const ProtectedSuperadminTenantsTenantIdAnalyticsRoute =
   ProtectedSuperadminTenantsTenantIdAnalyticsRouteImport.update({
@@ -140,12 +182,18 @@ export interface FileRoutesByFullPath {
   '/settings': typeof ProtectedSettingsRoute
   '/superadmin': typeof ProtectedSuperadminRouteWithChildren
   '/oauth/callback': typeof OauthCallbackRoute
+  '/projects/$projectId': typeof ProtectedProjectsProjectIdRouteWithChildren
   '/superadmin/logs': typeof ProtectedSuperadminLogsRoute
   '/superadmin/tenants': typeof ProtectedSuperadminTenantsRoute
   '/projects/': typeof ProtectedProjectsIndexRoute
   '/superadmin/': typeof ProtectedSuperadminIndexRoute
   '/users/': typeof ProtectedUsersIndexRoute
-  '/projects/$projectId/settings': typeof ProtectedProjectsProjectIdSettingsRoute
+  '/projects/$projectId/analytics': typeof ProtectedProjectsProjectIdAnalyticsRoute
+  '/projects/$projectId/auth': typeof ProtectedProjectsProjectIdAuthRoute
+  '/projects/$projectId/claims': typeof ProtectedProjectsProjectIdClaimsRoute
+  '/projects/$projectId/general': typeof ProtectedProjectsProjectIdGeneralRoute
+  '/projects/$projectId/security': typeof ProtectedProjectsProjectIdSecurityRoute
+  '/projects/$projectId/users': typeof ProtectedProjectsProjectIdUsersRoute
   '/projects/$projectId/': typeof ProtectedProjectsProjectIdIndexRoute
   '/superadmin/tenants/$tenantId/analytics': typeof ProtectedSuperadminTenantsTenantIdAnalyticsRoute
 }
@@ -164,7 +212,12 @@ export interface FileRoutesByTo {
   '/projects': typeof ProtectedProjectsIndexRoute
   '/superadmin': typeof ProtectedSuperadminIndexRoute
   '/users': typeof ProtectedUsersIndexRoute
-  '/projects/$projectId/settings': typeof ProtectedProjectsProjectIdSettingsRoute
+  '/projects/$projectId/analytics': typeof ProtectedProjectsProjectIdAnalyticsRoute
+  '/projects/$projectId/auth': typeof ProtectedProjectsProjectIdAuthRoute
+  '/projects/$projectId/claims': typeof ProtectedProjectsProjectIdClaimsRoute
+  '/projects/$projectId/general': typeof ProtectedProjectsProjectIdGeneralRoute
+  '/projects/$projectId/security': typeof ProtectedProjectsProjectIdSecurityRoute
+  '/projects/$projectId/users': typeof ProtectedProjectsProjectIdUsersRoute
   '/projects/$projectId': typeof ProtectedProjectsProjectIdIndexRoute
   '/superadmin/tenants/$tenantId/analytics': typeof ProtectedSuperadminTenantsTenantIdAnalyticsRoute
 }
@@ -181,12 +234,18 @@ export interface FileRoutesById {
   '/_protected/settings': typeof ProtectedSettingsRoute
   '/_protected/superadmin': typeof ProtectedSuperadminRouteWithChildren
   '/oauth/callback': typeof OauthCallbackRoute
+  '/_protected/projects/$projectId': typeof ProtectedProjectsProjectIdRouteWithChildren
   '/_protected/superadmin/logs': typeof ProtectedSuperadminLogsRoute
   '/_protected/superadmin/tenants': typeof ProtectedSuperadminTenantsRoute
   '/_protected/projects/': typeof ProtectedProjectsIndexRoute
   '/_protected/superadmin/': typeof ProtectedSuperadminIndexRoute
   '/_protected/users/': typeof ProtectedUsersIndexRoute
-  '/_protected/projects/$projectId/settings': typeof ProtectedProjectsProjectIdSettingsRoute
+  '/_protected/projects/$projectId/analytics': typeof ProtectedProjectsProjectIdAnalyticsRoute
+  '/_protected/projects/$projectId/auth': typeof ProtectedProjectsProjectIdAuthRoute
+  '/_protected/projects/$projectId/claims': typeof ProtectedProjectsProjectIdClaimsRoute
+  '/_protected/projects/$projectId/general': typeof ProtectedProjectsProjectIdGeneralRoute
+  '/_protected/projects/$projectId/security': typeof ProtectedProjectsProjectIdSecurityRoute
+  '/_protected/projects/$projectId/users': typeof ProtectedProjectsProjectIdUsersRoute
   '/_protected/projects/$projectId/': typeof ProtectedProjectsProjectIdIndexRoute
   '/_protected/superadmin/tenants_/$tenantId/analytics': typeof ProtectedSuperadminTenantsTenantIdAnalyticsRoute
 }
@@ -203,12 +262,18 @@ export interface FileRouteTypes {
     | '/settings'
     | '/superadmin'
     | '/oauth/callback'
+    | '/projects/$projectId'
     | '/superadmin/logs'
     | '/superadmin/tenants'
     | '/projects/'
     | '/superadmin/'
     | '/users/'
-    | '/projects/$projectId/settings'
+    | '/projects/$projectId/analytics'
+    | '/projects/$projectId/auth'
+    | '/projects/$projectId/claims'
+    | '/projects/$projectId/general'
+    | '/projects/$projectId/security'
+    | '/projects/$projectId/users'
     | '/projects/$projectId/'
     | '/superadmin/tenants/$tenantId/analytics'
   fileRoutesByTo: FileRoutesByTo
@@ -227,7 +292,12 @@ export interface FileRouteTypes {
     | '/projects'
     | '/superadmin'
     | '/users'
-    | '/projects/$projectId/settings'
+    | '/projects/$projectId/analytics'
+    | '/projects/$projectId/auth'
+    | '/projects/$projectId/claims'
+    | '/projects/$projectId/general'
+    | '/projects/$projectId/security'
+    | '/projects/$projectId/users'
     | '/projects/$projectId'
     | '/superadmin/tenants/$tenantId/analytics'
   id:
@@ -243,12 +313,18 @@ export interface FileRouteTypes {
     | '/_protected/settings'
     | '/_protected/superadmin'
     | '/oauth/callback'
+    | '/_protected/projects/$projectId'
     | '/_protected/superadmin/logs'
     | '/_protected/superadmin/tenants'
     | '/_protected/projects/'
     | '/_protected/superadmin/'
     | '/_protected/users/'
-    | '/_protected/projects/$projectId/settings'
+    | '/_protected/projects/$projectId/analytics'
+    | '/_protected/projects/$projectId/auth'
+    | '/_protected/projects/$projectId/claims'
+    | '/_protected/projects/$projectId/general'
+    | '/_protected/projects/$projectId/security'
+    | '/_protected/projects/$projectId/users'
     | '/_protected/projects/$projectId/'
     | '/_protected/superadmin/tenants_/$tenantId/analytics'
   fileRoutesById: FileRoutesById
@@ -350,6 +426,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedProjectsIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
+    '/_protected/projects/$projectId': {
+      id: '/_protected/projects/$projectId'
+      path: '/projects/$projectId'
+      fullPath: '/projects/$projectId'
+      preLoaderRoute: typeof ProtectedProjectsProjectIdRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
     '/_protected/superadmin/': {
       id: '/_protected/superadmin/'
       path: '/'
@@ -380,17 +463,52 @@ declare module '@tanstack/react-router' {
     }
     '/_protected/projects/$projectId/': {
       id: '/_protected/projects/$projectId/'
-      path: '/projects/$projectId'
+      path: '/'
       fullPath: '/projects/$projectId/'
       preLoaderRoute: typeof ProtectedProjectsProjectIdIndexRouteImport
-      parentRoute: typeof ProtectedRoute
+      parentRoute: typeof ProtectedProjectsProjectIdRoute
     }
-    '/_protected/projects/$projectId/settings': {
-      id: '/_protected/projects/$projectId/settings'
-      path: '/projects/$projectId/settings'
-      fullPath: '/projects/$projectId/settings'
-      preLoaderRoute: typeof ProtectedProjectsProjectIdSettingsRouteImport
-      parentRoute: typeof ProtectedRoute
+    '/_protected/projects/$projectId/analytics': {
+      id: '/_protected/projects/$projectId/analytics'
+      path: '/analytics'
+      fullPath: '/projects/$projectId/analytics'
+      preLoaderRoute: typeof ProtectedProjectsProjectIdAnalyticsRouteImport
+      parentRoute: typeof ProtectedProjectsProjectIdRoute
+    }
+    '/_protected/projects/$projectId/auth': {
+      id: '/_protected/projects/$projectId/auth'
+      path: '/auth'
+      fullPath: '/projects/$projectId/auth'
+      preLoaderRoute: typeof ProtectedProjectsProjectIdAuthRouteImport
+      parentRoute: typeof ProtectedProjectsProjectIdRoute
+    }
+    '/_protected/projects/$projectId/claims': {
+      id: '/_protected/projects/$projectId/claims'
+      path: '/claims'
+      fullPath: '/projects/$projectId/claims'
+      preLoaderRoute: typeof ProtectedProjectsProjectIdClaimsRouteImport
+      parentRoute: typeof ProtectedProjectsProjectIdRoute
+    }
+    '/_protected/projects/$projectId/general': {
+      id: '/_protected/projects/$projectId/general'
+      path: '/general'
+      fullPath: '/projects/$projectId/general'
+      preLoaderRoute: typeof ProtectedProjectsProjectIdGeneralRouteImport
+      parentRoute: typeof ProtectedProjectsProjectIdRoute
+    }
+    '/_protected/projects/$projectId/security': {
+      id: '/_protected/projects/$projectId/security'
+      path: '/security'
+      fullPath: '/projects/$projectId/security'
+      preLoaderRoute: typeof ProtectedProjectsProjectIdSecurityRouteImport
+      parentRoute: typeof ProtectedProjectsProjectIdRoute
+    }
+    '/_protected/projects/$projectId/users': {
+      id: '/_protected/projects/$projectId/users'
+      path: '/users'
+      fullPath: '/projects/$projectId/users'
+      preLoaderRoute: typeof ProtectedProjectsProjectIdUsersRouteImport
+      parentRoute: typeof ProtectedProjectsProjectIdRoute
     }
     '/_protected/superadmin/tenants_/$tenantId/analytics': {
       id: '/_protected/superadmin/tenants_/$tenantId/analytics'
@@ -420,25 +538,52 @@ const ProtectedSuperadminRouteChildren: ProtectedSuperadminRouteChildren = {
 const ProtectedSuperadminRouteWithChildren =
   ProtectedSuperadminRoute._addFileChildren(ProtectedSuperadminRouteChildren)
 
+interface ProtectedProjectsProjectIdRouteChildren {
+  ProtectedProjectsProjectIdAnalyticsRoute: typeof ProtectedProjectsProjectIdAnalyticsRoute
+  ProtectedProjectsProjectIdAuthRoute: typeof ProtectedProjectsProjectIdAuthRoute
+  ProtectedProjectsProjectIdClaimsRoute: typeof ProtectedProjectsProjectIdClaimsRoute
+  ProtectedProjectsProjectIdGeneralRoute: typeof ProtectedProjectsProjectIdGeneralRoute
+  ProtectedProjectsProjectIdSecurityRoute: typeof ProtectedProjectsProjectIdSecurityRoute
+  ProtectedProjectsProjectIdUsersRoute: typeof ProtectedProjectsProjectIdUsersRoute
+  ProtectedProjectsProjectIdIndexRoute: typeof ProtectedProjectsProjectIdIndexRoute
+}
+
+const ProtectedProjectsProjectIdRouteChildren: ProtectedProjectsProjectIdRouteChildren =
+  {
+    ProtectedProjectsProjectIdAnalyticsRoute:
+      ProtectedProjectsProjectIdAnalyticsRoute,
+    ProtectedProjectsProjectIdAuthRoute: ProtectedProjectsProjectIdAuthRoute,
+    ProtectedProjectsProjectIdClaimsRoute:
+      ProtectedProjectsProjectIdClaimsRoute,
+    ProtectedProjectsProjectIdGeneralRoute:
+      ProtectedProjectsProjectIdGeneralRoute,
+    ProtectedProjectsProjectIdSecurityRoute:
+      ProtectedProjectsProjectIdSecurityRoute,
+    ProtectedProjectsProjectIdUsersRoute: ProtectedProjectsProjectIdUsersRoute,
+    ProtectedProjectsProjectIdIndexRoute: ProtectedProjectsProjectIdIndexRoute,
+  }
+
+const ProtectedProjectsProjectIdRouteWithChildren =
+  ProtectedProjectsProjectIdRoute._addFileChildren(
+    ProtectedProjectsProjectIdRouteChildren,
+  )
+
 interface ProtectedRouteChildren {
   ProtectedDashboardRoute: typeof ProtectedDashboardRoute
   ProtectedSettingsRoute: typeof ProtectedSettingsRoute
   ProtectedSuperadminRoute: typeof ProtectedSuperadminRouteWithChildren
+  ProtectedProjectsProjectIdRoute: typeof ProtectedProjectsProjectIdRouteWithChildren
   ProtectedProjectsIndexRoute: typeof ProtectedProjectsIndexRoute
   ProtectedUsersIndexRoute: typeof ProtectedUsersIndexRoute
-  ProtectedProjectsProjectIdSettingsRoute: typeof ProtectedProjectsProjectIdSettingsRoute
-  ProtectedProjectsProjectIdIndexRoute: typeof ProtectedProjectsProjectIdIndexRoute
 }
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedDashboardRoute: ProtectedDashboardRoute,
   ProtectedSettingsRoute: ProtectedSettingsRoute,
   ProtectedSuperadminRoute: ProtectedSuperadminRouteWithChildren,
+  ProtectedProjectsProjectIdRoute: ProtectedProjectsProjectIdRouteWithChildren,
   ProtectedProjectsIndexRoute: ProtectedProjectsIndexRoute,
   ProtectedUsersIndexRoute: ProtectedUsersIndexRoute,
-  ProtectedProjectsProjectIdSettingsRoute:
-    ProtectedProjectsProjectIdSettingsRoute,
-  ProtectedProjectsProjectIdIndexRoute: ProtectedProjectsProjectIdIndexRoute,
 }
 
 const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(

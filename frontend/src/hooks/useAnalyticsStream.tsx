@@ -172,15 +172,8 @@ export function AnalyticsProvider({
 
             if (response.status === 401) {
               try {
-                const { refreshClient } = await import('../lib/api-client')
-                const csrfToken = useAuthStore.getState().csrfToken
-                const refreshRes = await refreshClient.post(
-                  '/auth/refresh',
-                  {},
-                  { headers: csrfToken ? { 'X-CSRF': csrfToken } : undefined },
-                )
-                latestToken = refreshRes.data.access_token
-                useAuthStore.getState().setAccessToken(latestToken, refreshRes.data.csrf_token)
+                const { refreshToken } = await import('../lib/api-client')
+                latestToken = await refreshToken()
                 response = await fetch(input, { ...init, headers: { ...init?.headers, Authorization: `Bearer ${latestToken}` } })
               } catch {
                 useAuthStore.getState().logout()
@@ -243,6 +236,7 @@ export function AnalyticsProvider({
           onclose: () => { setStatus('error') },
           onerror: (err) => {
             if (err instanceof Error && err.name === 'AbortError') return null
+            if ((err as any)?.name === 'AbortError') return null
             console.error('SSE Error:', err)
             setStatus('error')
             return 5000

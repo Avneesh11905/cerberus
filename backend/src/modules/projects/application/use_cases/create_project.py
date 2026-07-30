@@ -46,14 +46,15 @@ class CreateProjectUseCase(BaseProjectUseCase):
             )
             saved_project = await self.uow.project_command_repo.save(project)
 
-            self.analytics.record_event(
-                event_type="PROJECT_CREATED",
-                tenant_id=command.user_id,
-                project_id=project_id,
-            )
+        self.analytics.record_event(
+            event_type="PROJECT_CREATED",
+            event_id=project_id,
+            tenant_id=command.user_id,
+            project_id=project_id,
+        )
 
-            return CreateProjectDTO(
-                project=saved_project,
-                api_key_plaintext=api_key_plaintext,
-                public_pem=public_pem,
-            )
+        return CreateProjectDTO(
+            project=saved_project,
+            api_key_plaintext=api_key_plaintext,
+            public_pem=public_pem,
+        )

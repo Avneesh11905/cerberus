@@ -74,7 +74,7 @@ function GlobalUsersDashboard() {
   const totalPages = Math.ceil(total / size)
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8">
+    <div className="max-w-7xl mx-auto flex flex-col gap-8 w-full">
       <div className="flex items-center gap-4 mb-2">
         <Button 
           variant="outline" 

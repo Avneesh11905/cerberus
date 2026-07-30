@@ -7,7 +7,7 @@ from src.core.database import AsyncSessionLocal
 from src.modules.projects.infrastructure.models import Project
 from src.shared.infrastructure.adapters import AsyncSQLLogger
 
-logger = AsyncSQLLogger("ProjectConfigSyncTask")
+logger = AsyncSQLLogger(__name__)
 _sync_task: asyncio.Task | None = None
 
 

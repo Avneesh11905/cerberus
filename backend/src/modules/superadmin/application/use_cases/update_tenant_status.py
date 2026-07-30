@@ -45,10 +45,10 @@ class UpdateTenantStatusUseCase:
                 if self.cache:
                     await self.cache.delete_key(f"disabled_user:{command.tenant_id}")
 
-            if not command.is_active:
-                self.analytics.record_event(
-                    event_type="TENANT_SUSPENDED",
-                    tenant_id=command.tenant_id,
-                )
+        if not command.is_active:
+            self.analytics.record_event(
+                event_type="TENANT_SUSPENDED",
+                tenant_id=command.tenant_id,
+            )
 
-            return UpdateTenantStatusDTO(tenant=tenant)
+        return UpdateTenantStatusDTO(tenant=tenant)

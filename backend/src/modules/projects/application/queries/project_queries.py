@@ -30,6 +30,8 @@ class GetUserClaimsQuery:
 @dataclass(frozen=True)
 class ListProjectsQuery:
     user_id: UUID
+    skip: int = 0
+    limit: int = 20
 
 
 @dataclass(frozen=True)

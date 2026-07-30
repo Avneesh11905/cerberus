@@ -2,7 +2,6 @@
 
 import * as React from 'react'
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu'
-import { Check, ChevronRight, Circle } from 'lucide-react'
 
 import { cn } from '../../lib/utils'
 
@@ -63,7 +62,7 @@ const DropdownMenuLabel = React.forwardRef<
   <DropdownMenuPrimitive.Label
     ref={ref}
     className={cn(
-      'px-2 py-1.5 text-sm font-bold opacity-50',
+      'px-2 py-1.5 text-sm font-bold',
       inset && 'pl-8',
       className,
     )}

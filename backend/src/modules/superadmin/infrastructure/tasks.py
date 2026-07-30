@@ -16,7 +16,7 @@ from src.core.database import AsyncSessionLocal
 from src.core.models import SystemLog
 from src.shared.infrastructure.adapters import AsyncSQLLogger
 
-logger = AsyncSQLLogger("LogCleanupTask")
+logger = AsyncSQLLogger(__name__)
 
 
 async def _clean_old_system_logs_async():

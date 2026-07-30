@@ -39,11 +39,15 @@ class UpdateOauthUseCase(BaseProjectUseCase):
                 client_id = provider_config.get("client_id")
                 client_secret = provider_config.get("client_secret")
 
-                # Retain old secret if no new secret was provided
-                if not client_secret:
-                    client_secret = old_provider_config.get("client_secret")
+                # If client_id is missing/cleared, wipe both. Otherwise, retain old secret if none provided.
+                if not client_id:
+                    client_id = None
+                    client_secret = None
                 else:
-                    client_secret = self.encryption_adapter.encrypt(client_secret)
+                    if not client_secret:
+                        client_secret = old_provider_config.get("client_secret")
+                    else:
+                        client_secret = self.encryption_adapter.encrypt(client_secret)
 
                 # Validate if enabled
                 if is_enabled:
@@ -52,7 +56,7 @@ class UpdateOauthUseCase(BaseProjectUseCase):
                         errors.append(
                             {
                                 "loc": ["body", "oauth_config", provider, "client_id"],
-                                "msg": "Client ID is required when enabled.",
+                                "msg": "Client ID is required when adding a provider.",
                                 "type": "value_error.missing",
                             }
                         )
@@ -65,13 +69,14 @@ class UpdateOauthUseCase(BaseProjectUseCase):
                                     provider,
                                     "client_secret",
                                 ],
-                                "msg": "Client Secret is required when enabled.",
+                                "msg": "Client Secret is required when adding a provider.",
                                 "type": "value_error.missing",
                             }
                         )
 
                     if errors:
-                        raise ProjectError(str(errors))
+                        from fastapi import HTTPException
+                        raise HTTPException(status_code=422, detail=errors)
 
                 final_config[provider] = {
                     "enabled": is_enabled,

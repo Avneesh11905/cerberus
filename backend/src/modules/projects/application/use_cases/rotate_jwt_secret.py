@@ -35,11 +35,11 @@ class RotateJwtSecretUseCase(BaseProjectUseCase):
             project.updated_at = datetime.now(UTC)
             await self.uow.project_command_repo.save(project)
 
-            self.analytics.record_event(
-                event_type="JWT_KEY_ROTATED",
-                project_id=command.project_id,
-                tenant_id=project.tenant_id,
-                user_id=command.user_id,
-            )
+        self.analytics.record_event(
+            event_type="JWT_KEY_ROTATED",
+            project_id=command.project_id,
+            tenant_id=project.tenant_id,
+            user_id=command.user_id,
+        )
 
-            return RotateJwtSecretDTO(public_pem=public_pem)
+        return RotateJwtSecretDTO(public_pem=public_pem)

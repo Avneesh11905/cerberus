@@ -83,15 +83,15 @@ class PasswordResetExecuteUseCase:
             # Invalidate the token
             await self.cache.delete_key(f"pwd_reset:{command.token}")
 
-            if command.is_challenged:
-                await self.rate_limiter.record_success(limit_key)
+        if command.is_challenged:
+            await self.rate_limiter.record_success(limit_key)
 
-            self.analytics.record_event(
-                project_id=None,  # System wide event or attach to project if we had it in payload
-                event_type="PASSWORD_RESET",
-                user_id=user_id_uuid,
-                metadata=dataclasses.asdict(command.client_meta)
-                if command.client_meta
-                else None,
-            )
-            return True
+        self.analytics.record_event(
+            project_id=None,  # System wide event or attach to project if we had it in payload
+            event_type="PASSWORD_RESET",
+            user_id=user_id_uuid,
+            metadata=dataclasses.asdict(command.client_meta)
+            if command.client_meta
+            else None,
+        )
+        return True

@@ -2,45 +2,17 @@ import {
   createFileRoute,
   redirect,
   Outlet,
-  Link,
-  useNavigate,
   useLocation,
   Navigate,
 } from '@tanstack/react-router'
 import { useAuthStore } from '../store/auth'
 import type { User } from '../store/auth'
-import { checkInitialSession } from '../lib/auth-check'
 import { isTokenExpired } from '../lib/jwt'
 import { refreshClient } from '../lib/api-client'
-import {
-  LogOut,
-  LayoutDashboard,
-  FolderKanban,
-  Settings,
-  Activity,
-  Shield,
-  Users,
-} from 'lucide-react'
-import clsx from 'clsx'
-import {
-  AnalyticsProvider,
-  useAnalyticsStream,
-} from '../hooks/useAnalyticsStream'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '../components/ui/tooltip'
-import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '../components/ui/dropdown-menu'
+import { AnalyticsProvider } from '../hooks/useAnalyticsStream'
+import { Navbar } from '../components/ui/navbar'
+import { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem } from '../components/ui/context-menu'
+import { RefreshCcw, ArrowLeft, ArrowRight } from 'lucide-react'
 
 export const Route = createFileRoute('/_protected')({
   beforeLoad: async ({ location }) => {
@@ -88,43 +60,8 @@ export const Route = createFileRoute('/_protected')({
   component: ProtectedLayout,
 })
 
-function StreamIndicator() {
-  const status = useAnalyticsStream((state) => state.status)
-
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <div className="flex items-center gap-2 cursor-help">
-          <Activity className="w-4 h-4 text-slate/50" />
-          <div
-            className={clsx(
-              'w-2.5 h-2.5 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.2)]',
-              status === 'connected'
-                ? 'bg-sage'
-                : status === 'connecting'
-                  ? 'bg-ochre animate-pulse'
-                  : 'bg-terracotta',
-            )}
-          />
-        </div>
-      </TooltipTrigger>
-      <TooltipContent side="bottom" align="center">
-        {status === 'connected'
-          ? 'Live Stream Active'
-          : status === 'connecting'
-            ? 'Connecting...'
-            : 'Stream Disconnected'}
-      </TooltipContent>
-    </Tooltip>
-  )
-}
-
 function ProtectedLayout() {
-  const user = useAuthStore((state) => state.user)
-  const logout = useAuthStore((state) => state.logout)
-  const navigate = useNavigate()
   const location = useLocation()
-  const isSettings = location.pathname.startsWith('/settings')
 
   const accessToken = useAuthStore((state) => state.accessToken)
 
@@ -145,127 +82,41 @@ function ProtectedLayout() {
     }
   }
 
-  const handleLogout = () => {
-    logout()
-    navigate({ to: '/login' })
-  }
-
   return (
     <AnalyticsProvider scope={scope} projectId={projectId}>
       <div className="fixed inset-0 bg-vanilla flex overflow-hidden">
         {/* Main Content */}
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Top Bar */}
-          <header className="h-16 bg-vanilla border-b-2 border-taupe/30 flex items-center justify-between px-6 shrink-0">
-            <div className="flex items-center">
-              {!isSettings && (
-                <Link
-                  to="/dashboard"
-                  className="text-xl font-display font-bold text-slate tracking-tight"
-                >
-                  Cerberus
-                </Link>
-              )}
-            </div>
-
-            <div className="flex items-center gap-6">
-              {!isSettings && <StreamIndicator />}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Avatar className="w-8 h-8 cursor-pointer hover:-translate-y-0.5 hover:-translate-x-0.5 transition-transform outline-none select-none">
-                    <AvatarImage
-                      src={user?.picture || undefined}
-                      alt="Profile"
-                      className="select-none pointer-events-none"
-                    />
-                    <AvatarFallback>
-                      {(
-                        user?.name?.[0] ||
-                        user?.email?.[0] ||
-                        'U'
-                      ).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 mt-2">
-                  <DropdownMenuLabel>
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none text-slate">
-                        {typeof user?.name === 'object'
-                          ? (user?.name as any)?.value ||
-                            JSON.stringify(user?.name)
-                          : user?.name || 'User'}
-                      </p>
-                      <p className="text-xs leading-none text-slate/50">
-                        {typeof user?.email === 'object'
-                          ? (user?.email as any)?.value ||
-                            JSON.stringify(user?.email)
-                          : user?.email}
-                      </p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {!location.pathname.startsWith('/dashboard') && (
-                    <DropdownMenuItem
-                      onClick={() => navigate({ to: '/dashboard' })}
-                    >
-                      <LayoutDashboard className="w-4 h-4 mr-2" />
-                      Dashboard
-                    </DropdownMenuItem>
-                  )}
-                  {!location.pathname.startsWith('/projects') && (
-                    <DropdownMenuItem
-                      onClick={() => navigate({ to: '/projects' })}
-                    >
-                      <FolderKanban className="w-4 h-4 mr-2" />
-                      Projects
-                    </DropdownMenuItem>
-                  )}
-                  {!location.pathname.startsWith('/users') && (
-                    <DropdownMenuItem
-                      onClick={() => navigate({ to: '/users' })}
-                    >
-                      <Users className="w-4 h-4 mr-2" />
-                      Global Users
-                    </DropdownMenuItem>
-                  )}
-                  {!isSettings && (
-                    <DropdownMenuItem
-                      onClick={() => navigate({ to: '/settings' })}
-                    >
-                      <Settings className="w-4 h-4 mr-2" />
-                      Settings
-                    </DropdownMenuItem>
-                  )}
-                  {user?.role === 'SUPERADMIN' && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="text-ochre focus:text-ochre"
-                        onClick={() => navigate({ to: '/superadmin' })}
-                      >
-                        <Shield className="w-4 h-4 mr-2" />
-                        Superadmin
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="text-terracotta focus:text-vanilla focus:bg-terracotta"
-                    onClick={handleLogout}
-                  >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Log out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </header>
+          <Navbar />
 
           {/* Page Content */}
-          <main className="flex-1 overflow-y-auto bg-vanilla p-6 sm:p-8">
-            <Outlet />
-          </main>
+          <ContextMenu>
+            <ContextMenuTrigger asChild>
+              <main className="flex-1 overflow-y-auto bg-vanilla p-6 sm:p-8">
+                <Outlet />
+              </main>
+            </ContextMenuTrigger>
+            <ContextMenuContent className="w-56 bg-vanilla border-2 border-slate rounded-xl shadow-[4px_4px_0px_rgba(96,114,116,1)] p-1 z-[100]">
+              <ContextMenuItem
+                className="font-bold cursor-pointer rounded-lg px-3 py-2 hover:bg-sand focus:bg-sand"
+                onClick={() => window.history.back()}
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" /> Go Back
+              </ContextMenuItem>
+              <ContextMenuItem
+                className="font-bold cursor-pointer rounded-lg px-3 py-2 hover:bg-sand focus:bg-sand"
+                onClick={() => window.history.forward()}
+              >
+                <ArrowRight className="w-4 h-4 mr-2" /> Go Forward
+              </ContextMenuItem>
+              <ContextMenuItem
+                className="font-bold cursor-pointer rounded-lg px-3 py-2 hover:bg-sand focus:bg-sand"
+                onClick={() => window.location.reload()}
+              >
+                <RefreshCcw className="w-4 h-4 mr-2" /> Reload Page
+              </ContextMenuItem>
+            </ContextMenuContent>
+          </ContextMenu>
         </div>
       </div>
     </AnalyticsProvider>

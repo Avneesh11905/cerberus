@@ -12,6 +12,7 @@ class AnalyticsEventPort(Protocol):
     def record_event(
         self,
         event_type: str,
+        event_id: UUID | None = None,
         project_id: UUID | None = None,
         tenant_id: UUID | None = None,
         user_id: UUID | None = None,
