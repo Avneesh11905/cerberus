@@ -22,23 +22,39 @@ class FakeRateLimiter:
 def mock_rate_limiter(mocker):
     from src.core.config import get_settings
     from src.core.container import app_container
+    from src.shared.presentation.api.middlewares.rate_limit_and_analytics import (
+        RateLimitAndAnalyticsMiddleware,
+    )
 
-    # Explicitly mutate the Pydantic V2 model to avoid mocker.patch interference
+    # Instead of mutating get_settings() which can fail due to module double-loading in CI,
+    # we patch the ENABLED property on the middleware instances directly.
     original_enabled = get_settings().rate_limit.ENABLED
     get_settings().rate_limit.ENABLED = True
 
+    # Patch the class so that ANY instance of RateLimitSettings has ENABLED=True
+    mocker.patch(
+        "src.core.config.auth.RateLimitSettings.ENABLED",
+        new_callable=mocker.PropertyMock,
+        return_value=True,
+        create=True,
+    )
+
     fake = FakeRateLimiter()
-    mock_check = mocker.patch.object(
-        app_container.rate_limiter,
-        "check_rate_limit",
+
+    # Patch the class so that ANY instance of RedisRateLimiterAdapter uses fake
+    mock_check = mocker.patch(
+        "src.shared.infrastructure.adapters.rate_limiter.RedisRateLimiterAdapter.check_rate_limit",
         side_effect=fake.check_rate_limit,
     )
-    mocker.patch.object(app_container.rate_limiter, "record_failure")
-    mocker.patch.object(app_container.rate_limiter, "record_captcha_success")
-    
+    mocker.patch(
+        "src.shared.infrastructure.adapters.rate_limiter.RedisRateLimiterAdapter.record_failure"
+    )
+    mocker.patch(
+        "src.shared.infrastructure.adapters.rate_limiter.RedisRateLimiterAdapter.record_captcha_success"
+    )
+
     yield mock_check
-    
-    # Restore the original value
+
     get_settings().rate_limit.ENABLED = original_enabled
 
 

@@ -110,7 +110,6 @@ class RateLimitAndAnalyticsMiddleware(BaseHTTPMiddleware):
         is_allowed, remaining, reset_time = await self.rate_limiter.check_rate_limit(
             bucket_key, limit, window
         )
-
         if not is_allowed:
             if is_auth_route:
                 # For auth routes, we escalate to a CAPTCHA challenge instead of outright blocking
