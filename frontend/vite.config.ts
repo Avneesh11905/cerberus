@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig, loadEnv } from 'vite' // trigger reload
 import { devtools } from '@tanstack/devtools-vite'
 
@@ -21,5 +22,10 @@ export default defineConfig(({ mode }) => {
       include: ['react', 'react-dom', '@tanstack/react-router', 'lucide-react'],
     },
     plugins: [devtools(), tailwindcss(), tanstackStart(), viteReact()],
+    test: {
+      environment: 'jsdom',
+      globals: true,
+      setupFiles: ['./src/test/setup.ts'],
+    },
   }
 })

@@ -44,9 +44,10 @@ def main():
     private_pem, public_pem = generate_rsa_keypair()
     encryption_key = generate_fernet_key()
 
-    # Save PEM files to a 'keys' folder relative to this script
+    # Save PEM files to a 'keys' folder in the backend root
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    keys_dir = os.path.join(script_dir, "keys")
+    backend_dir = os.path.dirname(script_dir)
+    keys_dir = os.path.join(backend_dir, "keys")
     os.makedirs(keys_dir, exist_ok=True)
 
     private_key_path = os.path.join(keys_dir, "jwt_private.pem")
