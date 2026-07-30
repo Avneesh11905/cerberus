@@ -60,6 +60,8 @@ export function Navbar() {
   const navigate = useNavigate()
   const location = useLocation()
 
+  if (!user) return null
+
   const handleLogout = async () => {
     try {
       await apiClient.post('/auth/logout')
@@ -148,12 +150,16 @@ export function Navbar() {
           <DropdownMenuTrigger asChild>
             <Avatar className="w-8 h-8 cursor-pointer hover:-translate-y-0.5 hover:-translate-x-0.5 transition-transform outline-none select-none">
               <AvatarImage
-                src={user?.picture || undefined}
+                src={user.picture || undefined}
                 alt="Profile"
                 className="select-none pointer-events-none"
               />
               <AvatarFallback>
-                {(user?.name?.[0] || user?.email?.[0] || 'U').toUpperCase()}
+                {(
+                  (typeof user.name === 'string' ? user.name[0] : '') ||
+                  user.email[0] ||
+                  'U'
+                ).toUpperCase()}
               </AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>
@@ -161,18 +167,18 @@ export function Navbar() {
             <DropdownMenuLabel>
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none text-slate">
-                  {typeof user?.name === 'object'
-                    ? (user?.name as any)?.value || JSON.stringify(user?.name)
-                    : user?.name || 'User'}
+                  {typeof user.name === 'object'
+                    ? (user.name as any).value || JSON.stringify(user.name)
+                    : user.name || 'User'}
                 </p>
                 <p className="text-xs leading-none text-slate/50">
-                  {typeof user?.email === 'object'
-                    ? (user?.email as any)?.value || JSON.stringify(user?.email)
-                    : user?.email}
+                  {typeof user.email === 'object'
+                    ? (user.email as any).value || JSON.stringify(user.email)
+                    : user.email}
                 </p>
               </div>
             </DropdownMenuLabel>
-            {user?.role === 'SUPERADMIN' && (
+            {user.role === 'SUPERADMIN' && (
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
