@@ -91,7 +91,7 @@ function SuperadminTenantAnalyticsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card className="bg-vanilla border-2 border-slate shadow-[4px_4px_0px_rgba(30,41,59,1)]">
+        <Card className="bg-sand border-2 border-slate shadow-[4px_4px_0px_rgba(30,41,59,1)]">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg flex items-center gap-2 text-slate/70">
               <Activity className="w-5 h-5 text-terracotta" /> Total API
@@ -105,7 +105,7 @@ function SuperadminTenantAnalyticsPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-vanilla border-2 border-slate shadow-[4px_4px_0px_rgba(30,41,59,1)]">
+        <Card className="bg-sand border-2 border-slate shadow-[4px_4px_0px_rgba(30,41,59,1)]">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg flex items-center gap-2 text-slate/70">
               <LogIn className="w-5 h-5 text-sage" /> Total Logins
@@ -118,7 +118,7 @@ function SuperadminTenantAnalyticsPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-vanilla border-2 border-slate shadow-[4px_4px_0px_rgba(30,41,59,1)]">
+        <Card className="bg-sand border-2 border-slate shadow-[4px_4px_0px_rgba(30,41,59,1)]">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg flex items-center gap-2 text-slate/70">
               <Users className="w-5 h-5 text-ochre" /> Registrations
@@ -131,7 +131,7 @@ function SuperadminTenantAnalyticsPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-vanilla border-2 border-slate shadow-[4px_4px_0px_rgba(30,41,59,1)]">
+        <Card className="bg-sand border-2 border-slate shadow-[4px_4px_0px_rgba(30,41,59,1)]">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg flex items-center gap-2 text-slate/70">
               <AlertCircle className="w-5 h-5 text-slate" /> Active Users
@@ -146,7 +146,7 @@ function SuperadminTenantAnalyticsPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-8">
-        <Card className="bg-vanilla h-125 flex flex-col border-2 border-slate shadow-[8px_8px_0px_rgba(30,41,59,1)]">
+        <Card className="bg-sand h-125 flex flex-col border-2 border-slate shadow-[8px_8px_0px_rgba(30,41,59,1)]">
           <CardHeader>
             <CardTitle>30-Day Activity</CardTitle>
           </CardHeader>

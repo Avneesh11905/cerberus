@@ -54,7 +54,7 @@ function StatCard({
   accent?: string
 }) {
   return (
-    <Card className="bg-vanilla border-2 border-slate shadow-[4px_4px_0px_rgba(30,41,59,1)]">
+    <Card className="bg-sand border-2 border-slate shadow-[4px_4px_0px_rgba(30,41,59,1)]">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-bold text-slate/60 uppercase tracking-wider">
           {title}
@@ -210,7 +210,7 @@ function SuperadminAnalyticsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {/* API Traffic */}
-        <Card className="lg:col-span-2 bg-vanilla border-2 border-slate shadow-[4px_4px_0px_rgba(30,41,59,1)]">
+        <Card className="lg:col-span-2 bg-sand border-2 border-slate shadow-[4px_4px_0px_rgba(30,41,59,1)]">
           <CardHeader>
             <CardTitle className="text-base">API Traffic</CardTitle>
           </CardHeader>
@@ -236,7 +236,7 @@ function SuperadminAnalyticsPage() {
         </Card>
 
         {/* Auth Activity */}
-        <Card className="bg-vanilla border-2 border-slate shadow-[4px_4px_0px_rgba(30,41,59,1)]">
+        <Card className="bg-sand border-2 border-slate shadow-[4px_4px_0px_rgba(30,41,59,1)]">
           <CardHeader>
             <CardTitle className="text-base">Auth Activity</CardTitle>
           </CardHeader>
@@ -259,7 +259,7 @@ function SuperadminAnalyticsPage() {
         </Card>
 
         {/* Emails */}
-        <Card className="bg-vanilla border-2 border-slate shadow-[4px_4px_0px_rgba(30,41,59,1)]">
+        <Card className="bg-sand border-2 border-slate shadow-[4px_4px_0px_rgba(30,41,59,1)]">
           <CardHeader>
             <CardTitle className="text-base">Emails Sent</CardTitle>
           </CardHeader>
@@ -291,7 +291,7 @@ function SuperadminAnalyticsPage() {
         </Card>
 
         {/* Projects Created + Active Users */}
-        <Card className="lg:col-span-2 bg-vanilla border-2 border-slate shadow-[4px_4px_0px_rgba(30,41,59,1)]">
+        <Card className="lg:col-span-2 bg-sand border-2 border-slate shadow-[4px_4px_0px_rgba(30,41,59,1)]">
           <CardHeader>
             <CardTitle className="text-base">Growth — Projects Created & Active Users</CardTitle>
           </CardHeader>
