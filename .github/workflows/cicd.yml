@@ -26,7 +26,6 @@ permissions:
 
 env:
   BACKEND_IMAGE_NAME: avneesh11905/cerberus-fastapi
-  FRONTEND_IMAGE_NAME: avneesh11905/cerberus-vite
 
 jobs:
   # â”€â”€ Path filter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -106,7 +105,7 @@ jobs:
           uv run scripts/generate_keys.py
 
       - name: Lint (ruff)
-        run: uv run ruff check .
+        run: uv run ruff check . --fix
 
       - name: Type-check (mypy)
         run: uv run mypy . --check-untyped-defs
