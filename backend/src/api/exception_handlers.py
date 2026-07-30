@@ -28,6 +28,7 @@ from src.modules.projects.domain.exceptions import (
     ProjectError,
     ProjectForbiddenError,
     ProjectNotFoundError,
+    ProjectValidationError,
 )
 from src.modules.superadmin.domain.exceptions import (
     AbsoluteSuperadminImmutableException,
@@ -317,6 +318,13 @@ async def rate_limit_exception_handler(
         headers=headers,
     )
 
+async def project_validation_exception_handler(
+    request: Request, exc: ProjectValidationError
+) -> JSONResponse:
+    """Handles project validation errors matching FastAPI's RequestValidationError format."""
+    await logger.warning(f"Project Validation Error at {request.url.path}: {exc.errors}")
+    return build_error_response(status.HTTP_422_UNPROCESSABLE_CONTENT, exc.errors)
+
 
 def register_exception_handlers(app: FastAPI):
     """Registers exception handlers for the FastAPI app."""
@@ -324,6 +332,7 @@ def register_exception_handlers(app: FastAPI):
     app.add_exception_handler(RequestValidationError, validation_exception_handler)  # type: ignore
     app.add_exception_handler(AuthBaseException, auth_domain_exception_handler)  # type: ignore
     app.add_exception_handler(UserBaseException, user_domain_exception_handler)  # type: ignore
+    app.add_exception_handler(ProjectValidationError, project_validation_exception_handler)  # type: ignore
     app.add_exception_handler(ProjectError, project_domain_exception_handler)  # type: ignore
     app.add_exception_handler(
         SuperadminBaseException,

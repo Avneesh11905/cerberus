@@ -74,9 +74,9 @@ class UpdateOauthUseCase(BaseProjectUseCase):
                         )
 
                     if errors:
-                        from fastapi import HTTPException
+                        from src.modules.projects.domain.exceptions import ProjectValidationError
 
-                        raise HTTPException(status_code=422, detail=errors)
+                        raise ProjectValidationError(errors)
 
                 final_config[provider] = {
                     "enabled": is_enabled,
