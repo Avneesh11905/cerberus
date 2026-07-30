@@ -23,7 +23,9 @@ def mock_rate_limiter(mocker):
     from src.core.config import get_settings
     from src.core.container import app_container
 
-    mocker.patch.object(get_settings().rate_limit, "ENABLED", True)
+    # Explicitly mutate the Pydantic V2 model to avoid mocker.patch interference
+    original_enabled = get_settings().rate_limit.ENABLED
+    get_settings().rate_limit.ENABLED = True
 
     fake = FakeRateLimiter()
     mock_check = mocker.patch.object(
@@ -33,7 +35,11 @@ def mock_rate_limiter(mocker):
     )
     mocker.patch.object(app_container.rate_limiter, "record_failure")
     mocker.patch.object(app_container.rate_limiter, "record_captcha_success")
+    
     yield mock_check
+    
+    # Restore the original value
+    get_settings().rate_limit.ENABLED = original_enabled
 
 
 @pytest.mark.asyncio
