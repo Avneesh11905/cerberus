@@ -199,58 +199,15 @@ jobs:
           cache-from: type=registry,ref=${{ env.BACKEND_IMAGE_NAME }}:buildcache
           cache-to: type=registry,ref=${{ env.BACKEND_IMAGE_NAME }}:buildcache,mode=max
 
-  # â”€â”€ Frontend Docker build & push â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  frontend-build:
-    needs: [changes, node-ci]
-    # Run on main if frontend changed AND CI passed (or was skipped via workflow_dispatch)
-    if: |
-      (needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch') &&
-      github.ref == 'refs/heads/main' &&
-      (needs.node-ci.result == 'success' || needs.node-ci.result == 'skipped')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-
-      - name: Read frontend version
-        id: version
-        run: |
-          VERSION=$(grep '^FRONTEND_VERSION=' version.env | cut -d '=' -f2)
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v4
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build and push frontend image
-        uses: docker/build-push-action@v7
-        with:
-          context: ./frontend
-          file: ./frontend/Dockerfile
-          push: true
-          tags: |
-            ${{ env.FRONTEND_IMAGE_NAME }}:latest
-            ${{ env.FRONTEND_IMAGE_NAME }}:${{ steps.version.outputs.VERSION }}
-          build-args: |
-            VITE_API_URL=/api
-          cache-from: type=registry,ref=${{ env.FRONTEND_IMAGE_NAME }}:buildcache
-          cache-to: type=registry,ref=${{ env.FRONTEND_IMAGE_NAME }}:buildcache,mode=max
 
   # â”€â”€ Deploy â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   deploy:
-    needs: [changes, backend-build, frontend-build]
-    # Deploy only when on main AND at least one build succeeded (the other may be skipped)
+    needs: [changes, backend-build]
+    # Deploy only when on main AND the backend build succeeded (or skipped)
     if: |
       always() &&
       github.ref == 'refs/heads/main' &&
-      (needs.backend-build.result == 'success' || needs.backend-build.result == 'skipped') &&
-      (needs.frontend-build.result == 'success' || needs.frontend-build.result == 'skipped') &&
-      (needs.backend-build.result == 'success' || needs.frontend-build.result == 'success')
+      (needs.backend-build.result == 'success' || needs.backend-build.result == 'skipped')
     runs-on: [self-hosted, home-server]
     # Deploy job only needs to run docker commands on the self-hosted runner;
     # no repo read access required at this stage.
@@ -289,8 +246,6 @@ jobs:
           echo "Waiting for services to stabilize..."
           docker compose ps
 
-          echo "Checking Frontend..."
-          curl -sS --fail --retry 12 --retry-delay 5 --retry-connrefused http://localhost:3001
 
           echo "Checking Backend (Health)..."
           curl -sS --fail --retry 12 --retry-delay 5 --retry-connrefused http://localhost:8001/health
