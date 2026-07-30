@@ -1,8 +1,4 @@
-import {
-  createFileRoute,
-  redirect,
-  useNavigate,
-} from '@tanstack/react-router'
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -288,7 +284,10 @@ function RegisterPage() {
 
         <div className="mt-6 text-center text-sm font-medium text-slate">
           Already have an account?{' '}
-          <span onClick={() => navigate({ to: '/login' })} className="text-slate hover:underline font-bold cursor-pointer">
+          <span
+            onClick={() => navigate({ to: '/login' })}
+            className="text-slate hover:underline font-bold cursor-pointer"
+          >
             Log in
           </span>
         </div>

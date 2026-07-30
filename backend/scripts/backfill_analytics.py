@@ -60,16 +60,29 @@ BATCH_SIZE = 500
 
 # All columns for each live metrics table (must match DB schema exactly)
 _PROJECT_COLS = [
-    "api_requests", "login_successes", "login_failures",
-    "registrations", "active_users", "emails_sent", "emails_failed",
+    "api_requests",
+    "login_successes",
+    "login_failures",
+    "registrations",
+    "active_users",
+    "emails_sent",
+    "emails_failed",
 ]
 _TENANT_COLS = [
-    "api_requests", "login_successes", "login_failures",
-    "registrations", "active_users", "emails_sent", "emails_failed",
+    "api_requests",
+    "login_successes",
+    "login_failures",
+    "registrations",
+    "active_users",
+    "emails_sent",
+    "emails_failed",
     "projects_created",
 ]
 _SYSTEM_COLS = [
-    "tenants_onboarded", "tenant_suspensions", "api_key_rotations", "jwt_key_rotations",
+    "tenants_onboarded",
+    "tenant_suspensions",
+    "api_key_rotations",
+    "jwt_key_rotations",
 ]
 
 
@@ -212,7 +225,10 @@ async def backfill():
                 batch_num += 1
                 logger.info(
                     "  … committed batch %d (%d/%d events, %d errors so far)",
-                    batch_num, i + 1, len(rows), errors,
+                    batch_num,
+                    i + 1,
+                    len(rows),
+                    errors,
                 )
 
         # Commit any remainder

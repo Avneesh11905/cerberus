@@ -12,7 +12,10 @@ class ListProjectsUseCase(BaseProjectUseCase):
 
     async def execute(self, query: ListProjectsQuery) -> ListProjectsDTO:
         async with self.uow:
-            projects, total = await self.uow.project_query_repo.get_paginated_for_tenant(
+            (
+                projects,
+                total,
+            ) = await self.uow.project_query_repo.get_paginated_for_tenant(
                 query.user_id, query.skip, query.limit
             )
             return ListProjectsDTO(projects=projects, total=total)

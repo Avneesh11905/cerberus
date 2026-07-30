@@ -9,14 +9,25 @@ import {
   CardDescription,
   CardContent,
 } from '../components/ui/card'
-import { Button } from '../components/ui/button'
+import { Button, CopyButton, DownloadButton } from '../components/ui/button'
 import { Input } from '../components/ui/input'
-import { RefreshCw, Plus, Trash2, AlertTriangle, Eye, EyeOff, Check } from 'lucide-react'
+import {
+  RefreshCw,
+  Plus,
+  Trash2,
+  AlertTriangle,
+  Eye,
+  EyeOff,
+  Check,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { extractErrorMessage } from '../lib/api-client'
 import { useProject } from '../contexts/ProjectContext'
-import { updateProjectOrigins, rotateApiKey, rotateJwtSecret } from '../api/projects'
-import { CopyButton, DownloadButton } from '../components/ui/button'
+import {
+  updateProjectOrigins,
+  rotateApiKey,
+  rotateJwtSecret,
+} from '../api/projects'
 import { handleDownloadPem } from '../lib/utils'
 import {
   Dialog,
@@ -54,9 +65,7 @@ function SecurityTab() {
 
   // Sync with layout state
   useEffect(() => {
-    if (project) {
-      setAllowedOrigins(project.allowed_origins || [])
-    }
+    setAllowedOrigins(project.allowed_origins)
   }, [project])
 
   const handleAddOrigin = async () => {
@@ -89,7 +98,7 @@ function SecurityTab() {
       if (
         axios.isAxiosError(error) &&
         error.response?.status === 422 &&
-        error.response?.data?.detail?.[0]?.msg
+        error.response.data.detail[0]?.msg
       ) {
         setOriginError(error.response.data.detail[0].msg)
       } else {
@@ -246,7 +255,7 @@ function SecurityTab() {
                 Used for backend API integrations. The plaintext key is only
                 shown once when rotated.
               </p>
-              {project?.api_key_last_rotated && (
+              {project.api_key_last_rotated && (
                 <p className="text-xs font-semibold text-slate/50 mt-2">
                   Last rotated:{' '}
                   {new Date(project.api_key_last_rotated).toLocaleString()}
@@ -272,7 +281,7 @@ function SecurityTab() {
                   Used to verify the signatures of JWTs issued by Cerberus to
                   your users. This is safe to share.
                 </p>
-                {project?.jwt_secret_last_rotated && (
+                {project.jwt_secret_last_rotated && (
                   <p className="text-xs font-semibold text-slate/50 mt-2">
                     Last rotated:{' '}
                     {new Date(project.jwt_secret_last_rotated).toLocaleString()}
@@ -358,7 +367,7 @@ function SecurityTab() {
                     onDownload={() =>
                       handleDownloadPem(
                         publicKey,
-                        `${project?.name.replace(/\s+/g, '_').toLowerCase()}_public_key.pem`,
+                        `${project.name.replace(/\s+/g, '_').toLowerCase()}_public_key.pem`,
                       )
                     }
                     variant="outline"
@@ -493,7 +502,6 @@ function SecurityTab() {
                   <CopyButton value={rotatedApiKey} className="h-10 w-10" />
                 </div>
               </div>
-
             </div>
 
             <DialogFooter className="sm:justify-between flex-row items-center">
@@ -505,8 +513,8 @@ function SecurityTab() {
                     [
                       JSON.stringify(
                         {
-                          project_id: project?.id,
-                          project_name: project?.name,
+                          project_id: project.id,
+                          project_name: project.name,
                           api_key: rotatedApiKey,
                           rotated_at: new Date().toISOString(),
                         },
@@ -519,7 +527,7 @@ function SecurityTab() {
                   const url = URL.createObjectURL(blob)
                   const a = document.createElement('a')
                   a.href = url
-                  a.download = `cerberus_${project?.name.replace(/\s+/g, '_').toLowerCase()}_api_key.json`
+                  a.download = `cerberus_${project.name.replace(/\s+/g, '_').toLowerCase()}_api_key.json`
                   document.body.appendChild(a)
                   a.click()
                   document.body.removeChild(a)

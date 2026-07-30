@@ -55,8 +55,8 @@ export function ProjectUsers({ projectId }: { projectId: string }) {
     try {
       setLoading(true)
       const data = await getProjectUsers(projectId, page, size, debouncedSearch)
-      setUsers(data.items || [])
-      setTotal(data.total || 0)
+      setUsers(data.items)
+      setTotal(data.total)
     } catch (err) {
       toast.error(extractErrorMessage(err, 'Failed to fetch users'))
     } finally {
@@ -86,7 +86,7 @@ export function ProjectUsers({ projectId }: { projectId: string }) {
       // data might be { claims: ... } or just { ... } depending on the API.
       // The OpenAPI says `PaginatedProjectUsersRes` for list, but `Get User Claims` doesn't strictly define the response object. Let's assume it returns a raw object or { overrides: {} }.
       // If it's { user_overrides: {} }, use that. Otherwise use raw data.
-      const overrides = data.user_overrides || {}
+      const overrides = data.user_overrides
       setClaims(
         Object.entries(overrides).map(([k, v]) => ({
           key: k,

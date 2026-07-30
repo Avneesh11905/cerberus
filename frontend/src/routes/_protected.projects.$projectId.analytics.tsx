@@ -5,7 +5,6 @@ import { Activity, Users, LogIn, AlertCircle } from 'lucide-react'
 import { useAuthStore } from '../store/auth'
 import { API_URL } from '../lib/api-client'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
-import { useProject } from '../contexts/ProjectContext'
 import {
   ResponsiveContainer,
   AreaChart,
@@ -55,7 +54,6 @@ const TOOLTIP_STYLE = {
 
 function AnalyticsTab() {
   const { projectId } = Route.useParams()
-  const { project } = useProject()
   const accessToken = useAuthStore((state) => state.accessToken)
 
   const [timeSeries, setTimeSeries] = useState<DailyMetric[]>([])
@@ -124,7 +122,7 @@ function AnalyticsTab() {
             },
             onerror(err) {
               if (err instanceof Error && err.name === 'AbortError') return
-              if ((err as any)?.name === 'AbortError') return
+              if (err?.name === 'AbortError') return
 
               console.error('SSE Error:', err)
               if (isMounted) setTimeout(connectStream, 5000)
@@ -147,7 +145,7 @@ function AnalyticsTab() {
     }
   }, [projectId, accessToken])
 
-  if (!project) return null
+  // Project is guaranteed to be non-null by context
 
   return (
     <div className="flex flex-col gap-8 w-full animate-in fade-in slide-in-from-bottom-2 duration-300">

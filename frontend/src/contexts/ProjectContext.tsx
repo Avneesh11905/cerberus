@@ -7,7 +7,9 @@ export interface ProjectContextType {
   fetchProject: (showLoader?: boolean) => Promise<void>
 }
 
-export const ProjectContext = createContext<ProjectContextType | undefined>(undefined)
+export const ProjectContext = createContext<ProjectContextType | undefined>(
+  undefined,
+)
 
 export function useProject() {
   const context = useContext(ProjectContext)

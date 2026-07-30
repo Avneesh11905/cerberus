@@ -31,7 +31,8 @@ export function extractErrorMessage(
   return fallback
 }
 
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/v1'
+export const API_URL =
+  import.meta.env.VITE_API_URL || 'http://localhost:8000/v1'
 
 export const apiClient = axios.create({
   baseURL: API_URL,
@@ -63,10 +64,10 @@ const processQueue = (error: Error | null, token: string | null = null) => {
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const { accessToken, csrfToken } = useAuthStore.getState()
-    if (accessToken && config.headers) {
+    if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`
     }
-    if (csrfToken && config.headers) {
+    if (csrfToken) {
       config.headers['X-CSRF'] = csrfToken
     }
     return config
@@ -110,7 +111,7 @@ export const refreshToken = async (): Promise<string> => {
     )
 
     const newAccessToken = data.access_token
-    const newCsrfToken = data?.csrf_token
+    const newCsrfToken = data.csrf_token
     if (data.user) {
       useAuthStore
         .getState()
@@ -146,7 +147,6 @@ apiClient.interceptors.response.use(
 
     if (
       error.response?.status === 401 &&
-      originalRequest &&
       !originalRequest._retry &&
       !isAuthRoute
     ) {

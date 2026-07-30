@@ -52,7 +52,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
             Something went wrong
           </h1>
           <p className="text-slate/70 font-medium text-sm mb-8">
-            {error?.message || 'An unexpected error occurred.'}
+            {error.message || 'An unexpected error occurred.'}
           </p>
           <Button onClick={() => (window.location.href = '/')}>
             Return Home

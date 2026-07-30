@@ -61,8 +61,10 @@ async def list_projects(
 ):
     """List all projects owned by the authenticated tenant."""
     skip = (page - 1) * size
-    dto = await usecase.execute(ListProjectsQuery(user_id=user.id, skip=skip, limit=size))
-    
+    dto = await usecase.execute(
+        ListProjectsQuery(user_id=user.id, skip=skip, limit=size)
+    )
+
     return PaginatedProjectsRes(
         items=[ProjectReadRes.model_validate(p) for p in dto.projects],
         total=dto.total,

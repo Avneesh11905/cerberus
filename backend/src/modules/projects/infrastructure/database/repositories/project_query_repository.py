@@ -64,9 +64,13 @@ class SQLProjectQueryRepositoryAdapter(ProjectQueryRepositoryPort):
         models = result.scalars().all()
         return [self._to_entity(m) for m in models]
 
-    async def get_paginated_for_tenant(self, tenant_id: UUID, skip: int, limit: int) -> tuple[Sequence[ProjectEntity], int]:
+    async def get_paginated_for_tenant(
+        self, tenant_id: UUID, skip: int, limit: int
+    ) -> tuple[Sequence[ProjectEntity], int]:
         count_result = await self._session.execute(
-            select(func.count()).select_from(ProjectModel).where(ProjectModel.tenant_id == tenant_id)
+            select(func.count())
+            .select_from(ProjectModel)
+            .where(ProjectModel.tenant_id == tenant_id)
         )
         total = count_result.scalar() or 0
 

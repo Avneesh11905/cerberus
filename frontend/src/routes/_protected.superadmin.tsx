@@ -39,9 +39,9 @@ function SuperadminLayout() {
   return (
     <div className="max-w-7xl mx-auto flex flex-col gap-8 w-full">
       <div className="flex items-center gap-4">
-        <Button 
-          variant="outline" 
-          size="icon" 
+        <Button
+          variant="outline"
+          size="icon"
           className="border-2 border-slate w-10 h-10 rounded-xl"
           onClick={() => router.navigate({ to: '/dashboard' })}
         >

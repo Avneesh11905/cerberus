@@ -127,9 +127,17 @@ def record_analytics_event(
                 # ── Project-level UPSERT ───────────────────────────────────────────
                 if project_id and event_type in _PROJECT_EVENT_MAP:
                     col = _PROJECT_EVENT_MAP[event_type]
-                    
+
                     # Ensure all NOT NULL columns have a default of 0 when inserting a new row
-                    columns = ["api_requests", "login_successes", "login_failures", "registrations", "emails_sent", "emails_failed", "active_users"]
+                    columns = [
+                        "api_requests",
+                        "login_successes",
+                        "login_failures",
+                        "registrations",
+                        "emails_sent",
+                        "emails_failed",
+                        "active_users",
+                    ]
                     cols_str = ", ".join(columns)
                     vals_str = ", ".join("1" if c == col else "0" for c in columns)
 
@@ -156,12 +164,21 @@ def record_analytics_event(
                     and event_type in _TENANT_EVENT_MAP
                 ):
                     col = _TENANT_EVENT_MAP[event_type]
-                    
+
                     # Ensure all NOT NULL columns have a default of 0 when inserting a new row
-                    columns = ["api_requests", "login_successes", "login_failures", "registrations", "emails_sent", "emails_failed", "projects_created", "active_users"]
+                    columns = [
+                        "api_requests",
+                        "login_successes",
+                        "login_failures",
+                        "registrations",
+                        "emails_sent",
+                        "emails_failed",
+                        "projects_created",
+                        "active_users",
+                    ]
                     cols_str = ", ".join(columns)
                     vals_str = ", ".join("1" if c == col else "0" for c in columns)
-                    
+
                     await session.execute(
                         text(f"""
                         INSERT INTO live_tenant_metrics
@@ -177,9 +194,14 @@ def record_analytics_event(
                 # ── System-level UPSERT ────────────────────────────────────────────
                 if event_type in _SYSTEM_EVENT_MAP:
                     col = _SYSTEM_EVENT_MAP[event_type]
-                    
+
                     # Ensure all NOT NULL columns have a default of 0 when inserting a new row
-                    columns = ["tenants_onboarded", "tenant_suspensions", "api_key_rotations", "jwt_key_rotations"]
+                    columns = [
+                        "tenants_onboarded",
+                        "tenant_suspensions",
+                        "api_key_rotations",
+                        "jwt_key_rotations",
+                    ]
                     cols_str = ", ".join(columns)
                     vals_str = ", ".join("1" if c == col else "0" for c in columns)
 
@@ -216,7 +238,9 @@ def record_analytics_event(
             "timestamp": event.timestamp.isoformat(),
         }
 
-        async with Redis.from_url(get_settings().database.CACHE_URL, decode_responses=True) as redis_client:
+        async with Redis.from_url(
+            get_settings().database.CACHE_URL, decode_responses=True
+        ) as redis_client:
             publisher = RedisEventPublisherAdapter(redis_client=redis_client)
             if project_id:
                 await publisher.publish(f"analytics:project:{project_id}", event_data)

@@ -1,5 +1,8 @@
 from pydantic import BaseModel
-from src.modules.projects.presentation.api.schemas.project_read_res import ProjectReadRes
+from src.modules.projects.presentation.api.schemas.project_read_res import (
+    ProjectReadRes,
+)
+
 
 class PaginatedProjectsRes(BaseModel):
     items: list[ProjectReadRes]

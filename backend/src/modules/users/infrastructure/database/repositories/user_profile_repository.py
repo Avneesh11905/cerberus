@@ -17,6 +17,8 @@ from src.modules.users.domain.exceptions import UserNotFoundException
 from src.modules.users.infrastructure.models import User
 from src.shared.domain.value_objects import EmailAddress, HttpsUrl, PersonName
 
+from datetime import datetime, UTC
+
 
 class SQLUserProfileRepositoryAdapter(UserProfileRepositoryPort):
     """Implements UserProfileRepositoryPort using SQLAlchemy."""

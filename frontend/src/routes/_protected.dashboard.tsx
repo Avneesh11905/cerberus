@@ -13,7 +13,14 @@ import {
   Bar,
   Legend,
 } from 'recharts'
-import { Activity, Users, ShieldAlert, LogIn, FolderKanban, ArrowLeft } from 'lucide-react'
+import {
+  Activity,
+  Users,
+  ShieldAlert,
+  LogIn,
+  FolderKanban,
+  ArrowLeft,
+} from 'lucide-react'
 import { Button } from '../components/ui/button'
 
 export const Route = createFileRoute('/_protected/dashboard')({
@@ -39,7 +46,9 @@ function StatCard({ title, value, icon: Icon, subtitle }: StatCardProps) {
       <div className="text-3xl font-display font-bold text-slate mb-1">
         {typeof value === 'number' ? value.toLocaleString() : value}
       </div>
-      {subtitle && <p className="text-sm font-medium text-slate/50">{subtitle}</p>}
+      {subtitle && (
+        <p className="text-sm font-medium text-slate/50">{subtitle}</p>
+      )}
     </div>
   )
 }
@@ -59,9 +68,10 @@ function DashboardPage() {
 
   const totals = data?.totals
   const timeSeries = data?.timeSeries ?? []
-  const errorRate = totals && totals.api_requests > 0
-    ? ((totals.login_failures / totals.api_requests) * 100).toFixed(1) + '%'
-    : '0%'
+  const errorRate =
+    totals && totals.api_requests > 0
+      ? ((totals.login_failures / totals.api_requests) * 100).toFixed(1) + '%'
+      : '0%'
 
   return (
     <div className="max-w-7xl mx-auto flex flex-col gap-8 w-full">
@@ -124,7 +134,9 @@ function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Chart — API Requests over time */}
         <div className="lg:col-span-2 bg-sand rounded-xl border-2 border-slate p-6 shadow-[4px_4px_0px_rgba(30,41,59,1)]">
-          <h2 className="text-xl font-bold text-slate mb-6">API Traffic — Last 30 Days</h2>
+          <h2 className="text-xl font-bold text-slate mb-6">
+            API Traffic — Last 30 Days
+          </h2>
           {timeSeries.length === 0 ? (
             <div className="h-80 flex items-center justify-center text-slate/40 font-medium">
               No data yet — events will appear here in real time.
@@ -137,14 +149,35 @@ function DashboardPage() {
                   margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
                 >
                   <defs>
-                    <linearGradient id="colorRequests" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient
+                      id="colorRequests"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
                       <stop offset="5%" stopColor="#E07A5F" stopOpacity={0.3} />
                       <stop offset="95%" stopColor="#E07A5F" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#3d405b" vertical={false} />
-                  <XAxis dataKey="date" stroke="#3d405b" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#3d405b" fontSize={12} tickLine={false} axisLine={false} />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="#3d405b"
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="date"
+                    stroke="#3d405b"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis
+                    stroke="#3d405b"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                  />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: '#FAEED1',
@@ -185,9 +218,24 @@ function DashboardPage() {
                   data={timeSeries}
                   margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#3d405b" vertical={false} />
-                  <XAxis dataKey="date" stroke="#3d405b" fontSize={10} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#3d405b" fontSize={10} tickLine={false} axisLine={false} />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="#3d405b"
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="date"
+                    stroke="#3d405b"
+                    fontSize={10}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis
+                    stroke="#3d405b"
+                    fontSize={10}
+                    tickLine={false}
+                    axisLine={false}
+                  />
                   <Tooltip
                     cursor={{ fill: '#FAEED1', opacity: 0.5 }}
                     contentStyle={{
@@ -199,10 +247,27 @@ function DashboardPage() {
                       boxShadow: '4px 4px 0px rgba(61, 64, 91, 1)',
                     }}
                   />
-                  <Legend wrapperStyle={{ fontSize: '11px', fontWeight: 700 }} />
-                  <Bar dataKey="login_successes" name="Logins" fill="#81B29A" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="registrations" name="Registrations" fill="#F2CC8F" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="login_failures" name="Failures" fill="#E07A5F" radius={[4, 4, 0, 0]} />
+                  <Legend
+                    wrapperStyle={{ fontSize: '11px', fontWeight: 700 }}
+                  />
+                  <Bar
+                    dataKey="login_successes"
+                    name="Logins"
+                    fill="#81B29A"
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <Bar
+                    dataKey="registrations"
+                    name="Registrations"
+                    fill="#F2CC8F"
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <Bar
+                    dataKey="login_failures"
+                    name="Failures"
+                    fill="#E07A5F"
+                    radius={[4, 4, 0, 0]}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>

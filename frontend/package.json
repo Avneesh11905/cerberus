@@ -12,7 +12,8 @@
     "preview": "vite preview",
     "lint": "eslint",
     "format": "prettier --write . && eslint --fix",
-    "check": "prettier --check ."
+    "check": "prettier --check .",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@faker-js/faker": "^10.3.0",

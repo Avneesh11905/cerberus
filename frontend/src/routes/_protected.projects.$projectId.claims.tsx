@@ -19,13 +19,12 @@ import { extractErrorMessage } from '../lib/api-client'
 import { useProject } from '../contexts/ProjectContext'
 import { updateProjectClaims } from '../api/projects'
 import EditorModule from 'react-simple-code-editor'
-const Editor = (EditorModule as any).default || EditorModule
 import Prism from 'prismjs'
 import 'prismjs/themes/prism.css'
 
-export const Route = createFileRoute(
-  '/_protected/projects/$projectId/claims',
-)({
+const Editor = (EditorModule as any).default || EditorModule
+
+export const Route = createFileRoute('/_protected/projects/$projectId/claims')({
   component: ClaimsTab,
 })
 
@@ -39,11 +38,7 @@ function ClaimsTab() {
   const [claimsSaved, setClaimsSaved] = useState(false)
 
   useEffect(() => {
-    if (project) {
-      setClaimsJson(
-        JSON.stringify(project.default_claims || {}, null, 2),
-      )
-    }
+    setClaimsJson(JSON.stringify(project.default_claims, null, 2))
   }, [project])
 
   const handleFormatJson = () => {
@@ -157,7 +152,7 @@ function ClaimsTab() {
       } else if (
         axios.isAxiosError(error) &&
         error.response?.status === 422 &&
-        error.response?.data?.detail?.[0]?.msg
+        error.response.data.detail[0]?.msg
       ) {
         setClaimsError(error.response.data.detail[0].msg)
       } else {
@@ -238,7 +233,7 @@ function ClaimsTab() {
                   highlight={(code: string) =>
                     Prism.highlight(
                       code,
-                      Prism.languages.javascript || Prism.languages.js,
+                      Prism.languages.javascript,
                       'javascript',
                     )
                   }

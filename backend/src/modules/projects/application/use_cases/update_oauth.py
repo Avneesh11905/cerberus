@@ -1,7 +1,6 @@
 from datetime import datetime, UTC
 from typing import cast
 
-from src.modules.projects.domain.exceptions.project_error import ProjectError
 
 from src.modules.projects.application.commands.project_commands import (
     UpdateOauthCommand,
@@ -76,6 +75,7 @@ class UpdateOauthUseCase(BaseProjectUseCase):
 
                     if errors:
                         from fastapi import HTTPException
+
                         raise HTTPException(status_code=422, detail=errors)
 
                 final_config[provider] = {

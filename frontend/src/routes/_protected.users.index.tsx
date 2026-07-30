@@ -23,7 +23,13 @@ import {
   DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '../components/ui/avatar'
-import { MoreHorizontal, ShieldOff, Search, Loader2, ArrowLeft } from 'lucide-react'
+import {
+  MoreHorizontal,
+  ShieldOff,
+  Search,
+  Loader2,
+  ArrowLeft,
+} from 'lucide-react'
 
 export const Route = createFileRoute('/_protected/users/')({
   component: GlobalUsersDashboard,
@@ -76,9 +82,9 @@ function GlobalUsersDashboard() {
   return (
     <div className="max-w-7xl mx-auto flex flex-col gap-8 w-full">
       <div className="flex items-center gap-4 mb-2">
-        <Button 
-          variant="outline" 
-          size="icon" 
+        <Button
+          variant="outline"
+          size="icon"
           className="border-2 border-slate w-10 h-10 rounded-xl"
           onClick={() => router.navigate({ to: '/dashboard' })}
         >
@@ -185,25 +191,25 @@ function GlobalUsersDashboard() {
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                          align="end"
-                          className="w-48 bg-vanilla border-2 border-slate shadow-[4px_4px_0px_rgba(30,41,59,1)] rounded-xl p-1"
+                      <DropdownMenuContent
+                        align="end"
+                        className="w-48 bg-vanilla border-2 border-slate shadow-[4px_4px_0px_rgba(30,41,59,1)] rounded-xl p-1"
+                      >
+                        <DropdownMenuLabel className="font-bold text-slate px-2 py-1.5">
+                          Actions
+                        </DropdownMenuLabel>
+                        <DropdownMenuItem
+                          onClick={() =>
+                            handleToggleStatus(user.email, user.is_active)
+                          }
+                          className="font-medium cursor-pointer rounded-lg px-2 py-1.5"
                         >
-                          <DropdownMenuLabel className="font-bold text-slate px-2 py-1.5">
-                            Actions
-                          </DropdownMenuLabel>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              handleToggleStatus(user.email, user.is_active)
-                            }
-                            className="font-medium cursor-pointer rounded-lg px-2 py-1.5"
-                          >
                           <ShieldOff className="mr-2 h-4 w-4" />
                           {user.is_active
                             ? 'Deactivate Everywhere'
                             : 'Activate Everywhere'}
                         </DropdownMenuItem>
-                    </DropdownMenuContent>
+                      </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>

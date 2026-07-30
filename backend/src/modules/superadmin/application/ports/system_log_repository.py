@@ -17,7 +17,7 @@ class SystemLogRepositoryPort(Protocol):
     ) -> Sequence[SystemLogEntity]: ...
 
     async def count_logs(
-        self, 
+        self,
         level: LogLevel | None = None,
         start_date: datetime | None = None,
         end_date: datetime | None = None,

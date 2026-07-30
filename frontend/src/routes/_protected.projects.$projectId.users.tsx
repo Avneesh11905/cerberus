@@ -1,9 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { ProjectUsers } from '../components/ProjectUsers'
 
-export const Route = createFileRoute(
-  '/_protected/projects/$projectId/users',
-)({
+export const Route = createFileRoute('/_protected/projects/$projectId/users')({
   component: UsersTab,
 })
 

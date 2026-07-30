@@ -6,7 +6,6 @@ import { useForm } from 'react-hook-form'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
-  Settings,
   Shield,
   User as UserIcon,
   LogOut,
@@ -632,7 +631,8 @@ function DeleteAccountCard() {
       <CardHeader>
         <CardTitle className="text-terracotta">Danger Zone</CardTitle>
         <CardDescription>
-          Deactivate your account. You will have 28 days to recover it by logging in again before it is permanently deleted.
+          Deactivate your account. You will have 28 days to recover it by
+          logging in again before it is permanently deleted.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -643,14 +643,18 @@ function DeleteAccountCard() {
               Delete Account
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-106.25">
             <DialogHeader>
               <DialogTitle className="text-terracotta flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5" />
                 Delete Account
               </DialogTitle>
               <DialogDescription>
-                Are you sure you want to delete your account? Your account will be deactivated and soft-deleted. You can recover it at any time within the next 28 days simply by logging back in. After 28 days, your account and all associated data will be permanently lost.
+                Are you sure you want to delete your account? Your account will
+                be deactivated and soft-deleted. You can recover it at any time
+                within the next 28 days simply by logging back in. After 28
+                days, your account and all associated data will be permanently
+                lost.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="mt-6 flex gap-3 sm:justify-end">
@@ -664,7 +668,9 @@ function DeleteAccountCard() {
                 }}
                 disabled={deleteMutation.isPending}
               >
-                {deleteMutation.isPending ? 'Deleting...' : 'Yes, delete my account'}
+                {deleteMutation.isPending
+                  ? 'Deleting...'
+                  : 'Yes, delete my account'}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -694,8 +700,8 @@ function SettingsPage() {
       {/* Left Column (Header + Sidebar) */}
       <div className="w-full md:w-64 shrink-0 flex flex-col gap-8">
         <div className="flex items-center gap-3">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="icon"
             className="border-2 border-slate w-10 h-10 rounded-xl shrink-0"
             onClick={() => navigate({ to: '/dashboard' })}

@@ -11,11 +11,7 @@ import {
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useAnalyticsStream } from '../../hooks/useAnalyticsStream'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from './tooltip'
+import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip'
 import { Avatar, AvatarFallback, AvatarImage } from './avatar'
 import {
   DropdownMenu,
@@ -74,10 +70,11 @@ export function Navbar() {
     }
   }
 
-  const showStreamIndicator = 
-    location.pathname === '/dashboard' || 
-    location.pathname === '/superadmin' || 
-    (location.pathname.startsWith('/superadmin/tenants/') && location.pathname.endsWith('/analytics'))
+  const showStreamIndicator =
+    location.pathname === '/dashboard' ||
+    location.pathname === '/superadmin' ||
+    (location.pathname.startsWith('/superadmin/tenants/') &&
+      location.pathname.endsWith('/analytics'))
 
   return (
     <header className="h-16 bg-vanilla border-b-2 border-taupe/30 flex items-center justify-between px-6 shrink-0 z-50 relative">
@@ -96,8 +93,10 @@ export function Navbar() {
         <span
           onClick={() => navigate({ to: '/dashboard' })}
           className={clsx(
-            "text-sm font-bold flex items-center gap-2 transition-colors cursor-pointer",
-            location.pathname.startsWith('/dashboard') ? "text-slate" : "text-slate/70 hover:text-slate"
+            'text-sm font-bold flex items-center gap-2 transition-colors cursor-pointer',
+            location.pathname.startsWith('/dashboard')
+              ? 'text-slate'
+              : 'text-slate/70 hover:text-slate',
           )}
         >
           <LayoutDashboard className="w-4 h-4" />
@@ -106,8 +105,10 @@ export function Navbar() {
         <span
           onClick={() => navigate({ to: '/projects' })}
           className={clsx(
-            "text-sm font-bold flex items-center gap-2 transition-colors cursor-pointer",
-            location.pathname.startsWith('/projects') ? "text-slate" : "text-slate/70 hover:text-slate"
+            'text-sm font-bold flex items-center gap-2 transition-colors cursor-pointer',
+            location.pathname.startsWith('/projects')
+              ? 'text-slate'
+              : 'text-slate/70 hover:text-slate',
           )}
         >
           <FolderKanban className="w-4 h-4" />
@@ -116,8 +117,10 @@ export function Navbar() {
         <span
           onClick={() => navigate({ to: '/users' })}
           className={clsx(
-            "text-sm font-bold flex items-center gap-2 transition-colors cursor-pointer",
-            location.pathname.startsWith('/users') ? "text-slate" : "text-slate/70 hover:text-slate"
+            'text-sm font-bold flex items-center gap-2 transition-colors cursor-pointer',
+            location.pathname.startsWith('/users')
+              ? 'text-slate'
+              : 'text-slate/70 hover:text-slate',
           )}
         >
           <Users className="w-4 h-4" />
@@ -126,8 +129,10 @@ export function Navbar() {
         <span
           onClick={() => navigate({ to: '/settings' })}
           className={clsx(
-            "text-sm font-bold flex items-center gap-2 transition-colors cursor-pointer",
-            location.pathname.startsWith('/settings') ? "text-slate" : "text-slate/70 hover:text-slate"
+            'text-sm font-bold flex items-center gap-2 transition-colors cursor-pointer',
+            location.pathname.startsWith('/settings')
+              ? 'text-slate'
+              : 'text-slate/70 hover:text-slate',
           )}
         >
           <Settings className="w-4 h-4" />
@@ -138,7 +143,7 @@ export function Navbar() {
       {/* Right: Actions & Profile */}
       <div className="flex items-center justify-end gap-6 flex-1">
         {showStreamIndicator && <StreamIndicator />}
-        
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Avatar className="w-8 h-8 cursor-pointer hover:-translate-y-0.5 hover:-translate-x-0.5 transition-transform outline-none select-none">
@@ -148,11 +153,7 @@ export function Navbar() {
                 className="select-none pointer-events-none"
               />
               <AvatarFallback>
-                {(
-                  user?.name?.[0] ||
-                  user?.email?.[0] ||
-                  'U'
-                ).toUpperCase()}
+                {(user?.name?.[0] || user?.email?.[0] || 'U').toUpperCase()}
               </AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>
@@ -161,14 +162,12 @@ export function Navbar() {
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none text-slate">
                   {typeof user?.name === 'object'
-                    ? (user?.name as any)?.value ||
-                      JSON.stringify(user?.name)
+                    ? (user?.name as any)?.value || JSON.stringify(user?.name)
                     : user?.name || 'User'}
                 </p>
                 <p className="text-xs leading-none text-slate/50">
                   {typeof user?.email === 'object'
-                    ? (user?.email as any)?.value ||
-                      JSON.stringify(user?.email)
+                    ? (user?.email as any)?.value || JSON.stringify(user?.email)
                     : user?.email}
                 </p>
               </div>

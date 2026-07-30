@@ -28,9 +28,9 @@ async def list_system_logs(
 ):
     """View recent system activity logs (audits, errors, events)."""
     skip = (page - 1) * limit
-    
+
     from datetime import datetime
-    
+
     parsed_start = None
     parsed_end = None
     if start_date:
@@ -43,13 +43,13 @@ async def list_system_logs(
             parsed_end = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
         except ValueError:
             pass
-            
+
     logs, total = await use_case.execute(
-        skip=skip, 
-        limit=limit, 
+        skip=skip,
+        limit=limit,
         level=level,
         start_date=parsed_start,
-        end_date=parsed_end
+        end_date=parsed_end,
     )
 
     return PaginatedSystemLogRes(

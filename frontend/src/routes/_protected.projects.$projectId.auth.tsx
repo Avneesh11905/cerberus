@@ -8,16 +8,14 @@ import {
   CardDescription,
   CardContent,
 } from '../components/ui/card'
-import { Button } from '../components/ui/button'
+import { Button, CopyButton } from '../components/ui/button'
 import { Label } from '../components/ui/label'
 import { Input } from '../components/ui/input'
 import { RefreshCw, Plus, Shield, Trash2, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
-import { extractErrorMessage } from '../lib/api-client'
+import { extractErrorMessage, API_URL } from '../lib/api-client'
 import { useProject } from '../contexts/ProjectContext'
 import { updateProjectOAuth } from '../api/projects'
-import { API_URL } from '../lib/api-client'
-import { CopyButton } from '../components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -58,18 +56,16 @@ function AuthTab() {
   const [providerToDelete, setProviderToDelete] = useState<string | null>(null)
 
   useEffect(() => {
-    if (project) {
-      const providers: string[] = []
-      if (project.oauth_config?.github?.enabled) {
-        providers.push('github')
-        setGithubClientId(project.oauth_config.github.client_id || '')
-      }
-      if (project.oauth_config?.google?.enabled) {
-        providers.push('google')
-        setGoogleClientId(project.oauth_config.google.client_id || '')
-      }
-      setAllowedProviders(providers)
+    const providers: string[] = []
+    if (project.oauth_config.github.enabled) {
+      providers.push('github')
+      setGithubClientId(project.oauth_config.github.client_id || '')
     }
+    if (project.oauth_config.google.enabled) {
+      providers.push('google')
+      setGoogleClientId(project.oauth_config.google.client_id || '')
+    }
+    setAllowedProviders(providers)
   }, [project])
 
   const openAddProviderModal = () => {
@@ -145,7 +141,7 @@ function AuthTab() {
       if (
         axios.isAxiosError(error) &&
         error.response?.status === 422 &&
-        Array.isArray(error.response?.data?.detail)
+        Array.isArray(error.response.data.detail)
       ) {
         const errors: Record<string, string> = {}
         error.response.data.detail.forEach((d: any) => {
@@ -249,9 +245,8 @@ function AuthTab() {
                 No Providers Configured
               </h3>
               <p className="text-sm font-semibold text-slate/70 text-center max-w-md">
-                You haven't added any social login providers yet. Add a
-                provider to allow your users to sign in with their
-                existing accounts.
+                You haven't added any social login providers yet. Add a provider
+                to allow your users to sign in with their existing accounts.
               </p>
             </div>
           ) : (
@@ -268,8 +263,7 @@ function AuthTab() {
                       </h4>
                       <p className="text-sm font-semibold text-slate/70">
                         Users can sign in with their{' '}
-                        {provider.charAt(0).toUpperCase() +
-                          provider.slice(1)}{' '}
+                        {provider.charAt(0).toUpperCase() + provider.slice(1)}{' '}
                         accounts.
                       </p>
                     </div>

@@ -16,7 +16,10 @@ import { RefreshCw, Check, Save, Trash2, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
 import { extractErrorMessage } from '../lib/api-client'
 import { useProject } from '../contexts/ProjectContext'
-import { updateProjectEnvironment, updateProjectFrontendUrl } from '../api/projects'
+import {
+  updateProjectEnvironment,
+  updateProjectFrontendUrl,
+} from '../api/projects'
 import type { Environment } from '../api/projects'
 import {
   Dialog,
@@ -27,11 +30,11 @@ import {
   DialogFooter,
 } from '../components/ui/dialog'
 
-export const Route = createFileRoute(
-  '/_protected/projects/$projectId/general',
-)({
-  component: GeneralTab,
-})
+export const Route = createFileRoute('/_protected/projects/$projectId/general')(
+  {
+    component: GeneralTab,
+  },
+)
 
 function GeneralTab() {
   const { projectId } = Route.useParams()
@@ -43,13 +46,12 @@ function GeneralTab() {
   const [generalSaved, setGeneralSaved] = useState(false)
   const [generalErrors, setGeneralErrors] = useState<Record<string, string>>({})
   const [showEnvConfirm, setShowEnvConfirm] = useState(false)
-  const [isDeleteProjectModalOpen, setIsDeleteProjectModalOpen] = useState(false)
+  const [isDeleteProjectModalOpen, setIsDeleteProjectModalOpen] =
+    useState(false)
 
   useEffect(() => {
-    if (project) {
-      setEnvironment(project.environment)
-      setFrontendUrl(project.frontend_url || '')
-    }
+    setEnvironment(project.environment)
+    setFrontendUrl(project.frontend_url || '')
   }, [project])
 
   const handleSaveGeneral = async (e: React.FormEvent) => {
@@ -60,7 +62,8 @@ function GeneralTab() {
     const errors: Record<string, string> = {}
 
     if (frontendUrl && !frontendUrl.match(/^https?:\/\/.+/)) {
-      errors.frontendUrl = 'Must be a valid URL starting with http:// or https://'
+      errors.frontendUrl =
+        'Must be a valid URL starting with http:// or https://'
       hasErrors = true
     }
 
@@ -71,7 +74,7 @@ function GeneralTab() {
 
     setSavingGeneral(true)
     try {
-      if (frontendUrl !== project?.frontend_url) {
+      if (frontendUrl !== project.frontend_url) {
         await updateProjectFrontendUrl(projectId, frontendUrl)
       }
       setGeneralSaved(true)
@@ -120,9 +123,7 @@ function GeneralTab() {
                   className="shrink-0 bg-vanilla"
                 >
                   Switch to{' '}
-                  {environment === 'development'
-                    ? 'Production'
-                    : 'Development'}
+                  {environment === 'development' ? 'Production' : 'Development'}
                 </Button>
               </div>
             </div>
@@ -149,8 +150,8 @@ function GeneralTab() {
                 </p>
               )}
               <p className="text-xs text-slate/70 font-semibold">
-                Where users should be redirected after successful
-                authentication flows.
+                Where users should be redirected after successful authentication
+                flows.
               </p>
             </div>
           </CardContent>
@@ -217,8 +218,8 @@ function GeneralTab() {
         <CardHeader>
           <CardTitle className="text-terracotta">Danger Zone</CardTitle>
           <CardDescription>
-            Deleting this project will permanently remove all associated
-            users, sessions, and configurations.
+            Deleting this project will permanently remove all associated users,
+            sessions, and configurations.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -271,9 +272,7 @@ function GeneralTab() {
               type="button"
               onClick={async () => {
                 const newEnv =
-                  environment === 'development'
-                    ? 'production'
-                    : 'development'
+                  environment === 'development' ? 'production' : 'development'
                 try {
                   await updateProjectEnvironment(projectId, newEnv)
                   setEnvironment(newEnv)

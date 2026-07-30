@@ -76,8 +76,10 @@ async def run_clean_unverified_and_deleted_users():
             encryption_adapter=app_container.encryption_adapter,
             cache=app_container.cache_adapter,
         ) as uow:
-            count_soft_deleted = await uow.user_maintenance_repo.cleanup_soft_deleted_users(
-                days_old=get_settings().account.RETENTION_DAYS
+            count_soft_deleted = (
+                await uow.user_maintenance_repo.cleanup_soft_deleted_users(
+                    days_old=get_settings().account.RETENTION_DAYS
+                )
             )
             if count_soft_deleted:
                 await uow.session.commit()

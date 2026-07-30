@@ -60,7 +60,7 @@ class SQLSystemLogRepositoryAdapter(SystemLogRepositoryPort):
         return [self._to_entity(model) for model in orm_models]
 
     async def count_logs(
-        self, 
+        self,
         level: LogLevel | None = None,
         start_date: datetime | None = None,
         end_date: datetime | None = None,

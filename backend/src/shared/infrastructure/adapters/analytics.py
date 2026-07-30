@@ -15,6 +15,7 @@ class CeleryAnalyticsAdapter:
         metadata: dict[str, JsonValue] | None = None,
     ) -> None:
         from uuid import uuid4
+
         kwargs: dict[str, JsonValue] = {
             "event_type": event_type,
             "event_id": str(event_id) if event_id else str(uuid4()),

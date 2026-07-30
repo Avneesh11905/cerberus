@@ -11,7 +11,12 @@ import { isTokenExpired } from '../lib/jwt'
 import { refreshClient } from '../lib/api-client'
 import { AnalyticsProvider } from '../hooks/useAnalyticsStream'
 import { Navbar } from '../components/ui/navbar'
-import { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem } from '../components/ui/context-menu'
+import {
+  ContextMenu,
+  ContextMenuTrigger,
+  ContextMenuContent,
+  ContextMenuItem,
+} from '../components/ui/context-menu'
 import { RefreshCcw, ArrowLeft, ArrowRight } from 'lucide-react'
 
 export const Route = createFileRoute('/_protected')({
@@ -33,7 +38,7 @@ export const Route = createFileRoute('/_protected')({
           { headers: csrfToken ? { 'X-CSRF': csrfToken } : undefined },
         )
         const newAccessToken = data.access_token
-        const newCsrfToken = data?.csrf_token
+        const newCsrfToken = data.csrf_token
         if (data.user) {
           useAuthStore
             .getState()
@@ -74,7 +79,10 @@ function ProtectedLayout() {
 
   if (location.pathname.startsWith('/superadmin')) {
     scope = 'system'
-  } else if (location.pathname.startsWith('/projects/') && !location.pathname.endsWith('/settings')) {
+  } else if (
+    location.pathname.startsWith('/projects/') &&
+    !location.pathname.endsWith('/settings')
+  ) {
     const parts = location.pathname.split('/')
     if (parts.length >= 3 && parts[2] !== '') {
       scope = 'project'

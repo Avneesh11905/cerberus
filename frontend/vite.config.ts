@@ -20,11 +20,6 @@ export default defineConfig(({ mode }) => {
     optimizeDeps: {
       include: ['react', 'react-dom', '@tanstack/react-router', 'lucide-react'],
     },
-    plugins: [
-      devtools(),
-      tailwindcss(),
-      tanstackStart(),
-      viteReact(),
-    ],
+    plugins: [devtools(), tailwindcss(), tanstackStart(), viteReact()],
   }
 })

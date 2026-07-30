@@ -1,8 +1,4 @@
-import {
-  createFileRoute,
-  redirect,
-  useNavigate,
-} from '@tanstack/react-router'
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -164,10 +160,7 @@ function LoginPage() {
               Forgot password?
             </span>
           </div>
-            <PasswordInput
-              id="password"
-              {...register('password')}
-            />
+          <PasswordInput id="password" {...register('password')} />
           {errors.password && (
             <p className="text-terracotta text-sm font-medium">
               {errors.password.message}
@@ -263,7 +256,10 @@ function LoginPage() {
 
         <div className="mt-6 text-center text-sm font-medium text-slate">
           Don't have an account?{' '}
-          <span onClick={() => navigate({ to: '/register' })} className="text-slate hover:underline font-bold cursor-pointer">
+          <span
+            onClick={() => navigate({ to: '/register' })}
+            className="text-slate hover:underline font-bold cursor-pointer"
+          >
             Sign up
           </span>
         </div>
