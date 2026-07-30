@@ -49,7 +49,8 @@ class PasswordResetExecuteUseCase:
         async with self.uow:
             limit_key = f"{command.client_meta.ip_address if command.client_meta else 'unknown'}:pwd_reset"
 
-            if command.is_challenged:
+            # Turnstile Verification (bypassed if project_id is present via API Key)
+            if command.is_challenged and not command.project_id:
                 if not command.turnstile_token:
                     await self.rate_limiter.record_failure(limit_key)
                     raise TurnstileVerificationFailed(

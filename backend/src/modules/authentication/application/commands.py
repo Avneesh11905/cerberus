@@ -56,6 +56,7 @@ class PasswordResetRequestCommand:
 class PasswordResetExecuteCommand:
     token: str
     new_password: str
+    project_id: UUID | None = None
     client_meta: ClientMetadata | None = None
     is_challenged: bool = False
     turnstile_token: str | None = None

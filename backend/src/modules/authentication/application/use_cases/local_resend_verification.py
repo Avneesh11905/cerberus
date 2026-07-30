@@ -54,7 +54,8 @@ class LocalResendVerificationUseCase:
             resend_key = f"otp_resends:{scope}:{email_hash}"
             limit_key = f"{command.client_meta.ip_address if command.client_meta else 'unknown'}:{command.email.lower()}"
 
-            if command.is_challenged:
+            # Turnstile Verification (bypassed if project_id is present via API Key)
+            if not command.project_id and command.is_challenged:
                 if not command.turnstile_token:
                     await self._rate_limiter.record_failure(limit_key)
                     raise TurnstileVerificationFailed(

@@ -75,6 +75,7 @@ async def reset_password(
     body: ResetPasswordRequest,
     usecase: PasswordResetExecuteUseCaseDep,
     is_challenged: IsChallengedDep,
+    project_id: OptionalProjectIdDep,
 ):
     """
     Execute a password reset using a valid token.
@@ -90,6 +91,7 @@ async def reset_password(
     command = PasswordResetExecuteCommand(
         token=body.token,
         new_password=body.new_password,
+        project_id=project_id,
         is_challenged=is_challenged,
         turnstile_token=body.turnstile_token,
         client_meta=client_meta,
