@@ -16,7 +16,7 @@ x-nginx-conf-file-to-volume: &nginx-volume
   - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
 
 x-nginx-port-mapping: &nginx-ports
-  - "80:80"
+  - "8001:80"
 
 x-database-networks-included-observers-like-adminer-and-insights: &database-networks
   - Cerberus-Network
