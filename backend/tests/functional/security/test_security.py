@@ -44,7 +44,7 @@ def mock_rate_limiter(mocker):
     for middleware in app.user_middleware:
         if middleware.cls == RateLimitAndAnalyticsMiddleware:
             if "rate_limit_settings" in middleware.kwargs:
-                middleware.kwargs["rate_limit_settings"].ENABLED = True
+                middleware.kwargs["rate_limit_settings"].ENABLED = True  # type: ignore[attr-defined]
 
     fake = FakeRateLimiter()
 
@@ -66,7 +66,7 @@ def mock_rate_limiter(mocker):
     for middleware in app.user_middleware:
         if middleware.cls == RateLimitAndAnalyticsMiddleware:
             if "rate_limit_settings" in middleware.kwargs:
-                middleware.kwargs["rate_limit_settings"].ENABLED = original_enabled
+                middleware.kwargs["rate_limit_settings"].ENABLED = original_enabled  # type: ignore[attr-defined]
 
 
 @pytest.mark.asyncio
