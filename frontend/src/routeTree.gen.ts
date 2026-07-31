@@ -9,54 +9,35 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as ProtectedRouteImport } from './routes/_protected'
-import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as RegisterRouteImport } from './routes/register'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
-import { Route as ProtectedDashboardRouteImport } from './routes/_protected.dashboard'
-import { Route as ProtectedSettingsRouteImport } from './routes/_protected.settings'
-import { Route as ProtectedSuperadminRouteImport } from './routes/_protected.superadmin'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as ProtectedRouteImport } from './routes/_protected'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as OauthCallbackRouteImport } from './routes/oauth.callback'
-import { Route as ProtectedProjectsIndexRouteImport } from './routes/_protected.projects.index'
-import { Route as ProtectedProjectsProjectIdRouteImport } from './routes/_protected.projects.$projectId'
-import { Route as ProtectedSuperadminIndexRouteImport } from './routes/_protected.superadmin.index'
-import { Route as ProtectedSuperadminLogsRouteImport } from './routes/_protected.superadmin.logs'
-import { Route as ProtectedSuperadminTenantsRouteImport } from './routes/_protected.superadmin.tenants'
+import { Route as ProtectedSuperadminRouteImport } from './routes/_protected.superadmin'
+import { Route as ProtectedSettingsRouteImport } from './routes/_protected.settings'
+import { Route as ProtectedDashboardRouteImport } from './routes/_protected.dashboard'
 import { Route as ProtectedUsersIndexRouteImport } from './routes/_protected.users.index'
+import { Route as ProtectedSuperadminIndexRouteImport } from './routes/_protected.superadmin.index'
+import { Route as ProtectedProjectsIndexRouteImport } from './routes/_protected.projects.index'
+import { Route as ProtectedSuperadminTenantsRouteImport } from './routes/_protected.superadmin.tenants'
+import { Route as ProtectedSuperadminLogsRouteImport } from './routes/_protected.superadmin.logs'
+import { Route as ProtectedProjectsProjectIdRouteImport } from './routes/_protected.projects.$projectId'
 import { Route as ProtectedProjectsProjectIdIndexRouteImport } from './routes/_protected.projects.$projectId.index'
-import { Route as ProtectedProjectsProjectIdAnalyticsRouteImport } from './routes/_protected.projects.$projectId.analytics'
-import { Route as ProtectedProjectsProjectIdAuthRouteImport } from './routes/_protected.projects.$projectId.auth'
-import { Route as ProtectedProjectsProjectIdClaimsRouteImport } from './routes/_protected.projects.$projectId.claims'
-import { Route as ProtectedProjectsProjectIdGeneralRouteImport } from './routes/_protected.projects.$projectId.general'
-import { Route as ProtectedProjectsProjectIdSecurityRouteImport } from './routes/_protected.projects.$projectId.security'
 import { Route as ProtectedProjectsProjectIdUsersRouteImport } from './routes/_protected.projects.$projectId.users'
+import { Route as ProtectedProjectsProjectIdSecurityRouteImport } from './routes/_protected.projects.$projectId.security'
+import { Route as ProtectedProjectsProjectIdGeneralRouteImport } from './routes/_protected.projects.$projectId.general'
+import { Route as ProtectedProjectsProjectIdClaimsRouteImport } from './routes/_protected.projects.$projectId.claims'
+import { Route as ProtectedProjectsProjectIdAuthRouteImport } from './routes/_protected.projects.$projectId.auth'
+import { Route as ProtectedProjectsProjectIdAnalyticsRouteImport } from './routes/_protected.projects.$projectId.analytics'
 import { Route as ProtectedSuperadminTenantsTenantIdAnalyticsRouteImport } from './routes/_protected.superadmin.tenants_.$tenantId.analytics'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProtectedRoute = ProtectedRouteImport.update({
-  id: '/_protected',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
-  id: '/forgot-password',
-  path: '/forgot-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RegisterRoute = RegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
+const VerifyEmailRoute = VerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -64,14 +45,38 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const VerifyEmailRoute = VerifyEmailRouteImport.update({
-  id: '/verify-email',
-  path: '/verify-email',
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProtectedDashboardRoute = ProtectedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProtectedRoute = ProtectedRouteImport.update({
+  id: '/_protected',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OauthCallbackRoute = OauthCallbackRouteImport.update({
+  id: '/oauth/callback',
+  path: '/oauth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProtectedSuperadminRoute = ProtectedSuperadminRouteImport.update({
+  id: '/superadmin',
+  path: '/superadmin',
   getParentRoute: () => ProtectedRoute,
 } as any)
 const ProtectedSettingsRoute = ProtectedSettingsRouteImport.update({
@@ -79,37 +84,26 @@ const ProtectedSettingsRoute = ProtectedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => ProtectedRoute,
 } as any)
-const ProtectedSuperadminRoute = ProtectedSuperadminRouteImport.update({
-  id: '/superadmin',
-  path: '/superadmin',
+const ProtectedDashboardRoute = ProtectedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => ProtectedRoute,
 } as any)
-const OauthCallbackRoute = OauthCallbackRouteImport.update({
-  id: '/oauth/callback',
-  path: '/oauth/callback',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProtectedProjectsIndexRoute = ProtectedProjectsIndexRouteImport.update({
-  id: '/projects/',
-  path: '/projects/',
+const ProtectedUsersIndexRoute = ProtectedUsersIndexRouteImport.update({
+  id: '/users/',
+  path: '/users/',
   getParentRoute: () => ProtectedRoute,
 } as any)
-const ProtectedProjectsProjectIdRoute =
-  ProtectedProjectsProjectIdRouteImport.update({
-    id: '/projects/$projectId',
-    path: '/projects/$projectId',
-    getParentRoute: () => ProtectedRoute,
-  } as any)
 const ProtectedSuperadminIndexRoute =
   ProtectedSuperadminIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => ProtectedSuperadminRoute,
   } as any)
-const ProtectedSuperadminLogsRoute = ProtectedSuperadminLogsRouteImport.update({
-  id: '/logs',
-  path: '/logs',
-  getParentRoute: () => ProtectedSuperadminRoute,
+const ProtectedProjectsIndexRoute = ProtectedProjectsIndexRouteImport.update({
+  id: '/projects/',
+  path: '/projects/',
+  getParentRoute: () => ProtectedRoute,
 } as any)
 const ProtectedSuperadminTenantsRoute =
   ProtectedSuperadminTenantsRouteImport.update({
@@ -117,39 +111,27 @@ const ProtectedSuperadminTenantsRoute =
     path: '/tenants',
     getParentRoute: () => ProtectedSuperadminRoute,
   } as any)
-const ProtectedUsersIndexRoute = ProtectedUsersIndexRouteImport.update({
-  id: '/users/',
-  path: '/users/',
-  getParentRoute: () => ProtectedRoute,
+const ProtectedSuperadminLogsRoute = ProtectedSuperadminLogsRouteImport.update({
+  id: '/logs',
+  path: '/logs',
+  getParentRoute: () => ProtectedSuperadminRoute,
 } as any)
+const ProtectedProjectsProjectIdRoute =
+  ProtectedProjectsProjectIdRouteImport.update({
+    id: '/projects/$projectId',
+    path: '/projects/$projectId',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
 const ProtectedProjectsProjectIdIndexRoute =
   ProtectedProjectsProjectIdIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => ProtectedProjectsProjectIdRoute,
   } as any)
-const ProtectedProjectsProjectIdAnalyticsRoute =
-  ProtectedProjectsProjectIdAnalyticsRouteImport.update({
-    id: '/analytics',
-    path: '/analytics',
-    getParentRoute: () => ProtectedProjectsProjectIdRoute,
-  } as any)
-const ProtectedProjectsProjectIdAuthRoute =
-  ProtectedProjectsProjectIdAuthRouteImport.update({
-    id: '/auth',
-    path: '/auth',
-    getParentRoute: () => ProtectedProjectsProjectIdRoute,
-  } as any)
-const ProtectedProjectsProjectIdClaimsRoute =
-  ProtectedProjectsProjectIdClaimsRouteImport.update({
-    id: '/claims',
-    path: '/claims',
-    getParentRoute: () => ProtectedProjectsProjectIdRoute,
-  } as any)
-const ProtectedProjectsProjectIdGeneralRoute =
-  ProtectedProjectsProjectIdGeneralRouteImport.update({
-    id: '/general',
-    path: '/general',
+const ProtectedProjectsProjectIdUsersRoute =
+  ProtectedProjectsProjectIdUsersRouteImport.update({
+    id: '/users',
+    path: '/users',
     getParentRoute: () => ProtectedProjectsProjectIdRoute,
   } as any)
 const ProtectedProjectsProjectIdSecurityRoute =
@@ -158,10 +140,28 @@ const ProtectedProjectsProjectIdSecurityRoute =
     path: '/security',
     getParentRoute: () => ProtectedProjectsProjectIdRoute,
   } as any)
-const ProtectedProjectsProjectIdUsersRoute =
-  ProtectedProjectsProjectIdUsersRouteImport.update({
-    id: '/users',
-    path: '/users',
+const ProtectedProjectsProjectIdGeneralRoute =
+  ProtectedProjectsProjectIdGeneralRouteImport.update({
+    id: '/general',
+    path: '/general',
+    getParentRoute: () => ProtectedProjectsProjectIdRoute,
+  } as any)
+const ProtectedProjectsProjectIdClaimsRoute =
+  ProtectedProjectsProjectIdClaimsRouteImport.update({
+    id: '/claims',
+    path: '/claims',
+    getParentRoute: () => ProtectedProjectsProjectIdRoute,
+  } as any)
+const ProtectedProjectsProjectIdAuthRoute =
+  ProtectedProjectsProjectIdAuthRouteImport.update({
+    id: '/auth',
+    path: '/auth',
+    getParentRoute: () => ProtectedProjectsProjectIdRoute,
+  } as any)
+const ProtectedProjectsProjectIdAnalyticsRoute =
+  ProtectedProjectsProjectIdAnalyticsRouteImport.update({
+    id: '/analytics',
+    path: '/analytics',
     getParentRoute: () => ProtectedProjectsProjectIdRoute,
   } as any)
 const ProtectedSuperadminTenantsTenantIdAnalyticsRoute =
@@ -342,39 +342,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_protected': {
-      id: '/_protected'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof ProtectedRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/forgot-password': {
-      id: '/forgot-password'
-      path: '/forgot-password'
-      fullPath: '/forgot-password'
-      preLoaderRoute: typeof ForgotPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/register': {
-      id: '/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof RegisterRouteImport
+    '/verify-email': {
+      id: '/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof VerifyEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -384,18 +356,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/verify-email': {
-      id: '/verify-email'
-      path: '/verify-email'
-      fullPath: '/verify-email'
-      preLoaderRoute: typeof VerifyEmailRouteImport
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_protected/dashboard': {
-      id: '/_protected/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof ProtectedDashboardRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_protected': {
+      id: '/_protected'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof ProtectedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/oauth/callback': {
+      id: '/oauth/callback'
+      path: '/oauth/callback'
+      fullPath: '/oauth/callback'
+      preLoaderRoute: typeof OauthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_protected/superadmin': {
+      id: '/_protected/superadmin'
+      path: '/superadmin'
+      fullPath: '/superadmin'
+      preLoaderRoute: typeof ProtectedSuperadminRouteImport
       parentRoute: typeof ProtectedRoute
     }
     '/_protected/settings': {
@@ -405,32 +412,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedSettingsRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/superadmin': {
-      id: '/_protected/superadmin'
-      path: '/superadmin'
-      fullPath: '/superadmin'
-      preLoaderRoute: typeof ProtectedSuperadminRouteImport
+    '/_protected/dashboard': {
+      id: '/_protected/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof ProtectedDashboardRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/oauth/callback': {
-      id: '/oauth/callback'
-      path: '/oauth/callback'
-      fullPath: '/oauth/callback'
-      preLoaderRoute: typeof OauthCallbackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_protected/projects/': {
-      id: '/_protected/projects/'
-      path: '/projects'
-      fullPath: '/projects/'
-      preLoaderRoute: typeof ProtectedProjectsIndexRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/projects/$projectId': {
-      id: '/_protected/projects/$projectId'
-      path: '/projects/$projectId'
-      fullPath: '/projects/$projectId'
-      preLoaderRoute: typeof ProtectedProjectsProjectIdRouteImport
+    '/_protected/users/': {
+      id: '/_protected/users/'
+      path: '/users'
+      fullPath: '/users/'
+      preLoaderRoute: typeof ProtectedUsersIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
     '/_protected/superadmin/': {
@@ -440,12 +433,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedSuperadminIndexRouteImport
       parentRoute: typeof ProtectedSuperadminRoute
     }
-    '/_protected/superadmin/logs': {
-      id: '/_protected/superadmin/logs'
-      path: '/logs'
-      fullPath: '/superadmin/logs'
-      preLoaderRoute: typeof ProtectedSuperadminLogsRouteImport
-      parentRoute: typeof ProtectedSuperadminRoute
+    '/_protected/projects/': {
+      id: '/_protected/projects/'
+      path: '/projects'
+      fullPath: '/projects/'
+      preLoaderRoute: typeof ProtectedProjectsIndexRouteImport
+      parentRoute: typeof ProtectedRoute
     }
     '/_protected/superadmin/tenants': {
       id: '/_protected/superadmin/tenants'
@@ -454,11 +447,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedSuperadminTenantsRouteImport
       parentRoute: typeof ProtectedSuperadminRoute
     }
-    '/_protected/users/': {
-      id: '/_protected/users/'
-      path: '/users'
-      fullPath: '/users/'
-      preLoaderRoute: typeof ProtectedUsersIndexRouteImport
+    '/_protected/superadmin/logs': {
+      id: '/_protected/superadmin/logs'
+      path: '/logs'
+      fullPath: '/superadmin/logs'
+      preLoaderRoute: typeof ProtectedSuperadminLogsRouteImport
+      parentRoute: typeof ProtectedSuperadminRoute
+    }
+    '/_protected/projects/$projectId': {
+      id: '/_protected/projects/$projectId'
+      path: '/projects/$projectId'
+      fullPath: '/projects/$projectId'
+      preLoaderRoute: typeof ProtectedProjectsProjectIdRouteImport
       parentRoute: typeof ProtectedRoute
     }
     '/_protected/projects/$projectId/': {
@@ -468,32 +468,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedProjectsProjectIdIndexRouteImport
       parentRoute: typeof ProtectedProjectsProjectIdRoute
     }
-    '/_protected/projects/$projectId/analytics': {
-      id: '/_protected/projects/$projectId/analytics'
-      path: '/analytics'
-      fullPath: '/projects/$projectId/analytics'
-      preLoaderRoute: typeof ProtectedProjectsProjectIdAnalyticsRouteImport
-      parentRoute: typeof ProtectedProjectsProjectIdRoute
-    }
-    '/_protected/projects/$projectId/auth': {
-      id: '/_protected/projects/$projectId/auth'
-      path: '/auth'
-      fullPath: '/projects/$projectId/auth'
-      preLoaderRoute: typeof ProtectedProjectsProjectIdAuthRouteImport
-      parentRoute: typeof ProtectedProjectsProjectIdRoute
-    }
-    '/_protected/projects/$projectId/claims': {
-      id: '/_protected/projects/$projectId/claims'
-      path: '/claims'
-      fullPath: '/projects/$projectId/claims'
-      preLoaderRoute: typeof ProtectedProjectsProjectIdClaimsRouteImport
-      parentRoute: typeof ProtectedProjectsProjectIdRoute
-    }
-    '/_protected/projects/$projectId/general': {
-      id: '/_protected/projects/$projectId/general'
-      path: '/general'
-      fullPath: '/projects/$projectId/general'
-      preLoaderRoute: typeof ProtectedProjectsProjectIdGeneralRouteImport
+    '/_protected/projects/$projectId/users': {
+      id: '/_protected/projects/$projectId/users'
+      path: '/users'
+      fullPath: '/projects/$projectId/users'
+      preLoaderRoute: typeof ProtectedProjectsProjectIdUsersRouteImport
       parentRoute: typeof ProtectedProjectsProjectIdRoute
     }
     '/_protected/projects/$projectId/security': {
@@ -503,11 +482,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedProjectsProjectIdSecurityRouteImport
       parentRoute: typeof ProtectedProjectsProjectIdRoute
     }
-    '/_protected/projects/$projectId/users': {
-      id: '/_protected/projects/$projectId/users'
-      path: '/users'
-      fullPath: '/projects/$projectId/users'
-      preLoaderRoute: typeof ProtectedProjectsProjectIdUsersRouteImport
+    '/_protected/projects/$projectId/general': {
+      id: '/_protected/projects/$projectId/general'
+      path: '/general'
+      fullPath: '/projects/$projectId/general'
+      preLoaderRoute: typeof ProtectedProjectsProjectIdGeneralRouteImport
+      parentRoute: typeof ProtectedProjectsProjectIdRoute
+    }
+    '/_protected/projects/$projectId/claims': {
+      id: '/_protected/projects/$projectId/claims'
+      path: '/claims'
+      fullPath: '/projects/$projectId/claims'
+      preLoaderRoute: typeof ProtectedProjectsProjectIdClaimsRouteImport
+      parentRoute: typeof ProtectedProjectsProjectIdRoute
+    }
+    '/_protected/projects/$projectId/auth': {
+      id: '/_protected/projects/$projectId/auth'
+      path: '/auth'
+      fullPath: '/projects/$projectId/auth'
+      preLoaderRoute: typeof ProtectedProjectsProjectIdAuthRouteImport
+      parentRoute: typeof ProtectedProjectsProjectIdRoute
+    }
+    '/_protected/projects/$projectId/analytics': {
+      id: '/_protected/projects/$projectId/analytics'
+      path: '/analytics'
+      fullPath: '/projects/$projectId/analytics'
+      preLoaderRoute: typeof ProtectedProjectsProjectIdAnalyticsRouteImport
       parentRoute: typeof ProtectedProjectsProjectIdRoute
     }
     '/_protected/superadmin/tenants_/$tenantId/analytics': {

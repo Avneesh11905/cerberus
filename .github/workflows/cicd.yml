@@ -228,12 +228,6 @@ jobs:
         working-directory: /home/avneesh/cerberus/v1.0
         run: |
           echo "Schema changes detected â€” running Alembic migrations..."
-          docker compose up -d cerb-postgres
-          # Wait until postgres healthcheck passes before migrating
-          until docker compose ps cerb-postgres | grep -q '(healthy)'; do
-            echo "Waiting for postgres..."
-            sleep 3
-          done
           docker compose --profile migrate run --rm cerb-migrate
           echo "Migrations complete â€” container auto-deleted."
 
