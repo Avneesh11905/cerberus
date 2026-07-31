@@ -21,7 +21,7 @@ class FakeRateLimiter:
 @pytest.fixture
 def mock_rate_limiter(mocker):
     from src.core.config import get_settings
-    from src.core.container import app_container
+    from src import app
     from src.shared.presentation.api.middlewares.rate_limit_and_analytics import (
         RateLimitAndAnalyticsMiddleware,
     )
@@ -38,6 +38,13 @@ def mock_rate_limiter(mocker):
         return_value=True,
         create=True,
     )
+
+    # Directly mutate the middleware instance's kwargs to guarantee it's enabled in this test
+    # (Fixes issue where Pydantic v2 instance attributes shadow class-level mocks in CI)
+    for middleware in app.user_middleware:
+        if middleware.cls == RateLimitAndAnalyticsMiddleware:
+            if "rate_limit_settings" in middleware.kwargs:
+                middleware.kwargs["rate_limit_settings"].ENABLED = True
 
     fake = FakeRateLimiter()
 
@@ -56,6 +63,10 @@ def mock_rate_limiter(mocker):
     yield mock_check
 
     get_settings().rate_limit.ENABLED = original_enabled
+    for middleware in app.user_middleware:
+        if middleware.cls == RateLimitAndAnalyticsMiddleware:
+            if "rate_limit_settings" in middleware.kwargs:
+                middleware.kwargs["rate_limit_settings"].ENABLED = original_enabled
 
 
 @pytest.mark.asyncio
