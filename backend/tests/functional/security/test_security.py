@@ -79,10 +79,15 @@ def mock_rate_limiter(mocker):
 @pytest.mark.sanity
 async def test_rate_limit_regular_route(client: AsyncClient, mock_rate_limiter):
     """
-    Issue requests to a non-auth route until the limit is exceeded.
-    We'll hit /health 61 times (default limit is 60/minute).
+    Issue requests to a non-auth route exceeding the default_rate.
+    It should return 429 Too Many Requests.
     """
-    for i in range(60):
+    from src.core.config import get_settings
+    default_setting = get_settings().rate_limit.DEFAULT
+    default_limit = int(default_setting.split("/")[0])
+
+    # Exceed limit
+    for i in range(default_limit):
         resp = await client.get("/health")
         assert resp.status_code == 200, f"Request {i} failed prematurely"
 
@@ -96,15 +101,19 @@ async def test_rate_limit_regular_route(client: AsyncClient, mock_rate_limiter):
 @pytest.mark.asyncio
 async def test_rate_limit_auth_escalation(client: AsyncClient, mock_rate_limiter):
     """
-    Issue requests to an auth route exceeding the auth_rate (10/minute).
+    Issue requests to an auth route exceeding the auth_rate.
     Auth routes should not return 429; they should escalate to a CAPTCHA challenge.
     Without a CAPTCHA token, they will return a 400 from the Turnstile exception.
     """
-    for i in range(10):
+    from src.core.config import get_settings
+    auth_setting = get_settings().rate_limit.AUTH
+    auth_limit = int(auth_setting.split("/")[0])
+
+    for i in range(auth_limit):
         resp = await client.post("/v1/auth/login", json={})
         assert resp.status_code == 422, f"Request {i} didn't hit validation error"
 
-    # The 11th request exceeds the rate limit.
+    # The next request exceeds the rate limit.
     resp = await client.post(
         "/v1/auth/login", json={"email": "a@example.com", "password": "b"}
     )
