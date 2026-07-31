@@ -6,6 +6,7 @@ import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 
 import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { nitro } from 'nitro/vite'
 
 export default defineConfig(({ mode }) => {
   // Load env variables from .env files
@@ -29,6 +30,9 @@ export default defineConfig(({ mode }) => {
           // @ts-expect-error: preset is supported by Nitro but missing in types
           preset: 'vercel',
         },
+      }),
+      nitro({
+        preset: 'vercel',
       }),
       viteReact(),
     ],

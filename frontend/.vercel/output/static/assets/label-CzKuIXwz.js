@@ -1,0 +1,1 @@
+import{o as e,t}from"./react-Od-laFSK.js";import{a as n,n as r}from"./createLucideIcon-WOYFiwXo.js";var i=e(t(),1),a=n(),o=i.forwardRef(({className:e,...t},n)=>(0,a.jsx)(`label`,{ref:n,className:r(`text-sm font-bold leading-none text-slate peer-disabled:cursor-not-allowed peer-disabled:opacity-70`,e),...t}));o.displayName=`Label`;export{o as t};
