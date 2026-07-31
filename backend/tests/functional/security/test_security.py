@@ -83,8 +83,10 @@ async def test_rate_limit_regular_route(client: AsyncClient, mock_rate_limiter):
     It should return 429 Too Many Requests.
     """
     from src.core.config import get_settings
+    from src.shared.presentation.api.middlewares.rate_limit_and_analytics import parse_rate
+
     default_setting = get_settings().rate_limit.DEFAULT
-    default_limit = int(default_setting.split("/")[0])
+    default_limit, _ = parse_rate(default_setting)
 
     # Exceed limit
     for i in range(default_limit):
@@ -106,8 +108,10 @@ async def test_rate_limit_auth_escalation(client: AsyncClient, mock_rate_limiter
     Without a CAPTCHA token, they will return a 400 from the Turnstile exception.
     """
     from src.core.config import get_settings
+    from src.shared.presentation.api.middlewares.rate_limit_and_analytics import parse_rate
+
     auth_setting = get_settings().rate_limit.AUTH
-    auth_limit = int(auth_setting.split("/")[0])
+    auth_limit, _ = parse_rate(auth_setting)
 
     for i in range(auth_limit):
         resp = await client.post("/v1/auth/login", json={})
