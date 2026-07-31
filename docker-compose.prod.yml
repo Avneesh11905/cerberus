@@ -12,6 +12,9 @@ x-database-env-file: &database-env-file
 
 x-backend-image-reusable-for-celery-and-backend: &backend-image avneesh11905/cerberus-fastapi:latest
 
+x-backend-volumes: &backend-volumes
+  - ./keys:/app/keys:ro
+
 x-nginx-conf-file-to-volume: &nginx-volume
   - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
 
@@ -110,8 +113,7 @@ services:
     depends_on:
       cerb-postgres:
         condition: service_healthy
-    volumes:
-      - ./keys:/app/keys:ro
+    volumes: *backend-volumes
     networks: *common-networks
     logging: *logging-config
 
@@ -120,8 +122,7 @@ services:
     restart:  *restart-policy
     env_file: *backend-env-file
     depends_on: *backend-and-celery-deps
-    volumes:
-      - ./backend/keys:/app/keys:ro
+    volumes: *backend-volumes
     expose:
       - "8000"
     networks: *common-networks
@@ -139,8 +140,7 @@ services:
     command: celery -A src.core.celery_app worker -Q celery --loglevel=info
     env_file: *backend-env-file
     depends_on: *backend-and-celery-deps
-    volumes:
-      - ./backend/keys:/app/keys:ro
+    volumes: *backend-volumes
     networks: *common-networks
     healthcheck:
       test: [ "CMD-SHELL", "pgrep -f 'celery.*worker' > /dev/null || exit 1" ]
@@ -153,8 +153,7 @@ services:
     command: celery -A src.core.celery_app worker -Q analytics --loglevel=info
     env_file: *backend-env-file
     depends_on: *backend-and-celery-deps
-    volumes:
-      - ./backend/keys:/app/keys:ro
+    volumes: *backend-volumes
     networks: *common-networks
     healthcheck:
       test: [ "CMD-SHELL", "pgrep -f 'celery.*worker' > /dev/null || exit 1" ]
@@ -168,8 +167,7 @@ services:
     command: celery -A src.core.celery_app beat --loglevel=info --schedule=/tmp/celerybeat-schedule --pidfile=
     env_file: *backend-env-file
     depends_on: *backend-and-celery-deps
-    volumes:
-      - ./backend/keys:/app/keys:ro
+    volumes: *backend-volumes
     networks: *common-networks
     healthcheck:
       test: [ "CMD-SHELL", "pgrep -f 'celery.*beat' > /dev/null || exit 1" ]

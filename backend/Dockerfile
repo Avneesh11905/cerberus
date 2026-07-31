@@ -22,7 +22,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd --system appgroup \
-    && useradd --system --gid appgroup --no-create-home appuser
+    && useradd --system --gid appgroup --create-home appuser
 
 WORKDIR /app
 
