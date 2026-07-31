@@ -39,16 +39,10 @@ def mock_rate_limiter(mocker):
         create=True,
     )
 
-    # Directly mutate the middleware instance's kwargs to guarantee it's enabled in this test
-    # (Fixes issue where Pydantic v2 instance attributes shadow class-level mocks in CI)
-    for middleware in app.user_middleware:
-        if middleware.cls == RateLimitAndAnalyticsMiddleware:
-            if "rate_limit_settings" in middleware.kwargs:
-                middleware.kwargs["rate_limit_settings"].ENABLED = True  # type: ignore[attr-defined]
-
     fake = FakeRateLimiter()
 
     # Patch the class so that ANY instance of RedisRateLimiterAdapter uses fake
+    # (We still keep this as a fallback for any other places it might be used)
     mock_check = mocker.patch(
         "src.shared.infrastructure.adapters.rate_limiter.RedisRateLimiterAdapter.check_rate_limit",
         side_effect=fake.check_rate_limit,
@@ -59,6 +53,18 @@ def mock_rate_limiter(mocker):
     mocker.patch(
         "src.shared.infrastructure.adapters.rate_limiter.RedisRateLimiterAdapter.record_captcha_success"
     )
+
+    # Directly mutate the middleware instance's kwargs to guarantee it's enabled and mocked in this test
+    # (Fixes issue where Pydantic v2 instance attributes and classes shadow mocks in CI)
+    for middleware in app.user_middleware:
+        if middleware.cls == RateLimitAndAnalyticsMiddleware:
+            if "rate_limit_settings" in middleware.kwargs:
+                middleware.kwargs["rate_limit_settings"].ENABLED = True  # type: ignore[attr-defined]
+            if "rate_limiter" in middleware.kwargs:
+                limiter = middleware.kwargs["rate_limiter"]
+                mocker.patch.object(limiter, "check_rate_limit", new=mock_check)
+                mocker.patch.object(limiter, "record_failure")
+                mocker.patch.object(limiter, "record_captcha_success")
 
     yield mock_check
 
