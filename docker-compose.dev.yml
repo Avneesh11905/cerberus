@@ -142,8 +142,7 @@ services:
       context: ./frontend
       target: development
     container_name: cerb-vite
-    env_file: 
-      - .env.frontend
+    env_file: *env-file
     volumes:
       - ./frontend:/app
       - /app/node_modules
