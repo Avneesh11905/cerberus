@@ -104,7 +104,7 @@ function ProtectedLayout() {
                 <Outlet />
               </main>
             </ContextMenuTrigger>
-            <ContextMenuContent className="w-56 bg-vanilla border-2 border-slate rounded-xl shadow-[4px_4px_0px_rgba(96,114,116,1)] p-1 z-[100]">
+            <ContextMenuContent className="w-56 bg-vanilla border-2 border-slate rounded-xl shadow-[4px_4px_0px_rgba(96,114,116,1)] p-1 z-100">
               <ContextMenuItem
                 className="font-bold cursor-pointer rounded-lg px-3 py-2 hover:bg-sand focus:bg-sand"
                 onClick={() => window.history.back()}

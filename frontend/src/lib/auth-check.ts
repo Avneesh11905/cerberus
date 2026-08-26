@@ -35,7 +35,7 @@ export const checkInitialSession = (): Promise<string | null> => {
       // and we should not destroy their cached session.
       const status = err?.response?.status
       if (status === 401) {
-        useAuthStore.getState().logout()
+        useAuthStore.getState().clearAuth()
       }
       return null
     })

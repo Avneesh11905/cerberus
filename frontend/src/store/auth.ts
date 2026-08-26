@@ -49,6 +49,7 @@ interface AuthState {
   resendAvailableAt: number | null
   setResendAvailableAt: (timestamp: number | null) => void
   logout: () => void
+  clearAuth: () => void
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -83,6 +84,12 @@ export const useAuthStore = create<AuthState>()(
           otpExpiresAt: null,
           resendAvailableAt: null,
         }),
+      clearAuth: () => 
+        set({
+          accessToken: null,
+          csrfToken: null,
+          user: null,
+        })
     }),
     {
       name: 'cerberus-auth',
