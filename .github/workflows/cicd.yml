@@ -34,6 +34,7 @@ jobs:
       backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
       alembic: ${{ steps.filter.outputs.alembic }}
+      deploy: ${{ steps.filter.outputs.deploy }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -52,10 +53,18 @@ jobs:
               - 'backend/alembic/versions/**'
               - 'backend/alembic/env.py'
               - 'backend/alembic.ini'
+            deploy:
+              - '**'
+              - '!frontend/**'
+              - '!**/*.md'
+              - '!LICENSE'
+              - '!.gitignore'
 
   python-ci:
     needs: changes
-    if: needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch'
+    if: | 
+      needs.changes.outputs.backend == 'true' ||
+      github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     services:
       redis:
@@ -102,7 +111,10 @@ jobs:
           uv run scripts/generate_keys.py
 
       - name: Lint (ruff)
-        run: uv run ruff check . --fix
+        run: uv run ruff check .
+
+      - name: Format check (ruff)
+        run: uv run ruff format --check .
 
       - name: Type-check (mypy)
         run: uv run mypy . --check-untyped-defs
@@ -121,9 +133,11 @@ jobs:
       - name: Security Scan (bandit)
         run: uv run bandit -c pyproject.toml -r src/
 
-  node-ci:
+  frontend-ci:
     needs: changes
-    if: needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch'
+    if: |
+      needs.changes.outputs.frontend == 'true' ||
+      github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -157,9 +171,11 @@ jobs:
   backend-build:
     needs: [changes, python-ci]
     if: |
-      (needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch') &&
+      always() &&
+      (needs.changes.outputs.backend == 'true' ||
+      github.event_name == 'workflow_dispatch') &&
       github.ref == 'refs/heads/main' &&
-      (needs.python-ci.result == 'success' || needs.python-ci.result == 'skipped')
+      needs.python-ci.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -192,13 +208,15 @@ jobs:
           cache-from: type=registry,ref=${{ env.BACKEND_IMAGE_NAME }}:buildcache
           cache-to: type=registry,ref=${{ env.BACKEND_IMAGE_NAME }}:buildcache,mode=max
 
-
-  deploy:
+  backend-deploy:
     needs: [changes, backend-build]
     if: |
       always() &&
       github.ref == 'refs/heads/main' &&
-      (needs.backend-build.result == 'success' || needs.backend-build.result == 'skipped')
+      (needs.changes.outputs.deploy == 'true' ||
+      github.event_name == 'workflow_dispatch') &&
+      (needs.backend-build.result == 'success' ||
+      needs.backend-build.result == 'skipped')
     runs-on: [self-hosted, home-server]
     permissions: {}
     steps:
@@ -207,7 +225,9 @@ jobs:
         run: docker compose pull
 
       - name: Run Alembic migrations
-        if: needs.changes.outputs.alembic == 'true' || github.event_name == 'workflow_dispatch'
+        if: |
+          needs.changes.outputs.alembic == 'true' ||
+          github.event_name == 'workflow_dispatch'
         working-directory: /home/cerberus/v1
         run: |
           echo "Schema changes detected â€” running Alembic migrations..."
@@ -218,7 +238,6 @@ jobs:
         working-directory: /home/cerberus/v1
         run: |
           docker compose up -d
-          # Restart Nginx so it clears its cached IP address of the old cerb-fastapi container
           docker compose restart cerb-nginx
 
       - name: Health Check
@@ -227,8 +246,52 @@ jobs:
           echo "Waiting for services to stabilize..."
           docker compose ps
 
-
           echo "Checking Backend (Health)..."
-          curl -sS --fail --retry 12 --retry-delay 5 --retry-connrefused -H "Host: cerberus-api.aymahajan.in" http://localhost:8001/health
+          curl -sS --fail \
+            --retry 12 \
+            --retry-delay 5 \
+            --retry-connrefused \
+            -H "Host: cerberus-api.aymahajan.in" \
+            http://localhost:8001/health
 
           echo "All services are up and healthy!"
+
+  frontend-deploy:
+    needs: [changes, frontend-ci]
+    if: |
+      always() &&
+      github.ref == 'refs/heads/main' &&
+      (needs.changes.outputs.frontend == 'true' ||
+      github.event_name == 'workflow_dispatch') &&
+      needs.frontend-ci.result == 'success'
+    runs-on: ubuntu-latest
+
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    defaults:
+      run:  
+        working-directory: ./frontend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Pull Vercel production configuration
+        run: bunx vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+
+      - name: Build for Vercel
+        run: bunx vercel build --prod --token="$VERCEL_TOKEN"
+
+      - name: Deploy to Vercel
+        run: bunx vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
