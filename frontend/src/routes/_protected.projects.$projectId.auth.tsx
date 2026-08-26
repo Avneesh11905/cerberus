@@ -42,9 +42,7 @@ function AuthTab() {
 
   const [allowedProviders, setAllowedProviders] = useState<string[]>([])
   const [githubClientId, setGithubClientId] = useState('')
-  const [githubClientSecret, setGithubClientSecret] = useState('')
   const [googleClientId, setGoogleClientId] = useState('')
-  const [googleClientSecret, setGoogleClientSecret] = useState('')
   const [savingAuth, setSavingAuth] = useState(false)
   const [authErrors, setAuthErrors] = useState<Record<string, string>>({})
 
@@ -57,11 +55,11 @@ function AuthTab() {
 
   useEffect(() => {
     const providers: string[] = []
-    if (project.oauth_config.github.enabled) {
+    if (project.oauth_config.github?.enabled) {
       providers.push('github')
       setGithubClientId(project.oauth_config.github.client_id || '')
     }
-    if (project.oauth_config.google.enabled) {
+    if (project.oauth_config.google?.enabled) {
       providers.push('google')
       setGoogleClientId(project.oauth_config.google.client_id || '')
     }
@@ -81,10 +79,10 @@ function AuthTab() {
     setModalProvider(provider)
     if (provider === 'github') {
       setModalClientId(githubClientId)
-      setModalClientSecret(githubClientSecret)
+      setModalClientSecret('')
     } else if (provider === 'google') {
       setModalClientId(googleClientId)
-      setModalClientSecret(googleClientSecret)
+      setModalClientSecret('')
     }
     setIsProviderModalOpen(true)
   }
@@ -104,36 +102,49 @@ function AuthTab() {
 
     const newGithubClientId =
       modalProvider === 'github' ? modalClientId : githubClientId
-    const newGithubClientSecret =
-      modalProvider === 'github' ? modalClientSecret : githubClientSecret
     const newGoogleClientId =
       modalProvider === 'google' ? modalClientId : googleClientId
-    const newGoogleClientSecret =
-      modalProvider === 'google' ? modalClientSecret : googleClientSecret
+
+    const oauthConfig: Record<
+      string,
+      {
+        enabled: boolean
+        client_id?: string | null
+        client_secret?: string | null
+      }
+    > = {
+      github: {
+        enabled: newAllowedProviders.includes('github'),
+        client_id: newAllowedProviders.includes('github')
+          ? newGithubClientId || undefined
+          : null,
+      },
+      google: {
+        enabled: newAllowedProviders.includes('google'),
+        client_id: newAllowedProviders.includes('google')
+          ? newGoogleClientId || undefined
+          : null,
+      },
+    }
+
+    if (modalProvider === 'github' && modalClientSecret) {
+      oauthConfig.github.client_secret = modalClientSecret
+    }
+
+    if (modalProvider === 'google' && modalClientSecret) {
+      oauthConfig.google.client_secret = modalClientSecret
+    }
 
     try {
       await updateProjectOAuth(projectId, {
-        oauth_config: {
-          github: {
-            enabled: newAllowedProviders.includes('github'),
-            client_id: newGithubClientId || undefined,
-            client_secret: newGithubClientSecret || undefined,
-          },
-          google: {
-            enabled: newAllowedProviders.includes('google'),
-            client_id: newGoogleClientId || undefined,
-            client_secret: newGoogleClientSecret || undefined,
-          },
-        },
+        oauth_config: oauthConfig,
       })
 
       setAllowedProviders(newAllowedProviders)
       if (modalProvider === 'github') {
         setGithubClientId(newGithubClientId)
-        setGithubClientSecret('')
       } else if (modalProvider === 'google') {
         setGoogleClientId(newGoogleClientId)
-        setGoogleClientSecret('')
       }
       setIsProviderModalOpen(false)
       fetchProject(false)
@@ -173,42 +184,40 @@ function AuthTab() {
       (p) => p !== providerToDelete,
     )
 
-    let ghId: string | null | undefined = githubClientId || undefined
-    let ghSecret: string | null | undefined = githubClientSecret || undefined
-    let ggId: string | null | undefined = googleClientId || undefined
-    let ggSecret: string | null | undefined = googleClientSecret || undefined
-
-    if (providerToDelete === 'github') {
-      ghId = null
-      ghSecret = null
-    } else if (providerToDelete === 'google') {
-      ggId = null
-      ggSecret = null
+    const oauthConfig: Record<
+      string,
+      {
+        enabled: boolean
+        client_id?: string | null
+        client_secret?: string | null
+      }
+    > = {
+      github: {
+        enabled: newAllowedProviders.includes('github'),
+        client_id: newAllowedProviders.includes('github')
+          ? githubClientId || undefined
+          : null,
+        client_secret: providerToDelete === 'github' ? null : undefined,
+      },
+      google: {
+        enabled: newAllowedProviders.includes('google'),
+        client_id: newAllowedProviders.includes('google')
+          ? googleClientId || undefined
+          : null,
+        client_secret: providerToDelete === 'google' ? null : undefined,
+      },
     }
 
     try {
       await updateProjectOAuth(projectId, {
-        oauth_config: {
-          github: {
-            enabled: newAllowedProviders.includes('github'),
-            client_id: ghId,
-            client_secret: ghSecret,
-          },
-          google: {
-            enabled: newAllowedProviders.includes('google'),
-            client_id: ggId,
-            client_secret: ggSecret,
-          },
-        },
+        oauth_config: oauthConfig,
       })
 
       setAllowedProviders(newAllowedProviders)
       if (providerToDelete === 'github') {
         setGithubClientId('')
-        setGithubClientSecret('')
       } else if (providerToDelete === 'google') {
         setGoogleClientId('')
-        setGoogleClientSecret('')
       }
       setProviderToDelete(null)
       fetchProject(false)
@@ -483,7 +492,7 @@ function AuthTab() {
             <DialogDescription className="text-slate/80 font-semibold pt-4">
               Are you sure you want to remove the{' '}
               <strong className="capitalize">{providerToDelete}</strong>{' '}
-              provider? Users relying on this provider will no longer be able to
+              provider? Users relying on this provider will no longer be able to 
               log in.
             </DialogDescription>
           </DialogHeader>

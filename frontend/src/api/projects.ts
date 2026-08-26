@@ -16,6 +16,7 @@ export interface Project {
       client_secret_configured?: boolean
     }
   >
+  oauth_callback_urls: Record<string, string>
   default_claims: Record<string, string>
   created_at: string
   updated_at: string
