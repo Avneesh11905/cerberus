@@ -1,0 +1,152 @@
+name: cerberus
+
+x-env-file: &env-file
+  - .env
+
+x-celery-healthcheck-config: &celery-healthcheck-config
+  interval: 10s
+  timeout: 5s
+  retries: 3
+  start_period: 30s
+
+x-restart-policy: &restart-policy unless-stopped
+
+x-logging-config: &logging-config
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-networks: &networks
+  - Cerberus-Network
+  - Infrastructure-Network
+
+x-host-and-networks-config: &host-and-networks
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  networks: *networks
+
+x-backend-and-celery-volumes: &backend-and-celery-volumes
+  - ./backend:/app
+  - backend_venv:/app/.venv
+
+networks:
+  Cerberus-Network:
+    name: Cerberus-Network
+    driver: bridge
+  Infrastructure-Network:
+    external: true
+
+volumes:
+  backend_venv:
+
+services:
+  cerb-migrate:
+    build:
+      context: ./backend
+      target: development
+    container_name: cerb-migrate
+    command: alembic upgrade head
+    env_file: *env-file
+    volumes: *backend-and-celery-volumes
+    restart: "no"
+    <<: *host-and-networks
+    logging: *logging-config
+
+  cerb-fastapi:
+    build:
+      context: ./backend
+      target: development
+    container_name: cerb-fastapi
+    env_file: *env-file
+    depends_on:
+      cerb-migrate:
+        condition: service_completed_successfully
+    volumes: *backend-and-celery-volumes
+    restart: *restart-policy
+    <<: *host-and-networks
+    logging: *logging-config
+
+  cerb-celery-worker:
+    build:
+      context: ./backend
+      target: development
+    container_name: cerb-celery-worker
+    env_file: *env-file
+    depends_on:
+      cerb-migrate:
+        condition: service_completed_successfully
+    volumes: *backend-and-celery-volumes
+    command: watchmedo auto-restart -q --debug-force-polling --directory=/app --pattern="*.py" --recursive -- celery -A src.core.celery_app worker -Q celery --loglevel=info
+    restart: *restart-policy
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'celery.*worker' > /dev/null"]
+      <<: *celery-healthcheck-config
+    <<: *host-and-networks
+    logging: *logging-config
+
+  cerb-celery-analytics-worker:
+    build:
+      context: ./backend
+      target: development
+    container_name: cerb-celery-analytics-worker
+    env_file: *env-file
+    depends_on:
+      cerb-migrate:
+        condition: service_completed_successfully
+    volumes: *backend-and-celery-volumes
+    command: watchmedo auto-restart -q --debug-force-polling --directory=/app --pattern="*.py" --recursive -- celery -A src.core.celery_app worker -Q analytics --loglevel=info
+    restart: *restart-policy
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'celery.*worker' > /dev/null"]
+      <<: *celery-healthcheck-config
+    <<: *host-and-networks
+    logging: *logging-config
+
+  cerb-celery-beat:
+    build:
+      context: ./backend
+      target: development
+    container_name: cerb-celery-beat
+    env_file: *env-file
+    depends_on:
+      cerb-migrate:
+        condition: service_completed_successfully
+    volumes: *backend-and-celery-volumes
+    command: watchmedo auto-restart -q --debug-force-polling --directory=/app --pattern="*.py" --recursive -- celery -A src.core.celery_app beat --loglevel=info --schedule=/tmp/celerybeat-schedule --pidfile=
+    restart: *restart-policy
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'celery.*beat' > /dev/null"]
+      <<: *celery-healthcheck-config
+    <<: *host-and-networks
+    logging: *logging-config
+
+  cerb-nginx:
+    image: nginx:stable-alpine
+    container_name: cerb-nginx
+    restart: *restart-policy
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/dev.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      cerb-fastapi:
+        condition: service_started
+      cerb-vite:
+        condition: service_started
+    <<: *host-and-networks
+    logging: *logging-config
+
+  cerb-vite:
+    build:
+      context: ./frontend
+      target: development
+    container_name: cerb-vite
+    env_file: 
+      - .env.frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    restart: *restart-policy
+    <<: *host-and-networks
+    logging: *logging-config

@@ -28,7 +28,6 @@ env:
   BACKEND_IMAGE_NAME: avneesh11905/cerberus-fastapi
 
 jobs:
-  # â”€â”€ Path filter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   changes:
     runs-on: ubuntu-latest
     outputs:
@@ -38,7 +37,6 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          # fetch-depth: 0 ensures dorny/paths-filter can diff the entire commit history accurately
           fetch-depth: 0
       - uses: dorny/paths-filter@v4.0.1
         id: filter
@@ -55,7 +53,6 @@ jobs:
               - 'backend/alembic/env.py'
               - 'backend/alembic.ini'
 
-  # â”€â”€ Backend CI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   python-ci:
     needs: changes
     if: needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch'
@@ -124,7 +121,6 @@ jobs:
       - name: Security Scan (bandit)
         run: uv run bandit -c pyproject.toml -r src/
 
-  # â”€â”€ Frontend CI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   node-ci:
     needs: changes
     if: needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch'
@@ -163,10 +159,8 @@ jobs:
       - name: Run tests (vitest)
         run: npm run test
 
-  # â”€â”€ Backend Docker build & push â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   backend-build:
     needs: [changes, python-ci]
-    # Run on main if backend changed AND CI passed (or was skipped via workflow_dispatch)
     if: |
       (needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch') &&
       github.ref == 'refs/heads/main' &&
@@ -204,17 +198,13 @@ jobs:
           cache-to: type=registry,ref=${{ env.BACKEND_IMAGE_NAME }}:buildcache,mode=max
 
 
-  # â”€â”€ Deploy â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   deploy:
     needs: [changes, backend-build]
-    # Deploy only when on main AND the backend build succeeded (or skipped)
     if: |
       always() &&
       github.ref == 'refs/heads/main' &&
       (needs.backend-build.result == 'success' || needs.backend-build.result == 'skipped')
     runs-on: [self-hosted, home-server]
-    # Deploy job only needs to run docker commands on the self-hosted runner;
-    # no repo read access required at this stage.
     permissions: {}
     steps:
       - name: Pull latest images
@@ -222,8 +212,6 @@ jobs:
         run: docker compose pull
 
       - name: Run Alembic migrations
-        # Only execute when alembic/versions or env.py changed in this push.
-        # --rm ensures the container is auto-deleted the moment migrations finish.
         if: needs.changes.outputs.alembic == 'true' || github.event_name == 'workflow_dispatch'
         working-directory: /home/avneesh/cerberus/v1.0
         run: |
