@@ -34,7 +34,7 @@ jobs:
       backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
       alembic: ${{ steps.filter.outputs.alembic }}
-      deploy: ${{ steps.filter.outputs.deploy }}
+      deploy: ${{ steps.filter.outputs.backend == 'true' || steps.filter.outputs.alembic == 'true' || steps.filter.outputs.infra == 'true' }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -45,20 +45,15 @@ jobs:
           filters: |
             backend:
               - 'backend/**'
-              - '!backend/**/*.md'
             frontend:
               - 'frontend/**'
-              - '!frontend/**/*.md'
             alembic:
               - 'backend/alembic/versions/**'
               - 'backend/alembic/env.py'
               - 'backend/alembic.ini'
-            deploy:
-              - '**'
-              - '!frontend/**'
-              - '!**/*.md'
-              - '!LICENSE'
-              - '!.gitignore'
+            infra:
+              - 'docker-compose*.yml'
+              - '.github/workflows/**'
 
   python-ci:
     needs: changes
