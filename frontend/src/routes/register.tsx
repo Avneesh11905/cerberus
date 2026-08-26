@@ -1,11 +1,13 @@
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation } from '@tanstack/react-query'
-import { Turnstile } from '@marsidev/react-turnstile'
-
+import {
+  Turnstile,
+  type TurnstileInstance,
+} from '@marsidev/react-turnstile'
 import { apiClient, API_URL, extractErrorMessage } from '../lib/api-client'
 import { useAuthStore } from '../store/auth'
 import { AuthLayout } from '../components/layout/AuthLayout'
@@ -50,13 +52,14 @@ function RegisterPage() {
 
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const [authError, setAuthError] = useState<string | null>(null)
-
+  const [showCaptcha, setShowCaptcha] = useState(false)
+  const [captchaKey, setCaptchaKey] = useState(0)
   const [pendingAction, setPendingAction] = useState<
     'register' | 'google' | 'github' | null
   >(null)
   const [pendingRegisterData, setPendingRegisterData] =
     useState<RegisterData | null>(null)
-
+  const turnstileRef = useRef<TurnstileInstance>(null)
   useEffect(() => {
     if (accessToken) {
       navigate({ to: '/' })
@@ -91,7 +94,16 @@ function RegisterPage() {
       navigate({ to: '/verify-email' })
     },
     onError: (error: unknown) => {
-      setAuthError(extractErrorMessage(error, 'Registration failed'))
+      const message = extractErrorMessage(error, 'Registration failed')
+      setAuthError(message)
+      if (
+        message.toLowerCase().includes('captcha') ||
+        message.toLowerCase().includes('turnstile')
+      ) {
+        setTurnstileToken(null)
+        setShowCaptcha(true)
+        setCaptchaKey((key) => key + 1)
+      }
     },
   })
 
@@ -109,22 +121,30 @@ function RegisterPage() {
   }, [turnstileToken, pendingAction, pendingRegisterData, registerMutation])
 
   const onSubmit = (data: RegisterData) => {
-    setAuthError(null)
-    if (!turnstileToken) {
-      setPendingAction('register')
-      setPendingRegisterData(data)
+  setAuthError(null)
+  if (!turnstileToken) {
+    setPendingAction('register')
+    setPendingRegisterData(data)
+    if (showCaptcha) {
       return
     }
-    registerMutation.mutate(data)
+    turnstileRef.current?.execute()
+    return
   }
+  registerMutation.mutate(data)
+}
 
   const handleOAuth = (provider: 'google' | 'github') => {
-    if (!turnstileToken) {
-      setPendingAction(provider)
+  if (!turnstileToken) {
+    setPendingAction(provider)
+    if (showCaptcha) {
       return
     }
-    window.location.href = `${API_URL}/auth/tenant/login/${provider}`
+    turnstileRef.current?.execute()
+    return
   }
+  window.location.href = `${API_URL}/auth/tenant/login/${provider}`
+}
 
   if (accessToken) {
     return null
@@ -205,15 +225,32 @@ function RegisterPage() {
         )}
 
         <Turnstile
+          ref={turnstileRef}
+          key={captchaKey}
           siteKey={
             (import.meta.env.VITE_TURNSTILE_SITE_KEY || '')
               .replace(/^["']|["']$/g, '')
               .trim() || '1x00000000000000000000AA'
           }
-          onSuccess={(token) => setTurnstileToken(token)}
-          options={{ size: 'invisible' }}
+          onSuccess={(token) => {
+            setTurnstileToken(token)
+            setShowCaptcha(false)
+          }}
+          onError={() => {
+            setTurnstileToken(null)
+            setShowCaptcha(true)
+            setCaptchaKey((key) => key + 1)
+          }}
+          onExpire={() => {
+            setTurnstileToken(null)
+            setShowCaptcha(true)
+            setCaptchaKey((key) => key + 1)
+          }}
+          options={{
+            size: showCaptcha ? 'normal' : 'invisible',
+            execution: showCaptcha ? 'render' : 'execute',
+          }}
         />
-
         <Button
           type="submit"
           className="w-full mt-4"
