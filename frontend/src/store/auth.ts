@@ -84,12 +84,12 @@ export const useAuthStore = create<AuthState>()(
           otpExpiresAt: null,
           resendAvailableAt: null,
         }),
-      clearAuth: () => 
+      clearAuth: () =>
         set({
           accessToken: null,
           csrfToken: null,
           user: null,
-        })
+        }),
     }),
     {
       name: 'cerberus-auth',

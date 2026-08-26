@@ -19,11 +19,11 @@ export default [
   },
   {
     ignores: [
-    'eslint.config.js',
-    'prettier.config.js',
-    '.vercel/**',
-    'dist/**',
-    'node_modules/**',
-  ],
+      'eslint.config.js',
+      'prettier.config.js',
+      '.vercel/**',
+      'dist/**',
+      'node_modules/**',
+    ],
   },
 ]

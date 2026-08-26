@@ -492,7 +492,7 @@ function AuthTab() {
             <DialogDescription className="text-slate/80 font-semibold pt-4">
               Are you sure you want to remove the{' '}
               <strong className="capitalize">{providerToDelete}</strong>{' '}
-              provider? Users relying on this provider will no longer be able to 
+              provider? Users relying on this provider will no longer be able to
               log in.
             </DialogDescription>
           </DialogHeader>

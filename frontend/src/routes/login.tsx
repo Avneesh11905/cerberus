@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation } from '@tanstack/react-query'
-import type {TurnstileInstance} from '@marsidev/react-turnstile'
+import type { TurnstileInstance } from '@marsidev/react-turnstile'
 import { Turnstile } from '@marsidev/react-turnstile'
 import { apiClient, API_URL, extractErrorMessage } from '../lib/api-client'
 import { useAuthStore } from '../store/auth'
@@ -114,32 +114,32 @@ function LoginPage() {
     }
   }, [turnstileToken, pendingAction, pendingLoginData, loginMutation])
 
-const onSubmit = (data: LoginData) => {
-  setAuthError(null)
-  if (!turnstileToken) {
-    setPendingAction('login')
-    setPendingLoginData(data)
-    if (showCaptcha) {
+  const onSubmit = (data: LoginData) => {
+    setAuthError(null)
+    if (!turnstileToken) {
+      setPendingAction('login')
+      setPendingLoginData(data)
+      if (showCaptcha) {
+        return
+      }
+      turnstileRef.current?.execute()
       return
     }
-    turnstileRef.current?.execute()
-    return
-  }
 
-  loginMutation.mutate(data)
-}
+    loginMutation.mutate(data)
+  }
 
   const handleOAuth = (provider: 'google' | 'github') => {
-  if (!turnstileToken) {
-    setPendingAction(provider)
-    if (showCaptcha) {
+    if (!turnstileToken) {
+      setPendingAction(provider)
+      if (showCaptcha) {
+        return
+      }
+      turnstileRef.current?.execute()
       return
     }
-    turnstileRef.current?.execute()
-    return
+    window.location.href = `${API_URL}/auth/tenant/login/${provider}`
   }
-  window.location.href = `${API_URL}/auth/tenant/login/${provider}`
-}
 
   if (accessToken) {
     return null
