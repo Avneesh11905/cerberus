@@ -1,10 +1,11 @@
-//  @ts-check
+// @ts-check
 
 import { tanstackConfig } from '@tanstack/eslint-config'
 
 export default [
   ...tanstackConfig,
   {
+    files: ['**/*.{ts,tsx,mts,cts}'],
     rules: {
       'import/no-cycle': 'off',
       'import/order': 'off',
@@ -17,6 +18,12 @@ export default [
     },
   },
   {
-    ignores: ['eslint.config.js', 'prettier.config.js'],
+    ignores: [
+    'eslint.config.js',
+    'prettier.config.js',
+    '.vercel/**',
+    'dist/**',
+    'node_modules/**',
+  ],
   },
 ]

@@ -4,10 +4,8 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation } from '@tanstack/react-query'
-import {
-  Turnstile,
-  type TurnstileInstance,
-} from '@marsidev/react-turnstile'
+import type {TurnstileInstance} from '@marsidev/react-turnstile'
+import { Turnstile } from '@marsidev/react-turnstile'
 import { apiClient, API_URL, extractErrorMessage } from '../lib/api-client'
 import { useAuthStore } from '../store/auth'
 import { AuthLayout } from '../components/layout/AuthLayout'
