@@ -2,20 +2,22 @@ import { apiClient } from '../lib/api-client'
 
 export type Environment = 'development' | 'production'
 
+export interface OAuthProviderConfig {
+  enabled: boolean
+  client_id?: string
+  client_secret_configured?: boolean
+}
+
 export interface Project {
   id: string
   name: string
   environment: Environment
   frontend_url?: string
   allowed_origins: string[]
-  oauth_config: Record<
-    string,
-    {
-      enabled: boolean
-      client_id?: string
-      client_secret_configured?: boolean
-    }
-  >
+  oauth_config: {
+    github?: OAuthProviderConfig
+    google?: OAuthProviderConfig
+  }
   oauth_callback_urls: Record<string, string>
   default_claims: Record<string, string>
   created_at: string

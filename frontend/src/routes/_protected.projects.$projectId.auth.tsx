@@ -55,13 +55,14 @@ function AuthTab() {
 
   useEffect(() => {
     const providers: string[] = []
-    if (project.oauth_config.github.enabled) {
+    const oauth = project.oauth_config
+    if (oauth.github?.enabled) {
       providers.push('github')
-      setGithubClientId(project.oauth_config.github.client_id || '')
+      setGithubClientId(oauth.github.client_id || '')
     }
-    if (project.oauth_config.google.enabled) {
+    if (oauth.google?.enabled) {
       providers.push('google')
-      setGoogleClientId(project.oauth_config.google.client_id || '')
+      setGoogleClientId(oauth.google.client_id || '')
     }
     setAllowedProviders(providers)
   }, [project])
