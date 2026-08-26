@@ -287,14 +287,8 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Verify Vercel token
-        run: |
-          curl -sS --fail \
-            -H "Authorization: Bearer $VERCEL_TOKEN" \
-            https://api.vercel.com/v2/user
-
       - name: Pull Vercel production configuration
-        run: bunx vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+        run: bunx vercel pull --yes --environment=production --token="$VERCEL_TOKEN" --scope="$VERCEL_ORG_ID"
 
       - name: Build for Vercel
         run: bunx vercel build --prod --token="$VERCEL_TOKEN"
