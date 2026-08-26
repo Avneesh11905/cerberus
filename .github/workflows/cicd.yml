@@ -287,6 +287,15 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Remove old Vercel configuration
+        run: rm -rf .vercel
+      
+      - name: Verify Vercel project access
+        run: |
+          bunx vercel whoami --token="$VERCEL_TOKEN"
+          echo "Attempting to access configured project..."
+          bunx vercel project ls --token="$VERCEL_TOKEN"
+
       - name: Pull Vercel production configuration
         run: bunx vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
 
