@@ -4,5 +4,8 @@
       "source": "/api/(.*)",
       "destination": "https://cerberus-api.aymahajan.in/v1/$1"
     }
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": false
+  }
 }
