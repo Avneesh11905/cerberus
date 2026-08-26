@@ -203,26 +203,26 @@ jobs:
     permissions: {}
     steps:
       - name: Pull latest images
-        working-directory: /home/avneesh/cerberus/v2
+        working-directory: /home/cerberus/v2
         run: docker compose pull
 
       - name: Run Alembic migrations
         if: needs.changes.outputs.alembic == 'true' || github.event_name == 'workflow_dispatch'
-        working-directory: /home/avneesh/cerberus/v2
+        working-directory: /home/cerberus/v2
         run: |
           echo "Schema changes detected â€” running Alembic migrations..."
           docker compose --profile migrate run --rm cerb-migrate
           echo "Migrations complete â€” container auto-deleted."
 
       - name: Start / update application stack
-        working-directory: /home/avneesh/cerberus/v2
+        working-directory: /home/cerberus/v2
         run: |
           docker compose up -d
           # Restart Nginx so it clears its cached IP address of the old cerb-fastapi container
           docker compose restart cerb-nginx
 
       - name: Health Check
-        working-directory: /home/avneesh/cerberus/v2
+        working-directory: /home/cerberus/v2
         run: |
           echo "Waiting for services to stabilize..."
           docker compose ps
