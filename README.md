@@ -11,7 +11,6 @@
 
 It is designed to give business owners (Tenants) the ability to spin up isolated **Projects**, configure dynamic OAuth providers, manage environments (Development/Production), and securely manage end-users without locking into a single infrastructure stack.
 
-*Note: The official TypeScript SDK is available in a separate repository at [Avneesh11905/cerberus-sdk](https://github.com/Avneesh11905/cerberus-sdk).*
 
 ## 📦 Repository Structure
 

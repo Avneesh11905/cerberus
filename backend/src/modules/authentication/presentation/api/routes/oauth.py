@@ -122,13 +122,13 @@ Exposes HTTP endpoints for OAuth2 social login flows for project end-users.
 Two initiation strategies are supported:
 
 1. **Preflight + session** (preferred, secure):
-   POST /auth/oauth/preflight/{provider} — SDK calls this via Axios with the
+   POST /auth/oauth/preflight/{provider} — client calls this via Axios with the
    X-Cerberus-API-Key header. The server validates the key, stores the project_id
    in the signed session cookie, and returns a clean redirect URL with no secrets.
-   The SDK then redirects the browser to that URL. GET /auth/login/{provider} then
+   The client then redirects the browser to that URL. GET /auth/login/{provider} then
    reads the project context from the session cookie instead of a query param.
 
-2. **Direct query param** (legacy / non-SDK callers):
+2. **Direct query param** (legacy callers):
    GET /auth/login/{provider}?api_key=cerb_xxx — kept for backwards compatibility.
    The api_key appears in browser history; prefer the preflight flow.
 
@@ -149,10 +149,10 @@ async def oauth_preflight(
     """
     Establish OAuth session context without exposing the API key in a browser URL.
 
-    The SDK calls this endpoint via Axios (which sends X-Cerberus-API-Key as a
+    The client calls this endpoint via Axios (which sends X-Cerberus-API-Key as a
     header, never in a URL). The server validates the key, stores the project
     context in the signed session cookie, and returns the redirect URL.
-    The SDK then redirects the browser to that URL. Because the session cookie
+    The client then redirects the browser to that URL. Because the session cookie
     carries the project context, GET /auth/login/{provider} needs no api_key
     query parameter.
 
@@ -252,7 +252,7 @@ async def exchange(
     set_refresh_token_cookie(response, refresh_token)
 
     # Derive the CSRF token the same way set_refresh_token_cookie does so that
-    # SDK clients on foreign domains (who cannot read document.cookie across
+    # clients on foreign domains (who cannot read document.cookie across
     # origins) can store it in memory and attach it as X-CSRF on future requests.
     csrf_token = generate_csrf_token(refresh_token)
 

@@ -28,7 +28,7 @@ router = APIRouter()
 
 """
 Exposes HTTP endpoints for local email/password registration and login.
-Separates User (SDK) and Tenant (Dashboard) authentication.
+Separates User and Tenant (Dashboard) authentication.
 """
 
 # ---------------------------------------------------------
